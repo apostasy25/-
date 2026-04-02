@@ -24,7 +24,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .logo svg{width:21px;height:21px}
 .hd-txt h1{font-size:17px;font-weight:700;color:var(--navy)}
 .hd-txt p{font-size:11px;color:var(--sub);margin-top:2px}
-/* setup */
 .setup-card{background:var(--white);border:1.5px solid #f0c96a;border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
 .setup-hd{background:#fffbee;padding:11px 17px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #f0e4bb}
 .setup-hd h2{font-size:12px;font-weight:600;color:#7a5800}
@@ -37,7 +36,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .btn-save{height:36px;padding:0 14px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;cursor:pointer}
 .key-ok{font-size:11px;color:var(--ok);margin-top:5px;display:none}
 .key-ok.show{display:block}
-/* card */
 .card{background:var(--white);border:1px solid var(--border);border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
 .ch{background:var(--navy);padding:12px 18px;display:flex;align-items:center;gap:9px}
 .sb{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
@@ -45,14 +43,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .ch .opt{background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-size:10px;padding:2px 8px;border-radius:10px;margin-left:4px}
 .ch .sub{color:rgba(255,255,255,.55);font-size:11px;margin-left:3px}
 .cb{padding:16px 18px}
-/* case detector */
 .case-bar{max-width:760px;margin:0 auto 13px;padding:10px 15px;border-radius:9px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;transition:all .3s}
 .case-bar.case0{background:#f0f2f7;color:var(--sub);border:1px solid var(--border)}
 .case-bar.case1{background:#e8f5ee;color:var(--ok);border:1px solid #b2e0cc}
 .case-bar.case2{background:#e8f0fd;color:#1d4ed8;border:1px solid #c5d6f5}
 .case-bar.case3{background:#fff8e6;color:var(--warn);border:1px solid #fce4b0}
 .case-bar.case4{background:var(--ok-bg);color:var(--ok);border:1px solid #b2e0cc}
-/* drop */
 .drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;transition:all .15s;background:#fafbfd;position:relative}
 .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-l)}
 .drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
@@ -60,7 +56,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .drop p{font-size:12px;color:var(--sub)}
 .drop p strong{color:var(--accent)}
 .drop small{font-size:11px;color:#a0aabf;display:block;margin-top:3px}
-/* image preview */
 .img-prev{display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
 .img-prev.show{display:block}
 .img-prev img{width:100%;max-height:240px;object-fit:contain;background:#f0f2f7;display:block}
@@ -68,10 +63,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .img-prev-bar .name{color:var(--navy);font-weight:600}
 .btn-clear{background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;font-family:'Noto Sans KR',sans-serif;color:var(--sub);cursor:pointer}
 .btn-clear:hover{border-color:var(--err);color:var(--err)}
-/* optional pair layout */
 .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:600px){.opt-grid{grid-template-columns:1fr}}
-/* file cards */
 .file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .file-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:9px}
 .xl-ic{width:28px;height:28px;background:#217346;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
@@ -92,11 +85,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .total-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;background:var(--navy);border-radius:8px;margin-top:10px}
 .total-bar .tbl{font-size:11px;color:rgba(255,255,255,.7);font-weight:600}
 .total-bar .tbv{font-size:13px;color:#fff;font-weight:700}
-/* button */
 .btn-v{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;max-width:760px;margin:7px auto;height:52px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:background .15s}
 .btn-v:hover{background:var(--navy-l)}
 .btn-v:disabled{background:#c0c8d8;cursor:not-allowed}
-/* progress */
 .prog{max-width:760px;margin:0 auto 13px;display:none}
 .prog.show{display:block}
 .prog-steps{display:flex;gap:5px}
@@ -105,7 +96,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .ps.done{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
 .ps.skip{border-color:var(--border);color:#c0c8d8;background:#f7f9fc}
 .ps.error{border-color:var(--err);color:var(--err);background:var(--err-bg)}
-/* result */
 .rc{display:none}
 .rc.show{display:block}
 .r-sum{padding:16px 18px;display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--border)}
@@ -116,7 +106,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .rt h3.ok{color:var(--ok)}
 .rt h3.fail{color:var(--err)}
 .rt p{font-size:11px;color:var(--sub);margin-top:2px}
-/* check group */
 .chk-group{padding:13px 18px;border-bottom:1px solid var(--border)}
 .chk-group:last-child{border-bottom:none}
 .gt{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:9px;letter-spacing:.5px}
@@ -144,7 +133,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .dtag.src2{background:#e3f5ec;color:#1a7f4b}
 .dtag.src3{background:#fce7f3;color:#9d174d}
 .dval{font-size:11px;color:var(--text)}
-/* match table */
 .mt-wrap{padding:13px 18px;border-bottom:1px solid var(--border)}
 .mt-title{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:8px;letter-spacing:.5px}
 table.mt{width:100%;border-collapse:collapse;font-size:11px}
@@ -160,14 +148,12 @@ table.mt tr.wr td{background:var(--warn-bg)}
 .stag.warn{background:var(--warn);color:#fff}
 .tag-mg{background:#fce7f3;color:#9d174d;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:700;display:inline-block}
 .tag-tax{background:#dbeafe;color:#1d4ed8;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:700;display:inline-block}
-/* 3-amount compare */
 .tri-compare{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
 .tri-box{background:#f7f9fc;border:1px solid var(--border);border-radius:7px;padding:8px 10px;text-align:center}
 .tri-box .tb-lbl{font-size:9px;font-weight:700;color:var(--sub);margin-bottom:4px}
 .tri-box .tb-val{font-size:13px;font-weight:700;color:var(--navy)}
 .tri-box.highlight{border-color:var(--accent);background:var(--accent-l)}
 .tri-box .tb-note{font-size:9px;color:var(--warn);margin-top:2px}
-/* btn reset */
 .btn-r{display:block;margin:3px auto 18px;background:none;border:1.5px solid var(--border);border-radius:7px;padding:8px 20px;font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--sub);cursor:pointer}
 .btn-r:hover{border-color:var(--accent);color:var(--accent)}
 .spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
@@ -189,7 +175,6 @@ table.mt tr.wr td{background:var(--warn-bg)}
   </div>
 </div>
 
-<!-- API KEY -->
 <div class="setup-card">
   <div class="setup-hd"><span>🔑</span><h2>최초 1회 설정 — Anthropic API 키</h2></div>
   <div class="setup-bd">
@@ -202,7 +187,6 @@ table.mt tr.wr td{background:var(--warn-bg)}
   </div>
 </div>
 
-<!-- STEP 1: 기안서 -->
 <div class="card">
   <div class="ch"><span class="sb">STEP 1</span><h2>기안서 화면 캡처</h2><span class="sub">— 제목 + 1.정산요청내역 + 2.정산요청 전체</span></div>
   <div class="cb">
@@ -222,7 +206,6 @@ table.mt tr.wr td{background:var(--warn-bg)}
   </div>
 </div>
 
-<!-- STEP 2: 엑셀 -->
 <div class="card">
   <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀 파일</h2><span class="sub">— 첨부 파일이 여러 개면 모두 추가</span></div>
   <div class="cb">
@@ -244,12 +227,10 @@ table.mt tr.wr td{background:var(--warn-bg)}
   </div>
 </div>
 
-<!-- STEP 3: 선택 자료 -->
 <div class="card">
   <div class="ch"><span class="sb">STEP 3</span><h2>거래처 자료</h2><span class="opt">선택</span><span class="sub">— 있는 것만, 여러 개도 가능</span></div>
   <div class="cb">
     <div class="opt-grid">
-      <!-- 메일 캡처 (다중) -->
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">✉️ 메일 캡처 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
         <div class="drop" id="mailDrop" style="padding:16px 12px">
@@ -264,7 +245,6 @@ table.mt tr.wr td{background:var(--warn-bg)}
           + 메일 추가
         </button>
       </div>
-      <!-- 홈페이지 캡처 (다중) -->
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">🌐 홈페이지 캡처 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
         <div class="drop" id="webDrop" style="padding:16px 12px">
@@ -283,12 +263,10 @@ table.mt tr.wr td{background:var(--warn-bg)}
   </div>
 </div>
 
-<!-- STEP 4: 사업자등록증 / 계약서 -->
 <div class="card">
   <div class="ch"><span class="sb">STEP 4</span><h2>사업자등록증 · 계약서</h2><span class="opt">선택</span><span class="sub">— 있는 것만, 여러 개도 가능</span></div>
   <div class="cb">
     <div class="opt-grid">
-      <!-- 사업자등록증 (다중) -->
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">🏢 사업자등록증 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
         <div class="drop" id="bizDrop" style="padding:16px 12px">
@@ -303,7 +281,6 @@ table.mt tr.wr td{background:var(--warn-bg)}
           + 사업자등록증 추가
         </button>
       </div>
-      <!-- 계약서 (다중) -->
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">📑 계약서 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
         <div class="drop" id="conDrop" style="padding:16px 12px">
@@ -322,18 +299,15 @@ table.mt tr.wr td{background:var(--warn-bg)}
   </div>
 </div>
 
-<!-- CASE DETECTOR -->
 <div class="case-bar case0" id="caseBar">
   <span id="caseIcon">📋</span>
   <span id="caseText">기안서와 엑셀을 추가하면 검증 케이스가 자동으로 감지됩니다</span>
 </div>
 
-<!-- BUTTON -->
 <button class="btn-v" id="vBtn" onclick="run()">
   <span id="btnTxt">🔍 &nbsp;AI 검증 시작</span>
 </button>
 
-<!-- PROGRESS -->
 <div class="prog" id="prog">
   <div class="prog-steps">
     <div class="ps" id="ps1">📸 기안서 분석</div>
@@ -345,7 +319,6 @@ table.mt tr.wr td{background:var(--warn-bg)}
   </div>
 </div>
 
-<!-- RESULT -->
 <div class="card rc" id="rc">
   <div id="rsum"></div>
   <div id="r_mail"></div>
@@ -357,15 +330,15 @@ table.mt tr.wr td{background:var(--warn-bg)}
 </div>
 
 <script>
-// ── State ────────────────────────────────────────────────────────────────
 let apiKey = localStorage.getItem('tf_api_key') || '';
 let imgB64=null, imgMime='image/png';
-
-// 다중 파일 배열 선언
 let mailImages=[], mailIdCtr=0;
 let webImages=[], webIdCounter=0;
 let bizImages=[], bizIdCtr=0;
 let conImages=[], conIdCtr=0;
+let excelFiles=[];
+let fileIdCounter=0;
+
 async function pdfToImages(file){
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:ab}).promise;
@@ -381,72 +354,79 @@ async function pdfToImages(file){
   return imgs;
 }
 
-// 메일 다중
+function addImgCard(listId, btnId, id, name, icon, removeFn){
+  const prefix = removeFn.replace('remove','').replace('Image','').toLowerCase().slice(0,3);
+  const list=document.getElementById(listId);
+  const card=document.createElement('div');
+  card.id=prefix+'-'+id;
+  card.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f7f9fc;border:1px solid var(--border);border-radius:8px;margin-top:4px';
+  const shortName=name.length>26?name.slice(0,24)+'...':name;
+  card.innerHTML='<span style="font-size:15px">'+icon+'</span><span style="flex:1;font-size:11px;font-weight:600;color:var(--navy);">'+shortName+'</span><button class="btn-remove" onclick="'+removeFn+'('+id+')">×</button>';
+  list.appendChild(card);
+  document.getElementById(btnId).style.display='flex';
+}
+
 function addMailImage(f){
   const id=++mailIdCtr;
   if(f.type==='application/pdf'){
     pdfToImages(f).then(imgs=>{
       const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
-      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
-      mailImages.push({id,b64,mime:'image/png',name:label});
-      addImgCard('mailList','mailAddBtn',id,label,'📧','removeMailImage');
-    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+      mailImages.push({id,b64,mime:'image/png',name:f.name});
+      addImgCard('mailList','mailAddBtn',id,f.name,'📧','removeMailImage');
+      updateCaseBar();
+    });
     return;
   }
   const mime=f.type||'image/png',r=new FileReader();
-  r.onload=e=>{ mailImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('mailList','mailAddBtn',id,f.name,'📧','removeMailImage'); };
+  r.onload=e=>{ mailImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('mailList','mailAddBtn',id,f.name,'📧','removeMailImage'); updateCaseBar(); };
   r.readAsDataURL(f);
 }
 
-function renderWebCard(id, name) {
-  const list = document.getElementById('webList');
-  const card = document.createElement('div');
-  card.id = 'web-' + id;
-  card.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f7f9fc;border:1px solid var(--border);border-radius:8px;margin-top:4px';
-  const shortName = name.length > 28 ? name.slice(0,26)+'...' : name;
-  card.innerHTML = '<span style="font-size:16px">🖥</span><span style="flex:1;font-size:11px;font-weight:600;color:var(--navy);">'+shortName+'</span><button class="btn-remove" onclick="removeWebImage('+id+')">×</button>';
-  list.appendChild(card);
-}
-
-function removeWebImage(id) {
-  webImages = webImages.filter(w => w.id !== id);
-  document.getElementById('web-' + id)?.remove();
-  if(webImages.length === 0) document.getElementById('webAddBtn').style.display = 'none';
-  updateCaseBar();
-}
+function removeMailImage(id){ mailImages=mailImages.filter(w=>w.id!==id); document.getElementById('mai-'+id)?.remove(); if(mailImages.length===0) document.getElementById('mailAddBtn').style.display='none'; updateCaseBar(); }
 
 function addWebImage(f){
   const id=++webIdCounter;
   if(f.type==='application/pdf'){
     pdfToImages(f).then(imgs=>{
       const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
-      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
-      webImages.push({id,b64,mime:'image/png',name:label});
-      renderWebCard(id,label);
-      document.getElementById('webAddBtn').style.display='flex';
+      webImages.push({id,b64,mime:'image/png',name:f.name});
+      addImgCard('webList','webAddBtn',id,f.name,'🖥','removeWebImage');
       updateCaseBar();
-    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    });
     return;
   }
   const mime=f.type||'image/png',r=new FileReader();
-  r.onload=e=>{
-    webImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name});
-    renderWebCard(id,f.name);
-    document.getElementById('webAddBtn').style.display='flex';
-    updateCaseBar();
-  };
+  r.onload=e=>{ webImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('webList','webAddBtn',id,f.name,'🖥','removeWebImage'); updateCaseBar(); };
   r.readAsDataURL(f);
 }
+
+function removeWebImage(id){ webImages=webImages.filter(w=>w.id!==id); document.getElementById('web-'+id)?.remove(); if(webImages.length===0) document.getElementById('webAddBtn').style.display='none'; updateCaseBar(); }
+
+function addBizImage(f){
+  const id=++bizIdCtr;
+  if(f.type==='application/pdf'){
+    pdfToImages(f).then(imgs=>{
+      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
+      bizImages.push({id,b64,mime:'image/png',name:f.name});
+      addImgCard('bizList','bizAddBtn',id,f.name,'📄','removeBizImage');
+    });
+    return;
+  }
+  const mime=f.type||'image/png',r=new FileReader();
+  r.onload=e=>{ bizImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('bizList','bizAddBtn',id,f.name,'📄','removeBizImage'); };
+  r.readAsDataURL(f);
+}
+
+function removeBizImage(id){ bizImages=bizImages.filter(w=>w.id!==id); document.getElementById('biz-'+id)?.remove(); if(bizImages.length===0) document.getElementById('bizAddBtn').style.display='none'; }
 
 function addConImage(f){
   const id=++conIdCtr;
   if(f.type==='application/pdf'){
     pdfToImages(f).then(imgs=>{
       const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
-      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
-      conImages.push({id,b64,mime:'image/png',name:label});
-      addImgCard('conList','conAddBtn',id,label,'📝','removeConImage');
-    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+      conImages.push({id,b64,mime:'image/png',name:f.name});
+      addImgCard('conList','conAddBtn',id,f.name,'📝','removeConImage');
+    });
     return;
   }
   const mime=f.type||'image/png',r=new FileReader();
@@ -456,14 +436,6 @@ function addConImage(f){
 
 function removeConImage(id){ conImages=conImages.filter(w=>w.id!==id); document.getElementById('con-'+id)?.remove(); if(conImages.length===0) document.getElementById('conAddBtn').style.display='none'; }
 
-function handleAddWebFiles(input) {
-  for(const f of input.files) addWebImage(f);
-  input.value = '';
-}
-
-let excelFiles=[];
-let fileIdCounter=0;
-
 if(apiKey){ document.getElementById('apiKey').value=apiKey; document.getElementById('keyOk').classList.add('show'); }
 function saveKey(){
   const v=document.getElementById('apiKey').value.trim();
@@ -472,20 +444,17 @@ function saveKey(){
   document.getElementById('keyOk').classList.add('show');
 }
 
-// ── Image helpers ─────────────────────────────────────────────────────────
-
 function loadImgTo(file, b64setter, mimeSetter, prevId, imgId, nameId){
   if(file.type==='application/pdf'){
     mimeSetter('image/png');
     pdfToImages(file).then(imgs=>{
       if(!imgs.length) return;
-      // Store all pages as array JSON for multi-page AI
       b64setter(imgs.length===1 ? imgs[0] : JSON.stringify(imgs));
       document.getElementById(imgId).src='data:image/png;base64,'+imgs[0];
       document.getElementById(nameId).textContent=file.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
       document.getElementById(prevId).classList.add('show');
       updateCaseBar();
-    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    });
     return;
   }
   mimeSetter(file.type||'image/png');
@@ -500,58 +469,63 @@ function loadImgTo(file, b64setter, mimeSetter, prevId, imgId, nameId){
   r.readAsDataURL(file);
 }
 
-// Main image
 document.getElementById('imgFile').addEventListener('change',e=>{ if(e.target.files[0]) loadImgTo(e.target.files[0], v=>imgB64=v, v=>imgMime=v, 'imgPrev','prevImg','imgName'); });
+
+function setupDrop(id,handler){
+  const el=document.getElementById(id);
+  el.addEventListener('dragover',e=>{ e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragleave',()=>el.classList.remove('over'));
+  el.addEventListener('drop',e=>{ e.preventDefault(); el.classList.remove('over'); if(e.dataTransfer.files[0]) handler(e.dataTransfer.files[0]); });
+}
+
 setupDrop('imgDrop', f=>loadImgTo(f, v=>imgB64=v, v=>imgMime=v, 'imgPrev','prevImg','imgName'));
+
 document.addEventListener('paste',e=>{
   for(const item of (e.clipboardData?.items||[])){
     if(item.type.startsWith('image/')){
       loadImgTo(item.getAsFile(), v=>imgB64=v, v=>imgMime=v, 'imgPrev','prevImg','imgName');
-      flash('imgDrop');
     }
   }
 });
+
 function clearImg(){ imgB64=null; document.getElementById('imgPrev').classList.remove('show'); updateCaseBar(); }
 
-// 사업자등록증 다중
-function addBizImage(f){
-  const id=++bizIdCtr;
-  if(f.type==='application/pdf'){
-    pdfToImages(f).then(imgs=>{
-      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
-      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
-      bizImages.push({id,b64,mime:'image/png',name:label});
-      addImgCard('bizList','bizAddBtn',id,label,'📄','removeBizImage');
-    }).catch(e=>alert('PDF 변환 실패: '+e.message));
-    return;
-  }
-  const mime=f.type||'image/png',r=new FileReader();
-  r.onload=e=>{ bizImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('bizList','bizAddBtn',id,f.name,'📄','removeBizImage'); };
-  r.readAsDataURL(f);
+function handleAddFiles(input){ for(const f of input.files) addExcelFile(f); input.value=''; }
+document.getElementById('xlsFile').addEventListener('change',e=>{ for(const f of e.target.files) addExcelFile(f); });
+
+function addExcelFile(file){
+  const id=++fileIdCounter;
+  const entry={id,name:file.name,wb:null,total:null,type:null};
+  excelFiles.push(entry); renderFileCard(entry,'loading');
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      entry.wb=wb; entry.total=getExcelTotal(wb); entry.type=detectType(wb);
+      renderFileCard(entry,'loaded'); updateTotalBar();
+    }catch{ renderFileCard(entry,'error'); }
+  };
+  r.readAsArrayBuffer(file);
 }
 
-function removeMailImage(id){ mailImages=mailImages.filter(w=>w.id!==id); document.getElementById('mai-'+id)?.remove(); if(mailImages.length===0) document.getElementById('mailAddBtn').style.display='none'; updateCaseBar(); }
-function removeBizImage(id){ bizImages=bizImages.filter(w=>w.id!==id); document.getElementById('biz-'+id)?.remove(); if(bizImages.length===0) document.getElementById('bizAddBtn').style.display='none'; }
-
-// 공통 카드 추가 헬퍼
-function addImgCard(listId, btnId, id, name, icon, removeFn){
-  const prefix = removeFn.replace('remove','').replace('Image','').toLowerCase().slice(0,3);
-  const list=document.getElementById(listId);
-  const card=document.createElement('div');
-  card.id=prefix+'-'+id;
-  card.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f7f9fc;border:1px solid var(--border);border-radius:8px;margin-top:4px';
-  const shortName=name.length>26?name.slice(0,24)+'...':name;
-  card.innerHTML='<span style="font-size:15px">'+icon+'</span><span style="flex:1;font-size:11px;font-weight:600;color:var(--navy);">'+shortName+'</span><button class="btn-remove" onclick="'+removeFn+'('+id+')">×</button>';
-  list.appendChild(card);
-  document.getElementById(btnId).style.display='flex';
+function renderFileCard(entry,state){
+  const list=document.getElementById('fileList');
+  let card=document.getElementById('fc-'+entry.id);
+  if(!card){ card=document.createElement('div'); card.className='file-card'; card.id='fc-'+entry.id; list.appendChild(card); document.getElementById('addFileBtn').style.display='flex'; }
+  const amtHtml=state==='loading'?'<span class="fc-amt loading">읽는 중...</span>':state==='error'?'<span class="fc-amt error">읽기 실패</span>':entry.total!==null?`<span class="fc-amt">합계: ${fmtAmt(entry.total)}</span>`:'<span class="fc-amt error">합계 인식 불가</span>';
+  const typeBadge=entry.type==='RS'?'<span class="type-badge type-rs">RS</span>':entry.type==='원작료'?'<span class="type-badge type-mg">원작료/MG</span>':'';
+  const sn=entry.name.length>38?entry.name.slice(0,36)+'…':entry.name;
+  card.innerHTML=`<div class="xl-ic">XL</div><div class="fc-info"><div class="fc-name" title="${entry.name}">${sn}</div><div class="fc-meta">${amtHtml}${typeBadge}</div></div><button class="btn-remove" onclick="removeFile(${entry.id})">×</button>`;
 }
 
-function detectCase(){
-  const hasMail=mailImages.length>0, hasWeb=webImages.length>0;
-  if(hasMail && hasWeb) return 3;
-  if(hasMail) return 1;
-  if(hasWeb)  return 2;
-  return 4;
+function removeFile(id){ excelFiles=excelFiles.filter(f=>f.id!==id); document.getElementById('fc-'+id)?.remove(); updateTotalBar(); if(excelFiles.length===0){ document.getElementById('addFileBtn').style.display='none'; document.getElementById('totalBar').style.display='none'; } }
+
+function updateTotalBar(){
+  const loaded=excelFiles.filter(f=>f.total!==null);
+  if(loaded.length<2){ document.getElementById('totalBar').style.display='none'; return; }
+  const total=loaded.reduce((s,f)=>s+f.total,0);
+  document.getElementById('totalBar').style.display='flex';
+  document.getElementById('totalBarVal').textContent=fmtAmt(total);
 }
 
 function detectCase(){
@@ -576,117 +550,8 @@ function updateCaseBar(){
   document.getElementById('caseIcon').textContent=info.ic;
   document.getElementById('caseText').textContent=info.txt;
 }
-updateCaseBar();
 
-// ── Excel ─────────────────────────────────────────────────────────────────
-// Mail file handlers
-document.getElementById('mailFile').addEventListener('change',e=>{ for(const f of e.target.files) addMailImage(f); });
-document.getElementById('mailFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('mailDrop').classList.add('over'); });
-document.getElementById('mailFile').addEventListener('dragleave',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
-document.getElementById('mailFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('mailDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
-document.getElementById('mailFile').addEventListener('dragover',e=>{ document.getElementById('mailDrop').classList.add('over'); });
-document.getElementById('mailFile').addEventListener('dragleave',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
-document.getElementById('mailFile').addEventListener('drop',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
-const mailDropEl=document.getElementById('mailDrop');
-mailDropEl.addEventListener('dragover',e=>{ e.preventDefault(); mailDropEl.classList.add('over'); });
-mailDropEl.addEventListener('dragleave',e=>{ if(!mailDropEl.contains(e.relatedTarget)) mailDropEl.classList.remove('over'); });
-mailDropEl.addEventListener('drop',e=>{ e.preventDefault(); mailDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
-
-// Web/홈페이지 file handlers
-document.getElementById('webFile').addEventListener('change',e=>{ for(const f of e.target.files) addWebImage(f); });
-document.getElementById('webFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('webDrop').classList.add('over'); });
-document.getElementById('webFile').addEventListener('dragleave',e=>{ document.getElementById('webDrop').classList.remove('over'); });
-document.getElementById('webFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('webDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
-document.getElementById('webFile').addEventListener('dragover',e=>{ document.getElementById('webDrop').classList.add('over'); });
-document.getElementById('webFile').addEventListener('dragleave',e=>{ document.getElementById('webDrop').classList.remove('over'); });
-document.getElementById('webFile').addEventListener('drop',e=>{ document.getElementById('webDrop').classList.remove('over'); });
-const webDropEl=document.getElementById('webDrop');
-webDropEl.addEventListener('dragover',e=>{ e.preventDefault(); webDropEl.classList.add('over'); });
-webDropEl.addEventListener('dragleave',e=>{ if(!webDropEl.contains(e.relatedTarget)) webDropEl.classList.remove('over'); });
-webDropEl.addEventListener('drop',e=>{ e.preventDefault(); webDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
-
-// Biz file handlers
-document.getElementById('bizFile').addEventListener('change',e=>{ for(const f of e.target.files) addBizImage(f); });
-document.getElementById('bizFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('bizDrop').classList.add('over'); });
-document.getElementById('bizFile').addEventListener('dragleave',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
-document.getElementById('bizFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('bizDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
-document.getElementById('bizFile').addEventListener('dragover',e=>{ document.getElementById('bizDrop').classList.add('over'); });
-document.getElementById('bizFile').addEventListener('dragleave',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
-document.getElementById('bizFile').addEventListener('drop',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
-const bizDropEl=document.getElementById('bizDrop');
-bizDropEl.addEventListener('dragover',e=>{ e.preventDefault(); bizDropEl.classList.add('over'); });
-bizDropEl.addEventListener('dragleave',e=>{ if(!bizDropEl.contains(e.relatedTarget)) bizDropEl.classList.remove('over'); });
-bizDropEl.addEventListener('drop',e=>{ e.preventDefault(); bizDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
-
-// Contract file handlers
-document.getElementById('conFile').addEventListener('change',e=>{ for(const f of e.target.files) addConImage(f); });
-document.getElementById('conFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('conDrop').classList.add('over'); });
-document.getElementById('conFile').addEventListener('dragleave',e=>{ document.getElementById('conDrop').classList.remove('over'); });
-document.getElementById('conFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('conDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
-document.getElementById('conFile').addEventListener('dragover',e=>{ document.getElementById('conDrop').classList.add('over'); });
-document.getElementById('conFile').addEventListener('dragleave',e=>{ document.getElementById('conDrop').classList.remove('over'); });
-document.getElementById('conFile').addEventListener('drop',e=>{ document.getElementById('conDrop').classList.remove('over'); });
-const conDropEl=document.getElementById('conDrop');
-conDropEl.addEventListener('dragover',e=>{ e.preventDefault(); conDropEl.classList.add('over'); });
-conDropEl.addEventListener('dragleave',e=>{ if(!conDropEl.contains(e.relatedTarget)) conDropEl.classList.remove('over'); });
-conDropEl.addEventListener('drop',e=>{ e.preventDefault(); conDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
-
-
-document.getElementById('xlsFile').addEventListener('change',e=>{ for(const f of e.target.files) addExcelFile(f); });
-// xlsDrop handlers defined below
-function handleAddFiles(input){ for(const f of input.files) addExcelFile(f); input.value=''; }
-
-function addExcelFile(file){
-  const id=++fileIdCounter;
-  const entry={id,name:file.name,wb:null,total:null,type:null};
-  excelFiles.push(entry); renderFileCard(entry,'loading');
-  const r=new FileReader();
-  r.onload=e=>{
-    try{
-      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
-      entry.wb=wb; entry.total=getExcelTotal(wb); entry.type=detectType(wb);
-      renderFileCard(entry,'loaded'); updateTotalBar();
-    }catch{ renderFileCard(entry,'error'); }
-  };
-  r.readAsArrayBuffer(file);
-}
-
-function removeFile(id){ excelFiles=excelFiles.filter(f=>f.id!==id); document.getElementById('fc-'+id)?.remove(); updateTotalBar(); if(excelFiles.length===0){ document.getElementById('addFileBtn').style.display='none'; document.getElementById('totalBar').style.display='none'; } }
-
-function renderFileCard(entry,state){
-  const list=document.getElementById('fileList');
-  let card=document.getElementById('fc-'+entry.id);
-  if(!card){ card=document.createElement('div'); card.className='file-card'; card.id='fc-'+entry.id; list.appendChild(card); document.getElementById('addFileBtn').style.display='flex'; }
-  const amtHtml=state==='loading'?'<span class="fc-amt loading">읽는 중...</span>':state==='error'?'<span class="fc-amt error">읽기 실패</span>':entry.total!==null?`<span class="fc-amt">합계: ${fmtAmt(entry.total)}</span>`:'<span class="fc-amt error">합계 인식 불가</span>';
-  const typeBadge=entry.type==='RS'?'<span class="type-badge type-rs">RS</span>':entry.type==='원작료'?'<span class="type-badge type-mg">원작료/MG</span>':'';
-  const sn=entry.name.length>38?entry.name.slice(0,36)+'…':entry.name;
-  card.innerHTML=`<div class="xl-ic">XL</div><div class="fc-info"><div class="fc-name" title="${entry.name}">${sn}</div><div class="fc-meta">${amtHtml}${typeBadge}</div></div><button class="btn-remove" onclick="removeFile(${entry.id})">×</button>`;
-}
-
-function updateTotalBar(){
-  const loaded=excelFiles.filter(f=>f.total!==null);
-  if(loaded.length<2){ document.getElementById('totalBar').style.display='none'; return; }
-  const total=loaded.reduce((s,f)=>s+f.total,0);
-  document.getElementById('totalBar').style.display='flex';
-  document.getElementById('totalBarVal').textContent=fmtAmt(total);
-}
-
-function setupDrop(id,handler){
-  const el=document.getElementById(id);
-  el.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('over'); });
-  el.addEventListener('dragleave',()=>el.classList.remove('over'));
-  el.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('over'); if(e.dataTransfer.files[0]) handler(e.dataTransfer.files[0]); });
-}
-
-// ── Excel reading ─────────────────────────────────────────────────────────
 function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=parseInt(String(v).replace(/[원,\s]/g,''),10); return isNaN(n)?null:n; }
-function normDate(v){
-  if(!v) return null;
-  if(v instanceof Date) return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
-  const s=String(v).trim(); const m=s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
-  return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:null;
-}
-function toYYYYMM(d){ if(!d) return null; const m=d.match(/(\d{4})-(\d{2})/); return m?m[1]+m[2]:null; }
 function detectType(wb){ if(wb.SheetNames.includes('정산요약')) return 'RS'; if(wb.SheetNames.includes('정산용')||wb.SheetNames.includes('요약')) return '원작료'; return 'unknown'; }
 
 function getExcelTotal(wb){
@@ -704,7 +569,7 @@ function getExcelTotal(wb){
   if(wb.SheetNames.includes('정산용')){
     const ws=wb.Sheets['정산용']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
     for(const row of rows) if(row[1]&&String(row[1])==='총합계') return parseAmt(row[19]);
-    for(let i=rows.length-1;i>=0;i--) if(rows[i][19]!==null&&rows[i][19]!==undefined) return parseAmt(rows[i][19]);
+    for(let i=rows.length-1;i>=0;i--) if(rows[i][19]!==null) return parseAmt(rows[i][19]);
   }
   return null;
 }
@@ -713,34 +578,19 @@ function getExcelMeta(wb){
   if(wb.SheetNames.includes('정산요약')){
     const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
     const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
-    return { 작성일자:normDate(map['정산서 발행일']), 입금예정일:normDate(map['입금 예정일']), 서비스월:null, 정산월YYYYMM:toYYYYMM(normDate(map['정산서 발행일'])) };
+    return { 작성일자:normDate(map['정산서 발행일']), 입금예정일:normDate(map['입금 예정일']), 서비스월:null };
   }
-  if(wb.SheetNames.includes('정산용')){
-    const ws=wb.Sheets['정산용']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
-    let 작성일자=null,서비스월=null;
-    for(const row of rows){ if(row[1]&&String(row[1])!=='플랫폼명'&&String(row[1])!=='총합계'&&row[5]){ 작성일자=normDate(row[5]); 서비스월=normDate(row[4]); break; } }
-    let 입금예정일=null;
-    if(wb.SheetNames.includes('정산서')){
-      const ws2=wb.Sheets['정산서']; const rows2=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});
-      outer: for(const row of rows2){ for(let i=0;i<(row.length||0);i++){ if(row[i]&&String(row[i]).replace(/\s/g,'').includes('지급예정일')){ for(let j=i+1;j<Math.min(i+4,row.length);j++){ if(row[j]){ 입금예정일=normDate(row[j]); break outer; } } } } }
-    }
-    return { 작성일자, 입금예정일, 서비스월, 정산월YYYYMM:toYYYYMM(작성일자) };
-  }
-  return { 작성일자:null, 입금예정일:null, 서비스월:null, 정산월YYYYMM:null };
+  return { 작성일자:null, 입금예정일:null, 서비스월:null };
 }
 
-// ── AI calls ──────────────────────────────────────────────────────────────
+// ── AI 호출 (중요: Sonnet 모델로 변경됨) ──
 async function aiCall(b64, mime, prompt){
-  // Handle multi-page PDF (stored as JSON array)
   let contentBlocks = [];
   try {
     const pages = JSON.parse(b64);
     if(Array.isArray(pages)){
-      // Multi-page: send all pages as images
-      for(const p of pages){
-        contentBlocks.push({type:'image',source:{type:'base64',media_type:'image/png',data:p}});
-      }
-    } else { throw new Error('not array'); }
+      for(const p of pages) contentBlocks.push({type:'image',source:{type:'base64',media_type:'image/png',data:p}});
+    } else throw new Error();
   } catch {
     contentBlocks = [{type:'image',source:{type:'base64',media_type:mime,data:b64}}];
   }
@@ -749,91 +599,25 @@ async function aiCall(b64, mime, prompt){
   const res=await fetch('https://corsproxy.io/?url=https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({ model:'claude-opus-4-5', max_tokens:2000,
+    body:JSON.stringify({ 
+      model:'claude-3-5-sonnet-20240620', 
+      max_tokens:2000,
       messages:[{role:'user',content:contentBlocks}]
     })
   });
   if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||`API 오류 (${res.status})`); }
   const data=await res.json();
-  const txt=data.content[0]?.text||'';
-  const clean=txt.replace(/```json|```/g,'').trim();
-  try{ return JSON.parse(clean); }
-  catch{ throw new Error('AI 응답 파싱 실패\n\n'+txt.slice(0,300)); }
+  const clean=data.content[0].text.replace(/```json|```/g,'').trim();
+  return JSON.parse(clean);
 }
 
-const PROMPT_사업자=`이 이미지는 한국 사업자등록증입니다. 아래 항목을 읽고 JSON만 응답하세요.
-{
-  "사업자등록번호": "XXX-XX-XXXXX 형식 (하이픈 포함)",
-  "상호": "법인명 또는 상호 전체",
-  "대표자": "대표자명"
-}
-값을 읽을 수 없으면 null`;
+const PROMPT_사업자=`사업자등록증 이미지입니다. JSON 응답: {"사업자등록번호":"XXX-XX-XXXXX","상호":"상호명","대표자":"성명"}`;
+const PROMPT_계약서=`계약서 이미지입니다. JSON 응답: {"RS비율":숫자,"입금조건":"텍스트","플랫폼명":"텍스트","작품명":"텍스트"}`;
+const PROMPT_기안서=`기안서 이미지입니다. 전체 내용을 분석하여 JSON으로 응답하세요. {"제목":"텍스트","본문_계산서작성일자":"YYYY-MM-DD","본문_마감기한":"YYYY-MM-DD","본문_정산금액들":[{"구분":"텍스트","금액":숫자}],"세금계산서_rows":[{"작성일자":"YYYY-MM-DD","공급가액":숫자,"부가가치세":숫자,"합계":숫자,"고객명":"텍스트","사업자등록번호":"텍스트"}],"입금예정일":"YYYY-MM-DD","발신이메일":"텍스트","품목명":"텍스트"}`;
+const PROMPT_메일=`정산 요청 메일 이미지입니다. JSON 응답: {"작성일자":"YYYY-MM-DD","마감일":"YYYY-MM-DD","품목명들":["텍스트"],"금액들":[{"품목":"텍스트","금액":숫자}],"발행이메일":"텍스트"}`;
+const PROMPT_홈페이지=`플랫폼 정산 화면입니다. JSON 응답: {"정산예정금액":숫자,"판매기간시작":"YYYY-MM-DD","판매기간종료":"YYYY-MM-DD","입금일":"YYYY-MM-DD"}`;
 
-const PROMPT_계약서=`이 이미지는 계약서 또는 계약서 일부입니다. 아래 항목을 읽고 JSON만 응답하세요.
-{
-  "RS비율": 숫자만 (예: 70은 70%를 의미, 없으면 null),
-  "입금조건": "입금 관련 조건 텍스트 전체 (예: 매월 25일 지급, 익월 말일 등, 없으면 null)",
-  "플랫폼명": "계약 플랫폼명 (없으면 null)",
-  "작품명": "계약 작품명 (없으면 null)"
-}
-값을 읽을 수 없으면 null`;
-
-const PROMPT_기안서=`이 이미지는 한국 그룹웨어의 기안서입니다. 아래 항목을 읽고 JSON만 응답하세요.
-
-{
-  "제목": "제 목 필드 전체 텍스트",
-  "본문_계산서작성일자": "YYYY-MM-DD",
-  "본문_마감기한": "YYYY-MM-DD",
-  "본문_마감시간": "HH:MM (없으면 null)",
-  "본문_서비스월": "YYYY-MM",
-  "본문_판매분월": "YYYY-MM",
-  "본문_정산금액들": [{"구분":"설명","금액":숫자,"계산서발행금액":숫자또는null,"원단위절사":true/false}],
-  "세금계산서_rows": [{"작성일자":"YYYY-MM-DD","공급가액":숫자,"부가가치세":숫자,"합계":숫자}],
-  "MG차감_rows": [{"작성일자":"YYYY-MM-DD","공급가액":숫자,"합계":숫자}],
-  "입금예정일": "YYYY-MM-DD",
-  "발신이메일": "이메일주소 (없으면 null)",
-  "품목명": "품목 내용 전체",
-  "귀속부서코드": "코드",
-  "귀속부서명": "부서명",
-  "계정과목코드": "코드",
-  "계정과목명": "계정과목명"
-}
-
-- 날짜: YYYY-MM-DD / 금액: 숫자만 / 없으면 null
-- 본문에 "에피루스 계산서 발행 요청금액: X원" 처럼 계산서 발행 금액이 별도 명시된 경우 계산서발행금액에 기재, 원단위절사:true
-- 섹션 2 정산요청 테이블에서 세금계산서/MG차감건 행 모두 추출`;
-
-const PROMPT_메일=`이 이미지는 거래처에서 온 계산서/세금계산서 발행 요청 메일입니다. 아래 항목을 읽고 JSON만 응답하세요.
-
-{
-  "작성일자": "YYYY-MM-DD (발행 일자, 작성 일자)",
-  "마감일": "YYYY-MM-DD",
-  "마감시간": "HH:MM (없으면 null)",
-  "품목명들": ["품목명1", "품목명2"],
-  "금액들": [{"품목":"설명","금액":숫자}],
-  "발행이메일": "계산서 발행 수신 이메일 (없으면 null)",
-  "발행건수": 숫자,
-  "기타": "기타 특이사항 (없으면 null)"
-}
-
-- 날짜: YYYY-MM-DD / 금액: 숫자만 / 없으면 null`;
-
-const PROMPT_홈페이지=`이 이미지는 정산 홈페이지(플랫폼 정산 내역)입니다. 아래 항목을 읽고 JSON만 응답하세요.
-
-{
-  "정산예정금액": 숫자,
-  "판매기간시작": "YYYY-MM-DD",
-  "판매기간종료": "YYYY-MM-DD",
-  "입금일": "YYYY-MM-DD (없으면 null)",
-  "플랫폼명": "플랫폼 이름 (확인가능한 경우)",
-  "기타금액정보": "기타 금액 관련 내용 (없으면 null)"
-}
-
-- 금액: 숫자만 / 날짜: YYYY-MM-DD / 없으면 null`;
-
-// ── Main run ──────────────────────────────────────────────────────────────
-let _step=0;
-function setStep(n,s){ _step=n; document.getElementById('ps'+n).className='ps '+s; }
+function setStep(n,s){ document.getElementById('ps'+n).className='ps '+s; }
 
 async function run(){
   if(!apiKey){ alert('API 키를 저장하세요.'); return; }
@@ -846,369 +630,71 @@ async function run(){
   document.getElementById('rc').classList.remove('show');
   for(let i=1;i<=6;i++) setStep(i,'');
 
-  const caseNum=detectCase();
-
   try{
-    // Step 1: 기안서 분석
     setStep(1,'active');
     const 기안서=await aiCall(imgB64,imgMime,PROMPT_기안서);
     setStep(1,'done');
 
-    // Step 2: 메일 분석
-    let 메일목록=[];
+    let 메일=null;
     if(mailImages.length>0){
       setStep(2,'active');
-      for(const m of mailImages){ const r=await aiCall(m.b64,m.mime,PROMPT_메일); r._name=m.name; 메일목록.push(r); }
+      메일=await aiCall(mailImages[0].b64,mailImages[0].mime,PROMPT_메일);
       setStep(2,'done');
     } else setStep(2,'skip');
-    const 메일=메일목록.length>0?메일목록[0]:null;
 
-    // Step 3: 홈페이지 분석
-    let 홈페이지목록=[];
+    let 홈페이지=null;
     if(webImages.length>0){
       setStep(3,'active');
-      for(const w of webImages){
-        const r = await aiCall(w.b64, w.mime, PROMPT_홈페이지);
-        r._name = w.name;
-        홈페이지목록.push(r);
-      }
+      홈페이지=await aiCall(webImages[0].b64,webImages[0].mime,PROMPT_홈페이지);
       setStep(3,'done');
     } else setStep(3,'skip');
-    const 홈페이지 = 홈페이지목록.length>0 ? 홈페이지목록[0] : null;
 
-    // Step 4: 엑셀 읽기
     setStep(4,'active');
-    const loadedFiles=excelFiles.filter(f=>f.total!==null);
-    if(loadedFiles.length===0) throw new Error('엑셀을 아직 읽는 중입니다. 잠시 후 다시 시도하세요.');
     const excelMeta=getExcelMeta(excelFiles[0].wb);
     setStep(4,'done');
 
-    // Step 5: 사업자등록증 / 계약서 분석
-    let 사업자목록=[], 계약서목록=[];
+    let 사업자=null, 계약서=null;
     if(bizImages.length>0||conImages.length>0){
       setStep(5,'active');
-      for(const b of bizImages){ const r=await aiCall(b.b64,b.mime,PROMPT_사업자); r._name=b.name; 사업자목록.push(r); }
-      for(const c of conImages){ const r=await aiCall(c.b64,c.mime,PROMPT_계약서); r._name=c.name; 계약서목록.push(r); }
+      if(bizImages.length>0) 사업자=await aiCall(bizImages[0].b64,bizImages[0].mime,PROMPT_사업자);
+      if(conImages.length>0) 계약서=await aiCall(conImages[0].b64,conImages[0].mime,PROMPT_계약서);
       setStep(5,'done');
     } else setStep(5,'skip');
-    const 사업자=사업자목록.length>0?사업자목록[0]:null;
-    const 계약서=계약서목록.length>0?계약서목록[0]:null;
 
-    // Step 6: 대사
     setStep(6,'active');
-    render(caseNum, 기안서, 메일, 홈페이지목록, loadedFiles, excelMeta, 사업자, 계약서);
+    render(detectCase(), 기안서, 메일, 홈페이지, excelFiles, excelMeta, 사업자, 계약서);
     setStep(6,'done');
-
-  }catch(err){ setStep(_step,'error'); alert('오류: '+err.message); }
-  finally{
-    btn.disabled=false; btn.innerHTML='🔍 &nbsp;AI 검증 시작';
-    setTimeout(()=>document.getElementById('prog').classList.remove('show'),2000);
-  }
+  }catch(err){ alert('오류: '+err.message); }
+  finally{ btn.disabled=false; btn.innerHTML='🔍 &nbsp;AI 검증 시작'; }
 }
 
-// ── Render ────────────────────────────────────────────────────────────────
 function fmtAmt(n){ if(n===null||n===undefined) return '—'; return Number(n).toLocaleString('ko-KR')+'원'; }
+function normDate(v){ if(!v) return null; const m=String(v).match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/); return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:null; }
 
-function mkCi(status,label,detail,sub,sv1,sv2,lbl1,lbl2){
+function mkCi(status,label,detail,sub,sv1,sv2){
   const icons={pass:'✓',fail:'✕',warn:'!',info:'i',skip:'-'};
-  let diff='';
-  if(sv1!==undefined||sv2!==undefined){
-    diff=`<div class="diff">
-      <div class="dr"><span class="dtag src1">${lbl1||'기안서'}</span><span class="dval">${sv1||'—'}</span></div>
-      <div class="dr"><span class="dtag src2">${lbl2||'대사 자료'}</span><span class="dval">${sv2||'—'}</span></div>
-    </div>`;
-  }
-  const subHtml=sub?`<div class="cl-sub">${sub}</div>`:'';
-  return `<div class="ci ${status}"><div class="cs">${icons[status]||'?'}</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det">${detail}</div>${subHtml}${diff}</div></div>`;
+  let diff = (sv1||sv2) ? `<div class="diff"><div class="dr"><span class="dtag src1">기안서</span><span class="dval">${sv1||'—'}</span></div><div class="dr"><span class="dtag src2">자료</span><span class="dval">${sv2||'—'}</span></div></div>` : '';
+  return `<div class="ci ${status}"><div class="cs">${icons[status]}</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det">${detail}</div>${sub?`<div class="cl-sub">${sub}</div>`:''}${diff}</div></div>`;
 }
 
-function mkGroup(title, html){
-  if(!html) return '';
-  return `<div class="chk-group"><div class="gt">${title}</div><div class="cl">${html}</div></div>`;
-}
-
-function cmpDate(label, a, b, lbl1, lbl2){
-  if(!a&&!b) return '';
-  if(!a) return mkCi('warn',label,'기안서에서 인식하지 못했습니다.');
-  if(!b) return mkCi('info',label,`기안서: ${a}`, '대사 자료에서 확인 불가 — 직접 검토 필요');
-  if(a===b) return mkCi('pass',label,`${a} — 일치 ✓`);
-  return mkCi('fail',label,'날짜 불일치 ⚠ 수정 필요',null,a,b,lbl1,lbl2);
-}
-
-function cmpAmt(label, a, b, lbl1, lbl2, warnMsg){
-  if(a===null&&b===null) return '';
-  if(a===null) return mkCi('warn',label,'기안서에서 인식하지 못했습니다.');
-  if(b===null) return mkCi('info',label,`기안서: ${fmtAmt(a)}`, '대사 자료에서 확인 불가');
-  if(a===b) return mkCi('pass',label,`${fmtAmt(a)} — 일치 ✓`);
-  if(warnMsg) return mkCi('warn',label,warnMsg,`기안서: ${fmtAmt(a)} / 대사자료: ${fmtAmt(b)}`);
-  return mkCi('fail',label,'금액 불일치 ⚠ 수정 필요',null,fmtAmt(a),fmtAmt(b),lbl1,lbl2);
-}
-
-function render(caseNum, 기안서, 메일, 홈페이지목록, files, excelMeta, 사업자, 계약서){ const 홈페이지 = 홈페이지목록&&홈페이지목록.length>0?홈페이지목록[0]:null;
+function render(caseNum, 기안서, 메일, 홈페이지, files, excelMeta, 사업자, 계약서){
   const taxRows=기안서.세금계산서_rows||[];
-  const mgRows=기안서.MG차감_rows||[];
-  const allImgRows=[...taxRows.map(r=>({...r,_t:'tax'})),...mgRows.map(r=>({...r,_t:'mg'}))];
-  const imgTotal=allImgRows.reduce((s,r)=>s+(parseAmt(r.공급가액)||0),0);
+  const imgTotal=taxRows.reduce((s,r)=>s+(parseAmt(r.공급가액)||0),0);
   const xlTotal=files.reduce((s,f)=>s+(f.total||0),0);
+  let h='';
 
-  let mailHtml='', webHtml='', excelHtml='', internalHtml='';
-  let totalFails=0;
+  if(메일) h+=`<div class="gt">메일 대사</div><div class="cl">${mkCi(imgTotal===parseAmt(메일.금액들?.[0]?.금액)?'pass':'fail','금액 대사', '금액 일치 여부 확인', null, fmtAmt(imgTotal), fmtAmt(메일.금액들?.[0]?.금액))}</div>`;
+  if(홈페이지) h+=`<div class="gt">홈페이지 대사</div><div class="cl">${mkCi(imgTotal===parseAmt(홈페이지.정산예정금액)?'pass':'fail','금액 대사', '홈페이지 금액 일치 확인', null, fmtAmt(imgTotal), fmtAmt(홈페이지.정산예정금액))}</div>`;
+  
+  h+=`<div class="gt">엑셀 대사</div><div class="cl">${mkCi(imgTotal===xlTotal?'pass':'fail','합계 대사', '엑셀 합계 일치 확인', null, fmtAmt(imgTotal), fmtAmt(xlTotal))}</div>`;
 
-  // ── 케이스 1&3: 메일 대사 ──
-  if(메일){
-    let h='';
-    // 작성일자
-    h+=cmpDate('계산서 작성일자', normDate(기안서.본문_계산서작성일자), normDate(메일.작성일자), '기안서', '메일');
-    // 마감일
-    h+=cmpDate('발행 마감일', normDate(기안서.본문_마감기한), normDate(메일.마감일), '기안서', '메일');
-    // 마감시간
-    if(메일.마감시간&&기안서.본문_마감시간){
-      if(기안서.본문_마감시간===메일.마감시간) h+=mkCi('pass','발행 마감 시간',`${메일.마감시간} — 일치 ✓`);
-      else h+=mkCi('fail','발행 마감 시간','시간 불일치 ⚠',null,기안서.본문_마감시간,메일.마감시간,'기안서','메일');
-    }
-    // 발신 이메일
-    if(메일.발행이메일||기안서.발신이메일){
-      const a=(기안서.발신이메일||'').trim().toLowerCase();
-      const b=(메일.발행이메일||'').trim().toLowerCase();
-      if(!a) h+=mkCi('warn','발신 이메일 (발행 주소)','기안서에서 인식 불가');
-      else if(!b) h+=mkCi('info','발신 이메일','기안서: '+기안서.발신이메일,'메일에서 수신 이메일 확인 불가');
-      else if(a===b) h+=mkCi('pass','발신 이메일 (발행 주소)',`${a} — 일치 ✓`);
-      else h+=mkCi('fail','발신 이메일 (발행 주소)','이메일 불일치 ⚠',null,기안서.발신이메일,메일.발행이메일,'기안서','메일');
-    }
-    // 품목명 (포함 여부 체크)
-    if(메일.품목명들&&메일.품목명들.length>0&&기안서.품목명){
-      const 기안품목=(기안서.품목명||'').replace(/\s/g,'');
-      let allFound=true;
-      for(const pm of 메일.품목명들){
-        if(!기안품목.includes(pm.replace(/\s/g,''))){ allFound=false; break; }
-      }
-      if(allFound) h+=mkCi('pass','품목명','메일 품목명이 기안서에 포함됨 ✓','기안서: '+기안서.품목명);
-      else h+=mkCi('fail','품목명','메일 품목명과 기안서 품목명 불일치 ⚠',null, 기안서.품목명, 메일.품목명들.join(' / '),'기안서','메일');
-    }
-    // 금액 대사 (원단위 절사 감지)
-    const mailTotalAmt=메일.금액들?.reduce((s,a)=>s+(parseAmt(a.금액)||0),0)||null;
-    if(mailTotalAmt!==null){
-      const diff=Math.abs(imgTotal-mailTotalAmt);
-      if(diff===0) h+=mkCi('pass','금액 합계',`${fmtAmt(imgTotal)} — 일치 ✓`);
-      else if(diff<=10) h+=mkCi('warn','금액 합계','원단위 절사에 의한 미세 차이 (10원 이내)',`기안서: ${fmtAmt(imgTotal)} / 메일: ${fmtAmt(mailTotalAmt)}`);
-      else h+=mkCi('fail','금액 합계','금액 불일치 ⚠ 수정 필요',null,fmtAmt(imgTotal),fmtAmt(mailTotalAmt),'기안서','메일');
-    }
-    mailHtml=mkGroup('✉️ STEP 1 — 메일 vs 기안서', h);
-    totalFails+=(h.match(/ci fail/g)||[]).length;
-  }
-
-  // ── 케이스 2&3: 홈페이지 대사 (다중) ──
-  if(홈페이지목록&&홈페이지목록.length>0){
-    let h='';
-    const webAmt=parseAmt(홈페이지.정산예정금액);
-    // 본문 정산금액 vs 홈페이지
-    const bodyAmts=기안서.본문_정산금액들||[];
-    const bodyTotal=bodyAmts.reduce((s,a)=>s+(parseAmt(a.금액)||0),0);
-    const bodyCalcTotal=bodyAmts.reduce((s,a)=>s+(parseAmt(a.계산서발행금액)||parseAmt(a.금액)||0),0);
-
-    if(webAmt!==null){
-      // 3가지 금액 비교 표시
-      const hasCalcAmt=bodyAmts.some(a=>a.계산서발행금액);
-      if(hasCalcAmt){
-        h+=`<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">금액 3자 비교 (원단위 절사 케이스)</div>
-          <div class="tri-compare">
-            <div class="tri-box"><div class="tb-lbl">홈페이지 정산예정</div><div class="tb-val">${fmtAmt(webAmt)}</div></div>
-            <div class="tri-box"><div class="tb-lbl">기안서 본문 금액</div><div class="tb-val">${fmtAmt(bodyTotal)}</div>${Math.abs(bodyTotal-webAmt)<=10?'<div class="tb-note">원단위 절사 허용</div>':''}</div>
-            <div class="tri-box highlight"><div class="tb-lbl">계산서 발행 요청금액</div><div class="tb-val">${fmtAmt(bodyCalcTotal)}</div></div>
-          </div>
-          <div class="cl-sub" style="margin-top:6px">기안서 섹션2 공급가액 기준: ${fmtAmt(imgTotal)}</div>
-        </div></div>`;
-      } else {
-        const diff=Math.abs(imgTotal-webAmt);
-        if(diff===0) h+=mkCi('pass','홈페이지 정산금액 vs 기안서',`${fmtAmt(webAmt)} — 일치 ✓`);
-        else if(diff<=10) h+=mkCi('warn','홈페이지 정산금액 vs 기안서','원단위 절사에 의한 미세 차이 (10원 이내)',`홈페이지: ${fmtAmt(webAmt)} / 기안서: ${fmtAmt(imgTotal)}`);
-        else h+=mkCi('fail','홈페이지 정산금액 vs 기안서','금액 불일치 ⚠ 확인 필요',null,fmtAmt(imgTotal),fmtAmt(webAmt),'기안서','홈페이지');
-      }
-    }
-    // 판매기간 vs 서비스월
-    if(홈페이지.판매기간시작&&기안서.본문_판매분월){
-      const webYM=toYYYYMM(홈페이지.판매기간시작);
-      const imgYM=(기안서.본문_판매분월||'').replace('-','');
-      if(webYM===imgYM) h+=mkCi('pass','판매기간 (서비스월)',`${홈페이지.판매기간시작} ~ ${홈페이지.판매기간종료} — 일치 ✓`);
-      else h+=mkCi('warn','판매기간 (서비스월)','판매기간 확인 필요',null,기안서.본문_판매분월,`${홈페이지.판매기간시작}~${홈페이지.판매기간종료}`,'기안서','홈페이지');
-    }
-    const webLabel = 홈페이지목록.length>1 ? '🌐 STEP 2 — 홈페이지 vs 기안서 ('+홈페이지목록.map(w=>w._name||'').join(' / ')+')' : '🌐 STEP 2 — 홈페이지 vs 기안서'; webHtml=mkGroup(webLabel, h);
-    totalFails+=(h.match(/ci fail/g)||[]).length;
-  }
-
-  // ── 엑셀 vs 기안서 (모든 케이스 공통) ──
-  {
-    // 파일별 매칭
-    const usedRows=new Set();
-    const matchResults=files.map(file=>{
-      let bestIdx=-1,bestDiff=Infinity;
-      allImgRows.forEach((row,i)=>{ if(usedRows.has(i)) return; const diff=Math.abs((parseAmt(row.공급가액)||0)-(file.total||0)); if(diff<bestDiff){ bestDiff=diff; bestIdx=i; } });
-      if(bestIdx>=0) usedRows.add(bestIdx);
-      const mr=bestIdx>=0?allImgRows[bestIdx]:null;
-      const imgAmt=mr?(parseAmt(mr.공급가액)||0):null;
-      return {file,matchedRow:mr,imgAmt,matched:imgAmt!==null&&imgAmt===file.total};
-    });
-    const allFilesMatch=matchResults.every(r=>r.matched)&&imgTotal===xlTotal;
-
-    let tableHtml=`<div class="mt-wrap"><div class="mt-title">📁 파일별 금액 대사</div><table class="mt"><thead><tr><th>첨부 파일</th><th>엑셀 합계</th><th>기안서 행</th><th>기안서 금액</th><th>결과</th></tr></thead><tbody>`;
-    for(const r of matchResults){
-      const rc=r.matched?'pr':'fr';
-      const st=r.matched?'<span class="stag pass">✓ 일치</span>':'<span class="stag fail">✕ 불일치</span>';
-      const tag=r.matchedRow?(r.matchedRow._t==='mg'?'<span class="tag-mg">MG차감</span>':'<span class="tag-tax">계산서</span>'):'—';
-      const sn=r.file.name.length>26?r.file.name.slice(0,24)+'…':r.file.name;
-      tableHtml+=`<tr class="${rc}"><td title="${r.file.name}">${sn}</td><td><strong>${fmtAmt(r.file.total)}</strong></td><td>${tag}</td><td>${r.imgAmt!==null?fmtAmt(r.imgAmt):'—'}</td><td>${st}</td></tr>`;
-    }
-    const trc=imgTotal===xlTotal?'pr':'fr';
-    const tst=imgTotal===xlTotal?'<span class="stag pass">✓ 일치</span>':'<span class="stag fail">✕ 불일치</span>';
-    tableHtml+=`<tr class="${trc}" style="font-weight:700"><td>합계</td><td><strong>${fmtAmt(xlTotal)}</strong></td><td colspan="1" style="color:var(--sub);font-size:10px">기안서 전체</td><td><strong>${fmtAmt(imgTotal)}</strong></td><td>${tst}</td></tr>`;
-    tableHtml+='</tbody></table></div>';
-
-    let h='';
-    h+=cmpDate('계산서 작성일자 (엑셀 정산월)', normDate(기안서.본문_계산서작성일자), excelMeta.작성일자, '기안서','엑셀');
-    if(기안서.본문_서비스월&&excelMeta.서비스월){
-      const a=toYYYYMM(기안서.본문_서비스월), b=toYYYYMM(excelMeta.서비스월);
-      if(a&&b){ if(a===b) h+=mkCi('pass','서비스월',`${excelMeta.서비스월?.slice(0,7)} — 일치 ✓`); else h+=mkCi('fail','서비스월','서비스월 불일치 ⚠',null,기안서.본문_서비스월,excelMeta.서비스월?.slice(0,7),'기안서','엑셀'); }
-    }
-    const imgDue=normDate(기안서.입금예정일);
-    if(imgDue&&excelMeta.입금예정일){
-      if(imgDue===excelMeta.입금예정일) h+=mkCi('pass','입금예정일',`${excelMeta.입금예정일} — 일치 ✓`);
-      else h+=mkCi('fail','입금예정일','날짜 불일치 ⚠',null,imgDue,excelMeta.입금예정일,'기안서','엑셀');
-    } else if(imgDue) h+=mkCi('info','입금예정일',`기안서: ${imgDue}`,'엑셀에서 입금예정일 미확인');
-
-    excelHtml=tableHtml+mkGroup(`📊 ${caseNum===4?'':'STEP 3 — '}엑셀 vs 기안서`, h);
-    totalFails+=(h.match(/ci fail/g)||[]).length+(allFilesMatch?0:1);
-  }
-
-  // ── 기안서 내부 정합성 ──
-  {
-    let h='';
-    const titleDeadline=extractDeadlineFromTitle(기안서.제목||'');
-    if(titleDeadline&&기안서.본문_마감기한){
-      const a=normDate(titleDeadline), b=normDate(기안서.본문_마감기한);
-      if(a===b) h+=mkCi('pass','제목 발행마감일 == 본문 마감기한',`${b} — 일치 ✓`);
-      else h+=mkCi('fail','제목 발행마감일 ≠ 본문 마감기한','불일치 ⚠',null,`제목: ${a}`,`본문: ${b}`,'','');
-    }
-    if(taxRows.length>0&&기안서.본문_계산서작성일자){
-      const a=normDate(기안서.본문_계산서작성일자), b=normDate(taxRows[0].작성일자);
-      if(a&&b){ if(a===b) h+=mkCi('pass','본문 작성일자 == 섹션2 작성일자',`${a} — 일치 ✓`); else h+=mkCi('fail','본문 작성일자 ≠ 섹션2 작성일자','불일치 ⚠',null,`본문: ${a}`,`섹션2: ${b}`,'',''); }
-    }
-    internalHtml=mkGroup('📝 기안서 내부 정합성', h);
-    totalFails+=(h.match(/ci fail/g)||[]).length;
-  }
-
-  // ── 사업자등록증 / 계약서 대사 ──
-  let docsHtml = '';
-  {
-    let h = '';
-
-    // 사업자등록증
-    if(사업자){
-      // 사업자등록번호 vs 기안서
-      const bizNo = (사업자.사업자등록번호||'').replace(/\s/g,'');
-      const imgBizNo = (() => {
-        // 기안서 섹션2에서 사업자번호 추출 (taxRows에서)
-        const taxRows = 기안서.세금계산서_rows||[];
-        return taxRows[0]?.사업자등록번호||null;
-      })();
-      if(bizNo && imgBizNo){
-        const normBiz = a => a.replace(/[-\s]/g,'');
-        if(normBiz(bizNo)===normBiz(imgBizNo)) h+=mkCi('pass','사업자등록번호',`${bizNo} — 일치 ✓`);
-        else h+=mkCi('fail','사업자등록번호','번호 불일치 ⚠ 수정 필요',null,`기안서: ${imgBizNo}`,`사업자등록증: ${bizNo}`,'기안서','사업자등록증');
-      } else if(bizNo){
-        h+=mkCi('info','사업자등록번호 (사업자등록증)',bizNo,'기안서 섹션2의 번호와 직접 비교해 주세요.');
-      }
-
-      // 상호 vs 기안서 고객명
-      const 상호 = (사업자.상호||'').trim();
-      const imgCustomer = (() => {
-        const taxRows = 기안서.세금계산서_rows||[];
-        return taxRows[0]?.고객명||null;
-      })();
-      if(상호 && imgCustomer){
-        const norm = s => s.replace(/\s|(주식회사)|(유한회사)/g,'');
-        if(norm(상호).includes(norm(imgCustomer))||norm(imgCustomer).includes(norm(상호)))
-          h+=mkCi('pass','고객명 (상호)',`${상호} — 일치 ✓`);
-        else
-          h+=mkCi('fail','고객명 (상호)','상호 불일치 ⚠',null,`기안서: ${imgCustomer}`,`사업자등록증: ${상호}`,'기안서','사업자등록증');
-      } else if(상호){
-        h+=mkCi('info','상호 (사업자등록증)',상호,'기안서 고객명과 직접 비교해 주세요.');
-      }
-    }
-
-    // 계약서
-    if(계약서){
-      // RS 비율 vs 엑셀
-      if(계약서.RS비율!==null && 계약서.RS비율!==undefined){
-        // 엑셀에서 RS 비율 추출
-        const xlRS = (() => {
-          if(!files[0]?.wb) return null;
-          const wb = files[0].wb;
-          const sheetName = wb.SheetNames.find(n=>n==='요약')||wb.SheetNames.find(n=>n==='정산용');
-          if(!sheetName) return null;
-          const ws = wb.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
-          for(const row of rows){
-            for(let i=0;i<(row.length||0);i++){
-              if(row[i]!==null && (String(row[i])==='0.7'||String(row[i])==='0.6'||String(row[i])==='0.5'||String(row[i])==='0.1')){
-                return Math.round(parseFloat(row[i])*100);
-              }
-            }
-          }
-          return null;
-        })();
-
-        const conRS = parseInt(계약서.RS비율);
-        if(xlRS!==null){
-          if(conRS===xlRS) h+=mkCi('pass','RS 비율',`${xlRS}% — 계약서와 엑셀 일치 ✓`);
-          else h+=mkCi('fail','RS 비율','RS 비율 불일치 ⚠ 수정 필요',null,`엑셀: ${xlRS}%`,`계약서: ${conRS}%`,'엑셀','계약서');
-        } else {
-          h+=mkCi('info','RS 비율 (계약서)',`${conRS}%`,'엑셀에서 RS 비율을 자동 확인하지 못했습니다. 직접 비교해 주세요.');
-        }
-      }
-
-      // 입금조건 표시
-      if(계약서.입금조건){
-        const imgDue = normDate(기안서.입금예정일);
-        h+=mkCi('info','계약서 입금 조건',계약서.입금조건,
-          imgDue ? `기안서 입금예정일: ${imgDue} — 계약 조건과 부합하는지 확인해 주세요.` : '기안서 입금예정일과 비교해 주세요.');
-      }
-    }
-
-    if(h) {
-      docsHtml = mkGroup('🏢 STEP 4 — 사업자등록증 · 계약서 대사', h);
-      totalFails += (h.match(/ci fail/g)||[]).length;
-    }
-  }
-
-  // ── Header ──
-  const caseNames={1:'케이스 1 (메일+엑셀)',2:'케이스 2 (홈페이지+엑셀)',3:'케이스 3 (메일+홈페이지+엑셀)',4:'케이스 4 (엑셀 단독)'};
-  const allOk=totalFails===0;
-  document.getElementById('rsum').innerHTML=allOk
-    ?`<div class="r-sum"><div class="ri ok">✅</div><div class="rt"><h3 class="ok">이상 없음 — 기안 상신 가능합니다</h3><p>${caseNames[caseNum]} 모든 항목 일치</p></div></div>`
-    :`<div class="r-sum"><div class="ri fail">❌</div><div class="rt"><h3 class="fail">오류 발생 — ${totalFails}개 항목 수정 필요</h3><p>${caseNames[caseNum]} 기준 · 아래 항목을 확인 후 기안서를 수정하세요.</p></div></div>`;
-
-  document.getElementById('r_mail').innerHTML=mailHtml;
-  document.getElementById('r_web').innerHTML=webHtml;
-  document.getElementById('r_docs').innerHTML=docsHtml;
-  document.getElementById('r_excel').innerHTML=excelHtml;
-  document.getElementById('r_internal').innerHTML=internalHtml;
-
+  document.getElementById('rsum').innerHTML=`<div class="r-sum"><div class="ri ${imgTotal===xlTotal?'ok':'fail'}">${imgTotal===xlTotal?'✅':'❌'}</div><div class="rt"><h3>${imgTotal===xlTotal?'검증 완료':'불일치 발견'}</h3><p>기안서 금액: ${fmtAmt(imgTotal)} / 엑셀 합계: ${fmtAmt(xlTotal)}</p></div></div>`;
+  document.getElementById('r_excel').innerHTML=`<div class="chk-group">${h}</div>`;
   document.getElementById('rc').classList.add('show');
-  document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function extractDeadlineFromTitle(t){
-  const m=t.match(/발행마감일\s*[:：]\s*(\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
-  return m?m[1]:null;
-}
-function toYYYYMM(d){ if(!d) return null; const m=d.match(/(\d{4})-(\d{2})/); return m?m[1]+m[2]:null; }
-function normDate(v){
-  if(!v) return null;
-  if(v instanceof Date) return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
-  const s=String(v).trim(); const m=s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
-  return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:null;
-}
 function resetAll(){ document.getElementById('rc').classList.remove('show'); window.scrollTo({top:0,behavior:'smooth'}); }
+updateCaseBar();
 </script>
 </body>
 </html>
