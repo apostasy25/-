@@ -683,8 +683,9 @@ function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=p
 function normDate(v){
   if(!v) return null;
   if(v instanceof Date){
-    // Use UTC methods to avoid timezone shift (SheetJS stores dates as UTC midnight)
-    return `${v.getUTCFullYear()}-${String(v.getUTCMonth()+1).padStart(2,'0')}-${String(v.getUTCDate()).padStart(2,'0')}`;
+    // Add 9 hours for KST to correct UTC midnight issue from SheetJS
+    const kst = new Date(v.getTime() + 9*60*60*1000);
+    return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
   }
   const s=String(v).trim(); const m=s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
   return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:null;
@@ -811,11 +812,11 @@ const PROMPT_메일=`이 이미지는 거래처에서 온 계산서/세금계산
 
 {
   "작성일자": "YYYY-MM-DD (발행 일자, 작성 일자)",
-  "마감일": "YYYY-MM-DD",
+  "마감일": "YYYY-MM-DD (명시된 마감일. 'N일 이전' 같은 상대적 표현은 null로, 구체적 날짜가 있을 때만 기재)",
   "마감시간": "HH:MM (없으면 null)",
   "품목명들": ["품목명1", "품목명2"],
   "금액들": [{"품목":"설명","금액":숫자}],
-  "발행이메일": "계산서 발행 수신 이메일 (없으면 null)",
+  "발행이메일": "계산서 발행 수신 이메일. 명시된 수신 주소가 없으면 메일 발신자(보낸 사람) 이메일 주소를 기재",
   "이메일변경": "수신 이메일이 변경된 경우 변경 안내 문구 전체 (없으면 null)",
   "사업자변경": "사업자 정보(상호/번호/담당자 등)가 변경된 경우 변경 안내 문구 전체 (없으면 null)",
   "중요공지": "위 항목 외 ★, ※, 【】, 형광펜 강조 등 중요 표시된 내용 전체 (없으면 null)",
@@ -1263,8 +1264,9 @@ function toYYYYMM(d){ if(!d) return null; const m=d.match(/(\d{4})-(\d{2})/); re
 function normDate(v){
   if(!v) return null;
   if(v instanceof Date){
-    // Use UTC methods to avoid timezone shift (SheetJS stores dates as UTC midnight)
-    return `${v.getUTCFullYear()}-${String(v.getUTCMonth()+1).padStart(2,'0')}-${String(v.getUTCDate()).padStart(2,'0')}`;
+    // Add 9 hours for KST to correct UTC midnight issue from SheetJS
+    const kst = new Date(v.getTime() + 9*60*60*1000);
+    return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
   }
   const s=String(v).trim(); const m=s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
   return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:null;
