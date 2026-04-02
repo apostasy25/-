@@ -694,18 +694,18 @@ function detectType(wb){ if(wb.SheetNames.includes('정산요약')) return 'RS';
 
 function getExcelTotal(wb){
   if(wb.SheetNames.includes('정산요약')){
-    const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',UTC:true});
     const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
     return parseAmt(map['최종 입금액 (세후)']||map['정산총액']);
   }
   if(wb.SheetNames.includes('요약')){
-    const ws=wb.Sheets['요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+    const ws=wb.Sheets['요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
     let amtCol=-1;
     for(const row of rows.slice(0,8)){ for(let i=0;i<(row.length||0);i++){ if(row[i]&&String(row[i]).trim()==='매출액'){ amtCol=i; break; } } if(amtCol>=0) break; }
     for(const row of rows){ if(row[1]&&String(row[1])==='총합계'){ if(amtCol>=0) return parseAmt(row[amtCol]); for(let i=14;i>=8;i--){ const v=parseAmt(row[i]); if(v!==null&&v>0) return v; } } }
   }
   if(wb.SheetNames.includes('정산용')){
-    const ws=wb.Sheets['정산용']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+    const ws=wb.Sheets['정산용']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
     for(const row of rows) if(row[1]&&String(row[1])==='총합계') return parseAmt(row[19]);
     for(let i=rows.length-1;i>=0;i--) if(rows[i][19]!==null&&rows[i][19]!==undefined) return parseAmt(rows[i][19]);
   }
@@ -714,17 +714,17 @@ function getExcelTotal(wb){
 
 function getExcelMeta(wb){
   if(wb.SheetNames.includes('정산요약')){
-    const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',UTC:true});
     const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
     return { 작성일자:normDate(map['정산서 발행일']), 입금예정일:normDate(map['입금 예정일']), 서비스월:null, 정산월YYYYMM:toYYYYMM(normDate(map['정산서 발행일'])) };
   }
   if(wb.SheetNames.includes('정산용')){
-    const ws=wb.Sheets['정산용']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+    const ws=wb.Sheets['정산용']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
     let 작성일자=null,서비스월=null;
     for(const row of rows){ if(row[1]&&String(row[1])!=='플랫폼명'&&String(row[1])!=='총합계'&&row[5]){ 작성일자=normDate(row[5]); 서비스월=normDate(row[4]); break; } }
     let 입금예정일=null;
     if(wb.SheetNames.includes('정산서')){
-      const ws2=wb.Sheets['정산서']; const rows2=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null});
+      const ws2=wb.Sheets['정산서']; const rows2=XLSX.utils.sheet_to_json(ws2,{header:1,defval:null,UTC:true});
       outer: for(const row of rows2){ for(let i=0;i<(row.length||0);i++){ if(row[i]&&String(row[i]).replace(/\s/g,'').includes('지급예정일')){ for(let j=i+1;j<Math.min(i+4,row.length);j++){ if(row[j]){ 입금예정일=normDate(row[j]); break outer; } } } } }
     }
     return { 작성일자, 입금예정일, 서비스월, 정산월YYYYMM:toYYYYMM(작성일자) };
@@ -775,7 +775,8 @@ const PROMPT_사업자=`이 이미지는 한국 사업자등록증입니다. 아
 const PROMPT_계약서=`이 이미지는 계약서 또는 계약서 일부입니다. 아래 항목을 읽고 JSON만 응답하세요.
 {
   "RS비율": 숫자만 (예: 70은 70%를 의미, 없으면 null),
-  "입금조건": "입금 관련 조건 텍스트 전체 (예: 매월 25일 지급, 익월 말일 등, 없으면 null)",
+  "입금조건": "입금/지급 관련 조건 텍스트 전체 (예: 계약체결 후 15영업일, 익월 말일, 매월 25일 등, 없으면 null)",
+  "선급금": 숫자 (계약서에 선급금/선급비용 금액이 명시된 경우, 없으면 null),
   "플랫폼명": "계약 플랫폼명 (없으면 null)",
   "작품명": "계약 작품명 (없으면 null)"
 }
@@ -815,6 +816,11 @@ const PROMPT_메일=`이 이미지는 거래처에서 온 계산서/세금계산
   "품목명들": ["품목명1", "품목명2"],
   "금액들": [{"품목":"설명","금액":숫자}],
   "발행이메일": "계산서 발행 수신 이메일 (없으면 null)",
+  "이메일변경": "수신 이메일이 변경된 경우 변경 안내 문구 전체 (없으면 null)",
+  "사업자변경": "사업자 정보(상호/번호/담당자 등)가 변경된 경우 변경 안내 문구 전체 (없으면 null)",
+  "중요공지": "위 항목 외 ★, ※, 【】, 형광펜 강조 등 중요 표시된 내용 전체 (없으면 null)",
+  "입금예정일": "YYYY-MM-DD (정산 지급일, 입금일, 지급예정일 등. 없으면 null)",
+  "입금조건": "익월 말, 매월 25일 등 날짜가 아닌 조건 텍스트 (없으면 null)",
   "발행건수": 숫자,
   "기타": "기타 특이사항 (없으면 null)"
 }
@@ -996,6 +1002,20 @@ function render(caseNum, 기안서, 메일, 홈페이지목록, files, excelMeta
       else if(diff<=10) h+=mkCi('warn','금액 합계','원단위 절사에 의한 미세 차이 (10원 이내)',`기안서: ${fmtAmt(imgTotal)} / 메일: ${fmtAmt(mailTotalAmt)}`);
       else h+=mkCi('fail','금액 합계','금액 불일치 ⚠ 수정 필요',null,fmtAmt(imgTotal),fmtAmt(mailTotalAmt),'기안서','메일');
     }
+    // 중요 공지 하이라이트 (이메일변경/사업자변경/중요공지)
+    const 하이라이트목록 = [
+      {key:'이메일변경', icon:'📧', label:'수신 이메일 변경 안내'},
+      {key:'사업자변경', icon:'🏢', label:'사업자 정보 변경 안내'},
+      {key:'중요공지',   icon:'⚠️', label:'중요 공지'},
+    ];
+    for(const {key, icon, label} of 하이라이트목록){
+      if(메일[key]){
+        h+=`<div style="margin:8px 0;padding:12px 14px;background:#fff3cd;border:2px solid #ffc107;border-radius:8px;font-size:12px;">
+          <div style="font-weight:700;color:#856404;margin-bottom:4px">${icon} ${label}</div>
+          <div style="color:#5a3e00;line-height:1.6">${메일[key]}</div>
+        </div>`;
+      }
+    }
     mailHtml=mkGroup('✉️ STEP 1 — 메일 vs 기안서', h);
     totalFails+=(h.match(/ci fail/g)||[]).length;
   }
@@ -1073,10 +1093,21 @@ function render(caseNum, 기안서, 메일, 홈페이지목록, files, excelMeta
       if(a&&b){ if(a===b) h+=mkCi('pass','서비스월',`${excelMeta.서비스월?.slice(0,7)} — 일치 ✓`); else h+=mkCi('fail','서비스월','서비스월 불일치 ⚠',null,기안서.본문_서비스월,excelMeta.서비스월?.slice(0,7),'기안서','엑셀'); }
     }
     const imgDue=normDate(기안서.입금예정일);
-    if(imgDue&&excelMeta.입금예정일){
+    const mailDue=메일?normDate(메일.입금예정일):null;
+    const mailDueCond=메일?.입금조건||null;
+    const conDueCond=계약서?.입금조건||null;
+    if(imgDue&&mailDue){
+      if(imgDue===mailDue) h+=mkCi('pass','입금예정일',`${imgDue} — 메일과 일치 ✓`);
+      else h+=mkCi('fail','입금예정일','메일 입금일과 불일치 ⚠',null,imgDue,mailDue,'기안서','메일');
+    } else if(imgDue&&excelMeta.입금예정일){
       if(imgDue===excelMeta.입금예정일) h+=mkCi('pass','입금예정일',`${excelMeta.입금예정일} — 일치 ✓`);
       else h+=mkCi('fail','입금예정일','날짜 불일치 ⚠',null,imgDue,excelMeta.입금예정일,'기안서','엑셀');
-    } else if(imgDue) h+=mkCi('info','입금예정일',`기안서: ${imgDue}`,'엑셀에서 입금예정일 미확인');
+    } else if(imgDue){
+      h+=mkCi('info','입금예정일',`기안서: ${imgDue}`,'메일/엑셀에서 입금예정일 미확인 — 아래 조건 참고');
+    }
+    // 입금 조건 참고 표시 (메일 또는 계약서)
+    if(mailDueCond) h+=`<div style="margin:4px 0 8px;padding:10px 14px;background:#e8f4fd;border:1.5px solid #90caf9;border-radius:8px;font-size:12px;"><span style="font-weight:700;color:#1565c0">📅 메일 입금 조건</span><br><span style="color:#0d47a1">${mailDueCond}</span></div>`;
+    if(conDueCond) h+=`<div style="margin:4px 0 8px;padding:10px 14px;background:#e8f5e9;border:1.5px solid #a5d6a7;border-radius:8px;font-size:12px;"><span style="font-weight:700;color:#2e7d32">📄 계약서 입금 조건</span><br><span style="color:#1b5e20">${conDueCond}</span></div>`;
 
     excelHtml=tableHtml+mkGroup(`📊 ${caseNum===4?'':'STEP 3 — '}엑셀 vs 기안서`, h);
     totalFails+=(h.match(/ci fail/g)||[]).length+(allFilesMatch?0:1);
@@ -1149,7 +1180,7 @@ function render(caseNum, 기안서, 메일, 홈페이지목록, files, excelMeta
           const sheetName = wb.SheetNames.find(n=>n==='요약')||wb.SheetNames.find(n=>n==='정산용');
           if(!sheetName) return null;
           const ws = wb.Sheets[sheetName];
-          const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+          const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
           for(const row of rows){
             for(let i=0;i<(row.length||0);i++){
               if(row[i]!==null && (String(row[i])==='0.7'||String(row[i])==='0.6'||String(row[i])==='0.5'||String(row[i])==='0.1')){
