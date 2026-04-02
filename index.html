@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>기안서 검증기 v7 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if(typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 :root {
@@ -358,31 +362,26 @@ let apiKey = localStorage.getItem('tf_api_key') || '';
 let imgB64=null, imgMime='image/png';
 // 메일 다중
 let mailImages=[], mailIdCtr=0;
-function addMailImage(f){ const id=++mailIdCtr,mime=f.type||'image/png',r=new FileReader(); r.onload=e=>{ mailImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('mailList','mailAddBtn',id,f.name,'📧','removeMailImage'); updateCaseBar(); }; r.readAsDataURL(f); }
-function removeMailImage(id){ mailImages=mailImages.filter(w=>w.id!==id); document.getElementById('mc-'+id)?.remove(); if(mailImages.length===0) document.getElementById('mailAddBtn').style.display='none'; updateCaseBar(); }
-function handleAddMailFiles(input){ for(const f of input.files) addMailImage(f); input.value=''; }
-// 홈페이지 다중 관리
-let webImages = []; // [{id, b64, mime, name}]
-let webIdCounter = 0;
-
-function addWebImage(file) {
-  const id = ++webIdCounter;
-  const mime = file.type || 'image/png';
-  const r = new FileReader();
-  r.onload = e => {
-    const b64 = e.target.result.split(',')[1];
-    webImages.push({id, b64, mime, name: file.name});
-    renderWebCard(id, file.name);
-    document.getElementById('webAddBtn').style.display = 'flex';
-    updateCaseBar();
-  };
-  r.readAsDataURL(file);
+function addMailImage(f){
+  const id=++mailIdCtr;
+  if(f.type==='application/pdf'){
+    pdfToImages(f).then(imgs=>{
+      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
+      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      mailImages.push({id,b64,mime:'image/png',name:label});
+      addImgCard('mailList','mailAddBtn',id,label,'📧','removeMailImage');
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
+  const mime=f.type||'image/png',r=new FileReader();
+  r.onload=e=>{ mailImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('mailList','mailAddBtn',id,f.name,'📧','removeMailImage'); };
+  r.readAsDataURL(f);
 }
 
 function renderWebCard(id, name) {
   const list = document.getElementById('webList');
   const card = document.createElement('div');
-  card.id = 'wc-' + id;
+  card.id = 'web-' + id;
   card.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f7f9fc;border:1px solid var(--border);border-radius:8px;margin-top:4px';
   const shortName = name.length > 28 ? name.slice(0,26)+'...' : name;
   card.innerHTML = '<span style="font-size:16px">🖥</span><span style="flex:1;font-size:11px;font-weight:600;color:var(--navy);">'+shortName+'</span><button class="btn-remove" onclick="removeWebImage('+id+')">×</button>';
@@ -391,10 +390,51 @@ function renderWebCard(id, name) {
 
 function removeWebImage(id) {
   webImages = webImages.filter(w => w.id !== id);
-  document.getElementById('wc-' + id)?.remove();
+  document.getElementById('web-' + id)?.remove();
   if(webImages.length === 0) document.getElementById('webAddBtn').style.display = 'none';
   updateCaseBar();
 }
+
+function addWebImage(f){
+  const id=++webIdCounter;
+  if(f.type==='application/pdf'){
+    pdfToImages(f).then(imgs=>{
+      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
+      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      webImages.push({id,b64,mime:'image/png',name:label});
+      renderWebCard(id,label);
+      document.getElementById('webAddBtn').style.display='flex';
+      updateCaseBar();
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
+  const mime=f.type||'image/png',r=new FileReader();
+  r.onload=e=>{
+    webImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name});
+    renderWebCard(id,f.name);
+    document.getElementById('webAddBtn').style.display='flex';
+    updateCaseBar();
+  };
+  r.readAsDataURL(f);
+}
+
+function addConImage(f){
+  const id=++conIdCtr;
+  if(f.type==='application/pdf'){
+    pdfToImages(f).then(imgs=>{
+      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
+      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      conImages.push({id,b64,mime:'image/png',name:label});
+      addImgCard('conList','conAddBtn',id,label,'📝','removeConImage');
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
+  const mime=f.type||'image/png',r=new FileReader();
+  r.onload=e=>{ conImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('conList','conAddBtn',id,f.name,'📝','removeConImage'); };
+  r.readAsDataURL(f);
+}
+
+function removeConImage(id){ conImages=conImages.filter(w=>w.id!==id); document.getElementById('con-'+id)?.remove(); if(conImages.length===0) document.getElementById('conAddBtn').style.display='none'; }
 
 function handleAddWebFiles(input) {
   for(const f of input.files) addWebImage(f);
@@ -413,7 +453,35 @@ function saveKey(){
 }
 
 // ── Image helpers ─────────────────────────────────────────────────────────
+async function pdfToImages(file){
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+  const imgs = [];
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({scale:1.5});
+    const cv = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    imgs.push(cv.toDataURL('image/png').split(',')[1]);
+  }
+  return imgs;
+}
+
 function loadImgTo(file, b64setter, mimeSetter, prevId, imgId, nameId){
+  if(file.type==='application/pdf'){
+    mimeSetter('image/png');
+    pdfToImages(file).then(imgs=>{
+      if(!imgs.length) return;
+      // Store all pages as array JSON for multi-page AI
+      b64setter(imgs.length===1 ? imgs[0] : JSON.stringify(imgs));
+      document.getElementById(imgId).src='data:image/png;base64,'+imgs[0];
+      document.getElementById(nameId).textContent=file.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      document.getElementById(prevId).classList.add('show');
+      updateCaseBar();
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
   mimeSetter(file.type||'image/png');
   const r=new FileReader();
   r.onload=e=>{
@@ -439,49 +507,61 @@ document.addEventListener('paste',e=>{
 });
 function clearImg(){ imgB64=null; document.getElementById('imgPrev').classList.remove('show'); updateCaseBar(); }
 
+// Mail file handlers
+document.getElementById('mailFile').addEventListener('change',e=>{ for(const f of e.target.files) addMailImage(f); });
+const mailDropEl=document.getElementById('mailDrop');
+mailDropEl.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); mailDropEl.classList.add('over'); });
+mailDropEl.addEventListener('dragleave',()=>mailDropEl.classList.remove('over'));
+mailDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); mailDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
+
+// Web/홈페이지 file handlers
+document.getElementById('webFile').addEventListener('change',e=>{ for(const f of e.target.files) addWebImage(f); });
+const webDropEl=document.getElementById('webDrop');
+webDropEl.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); webDropEl.classList.add('over'); });
+webDropEl.addEventListener('dragleave',()=>webDropEl.classList.remove('over'));
+webDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); webDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
+
+// Biz file handlers
+document.getElementById('bizFile').addEventListener('change',e=>{ for(const f of e.target.files) addBizImage(f); });
+const bizDropEl=document.getElementById('bizDrop');
+bizDropEl.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); bizDropEl.classList.add('over'); });
+bizDropEl.addEventListener('dragleave',()=>bizDropEl.classList.remove('over'));
+bizDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); bizDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
+
+// Contract file handlers
+document.getElementById('conFile').addEventListener('change',e=>{ for(const f of e.target.files) addConImage(f); });
+const conDropEl=document.getElementById('conDrop');
+conDropEl.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); conDropEl.classList.add('over'); });
+conDropEl.addEventListener('dragleave',()=>conDropEl.classList.remove('over'));
+conDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); conDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
+
 // 사업자등록증 다중
 let bizImages=[],bizIdCtr=0;
-function addBizImage(f){ const id=++bizIdCtr,mime=f.type||'image/png',r=new FileReader(); r.onload=e=>{ bizImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('bizList','bizAddBtn',id,f.name,'📄','removeBizImage'); }; r.readAsDataURL(f); }
-function removeBizImage(id){ bizImages=bizImages.filter(w=>w.id!==id); document.getElementById('bc-'+id)?.remove(); if(bizImages.length===0) document.getElementById('bizAddBtn').style.display='none'; }
-function handleAddBizFiles(input){ for(const f of input.files) addBizImage(f); input.value=''; }
-document.getElementById('bizFile').addEventListener('change',e=>{ for(const f of e.target.files) addBizImage(f); });
-setupDrop('bizDrop', f=>addBizImage(f));
-
-// 계약서 다중
-let conImages=[],conIdCtr=0;
-function addConImage(f){ const id=++conIdCtr,mime=f.type||'image/png',r=new FileReader(); r.onload=e=>{ conImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('conList','conAddBtn',id,f.name,'📝','removeConImage'); }; r.readAsDataURL(f); }
-function removeConImage(id){ conImages=conImages.filter(w=>w.id!==id); document.getElementById('cc-'+id)?.remove(); if(conImages.length===0) document.getElementById('conAddBtn').style.display='none'; }
-function handleAddConFiles(input){ for(const f of input.files) addConImage(f); input.value=''; }
-document.getElementById('conFile').addEventListener('change',e=>{ for(const f of e.target.files) addConImage(f); });
-setupDrop('conDrop', f=>addConImage(f));
-document.getElementById('mailFile').addEventListener('change',e=>{ for(const f of e.target.files) addMailImage(f); });
-setupDrop('mailDrop', f=>addMailImage(f));
-// clearMail handled by removeMailImage
-
-// Web
-document.getElementById('webFile').addEventListener('change',e=>{ for(const f of e.target.files) addWebImage(f); });
-const webDropEl2 = document.getElementById('webDrop');
-webDropEl2.addEventListener('dragover',e=>{ e.preventDefault(); webDropEl2.classList.add('over'); });
-webDropEl2.addEventListener('dragleave',()=>webDropEl2.classList.remove('over'));
-webDropEl2.addEventListener('drop',e=>{ e.preventDefault(); webDropEl2.classList.remove('over'); for(const f of e.dataTransfer.files) if(f.type.startsWith('image/')) addWebImage(f); },true);
-
-function flash(id){ const el=document.getElementById(id); el.style.borderColor='var(--ok)'; setTimeout(()=>el.style.borderColor='',1500); }
-
-// ── Case detector ─────────────────────────────────────────────────────────
-function detectCase(){
-  const hasMail=mailImages.length>0, hasWeb=webImages.length>0;
-  if(hasMail && hasWeb) return 3;
-  if(hasMail) return 1;
-  if(hasWeb)  return 2;
-  return 4;
+function addBizImage(f){
+  const id=++bizIdCtr;
+  if(f.type==='application/pdf'){
+    pdfToImages(f).then(imgs=>{
+      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
+      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      bizImages.push({id,b64,mime:'image/png',name:label});
+      addImgCard('bizList','bizAddBtn',id,label,'📄','removeBizImage');
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
+  const mime=f.type||'image/png',r=new FileReader();
+  r.onload=e=>{ bizImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('bizList','bizAddBtn',id,f.name,'📄','removeBizImage'); };
+  r.readAsDataURL(f);
 }
+
+function removeMailImage(id){ mailImages=mailImages.filter(w=>w.id!==id); document.getElementById('mai-'+id)?.remove(); if(mailImages.length===0) document.getElementById('mailAddBtn').style.display='none'; updateCaseBar(); }
+function removeBizImage(id){ bizImages=bizImages.filter(w=>w.id!==id); document.getElementById('biz-'+id)?.remove(); if(bizImages.length===0) document.getElementById('bizAddBtn').style.display='none'; }
 
 // 공통 카드 추가 헬퍼
 function addImgCard(listId, btnId, id, name, icon, removeFn){
-  const prefix = removeFn.replace('remove','').replace('Image','').toLowerCase().slice(0,2);
+  const prefix = removeFn.replace('remove','').replace('Image','').toLowerCase().slice(0,3);
   const list=document.getElementById(listId);
   const card=document.createElement('div');
-  card.id=prefix+'c-'+id;
+  card.id=prefix+'-'+id;
   card.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f7f9fc;border:1px solid var(--border);border-radius:8px;margin-top:4px';
   const shortName=name.length>26?name.slice(0,24)+'...':name;
   card.innerHTML='<span style="font-size:15px">'+icon+'</span><span style="flex:1;font-size:11px;font-weight:600;color:var(--navy);">'+shortName+'</span><button class="btn-remove" onclick="'+removeFn+'('+id+')">×</button>';
@@ -510,7 +590,7 @@ document.getElementById('xlsFile').addEventListener('change',e=>{ for(const f of
 const xlsDropEl=document.getElementById('xlsDrop');
 xlsDropEl.addEventListener('dragover',e=>{ e.preventDefault(); xlsDropEl.classList.add('over'); });
 xlsDropEl.addEventListener('dragleave',()=>xlsDropEl.classList.remove('over'));
-xlsDropEl.addEventListener('drop',e=>{ e.preventDefault(); xlsDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) if(f.name.match(/\.xlsx?$/i)) addExcelFile(f); },true);
+xlsDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); xlsDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) if(f.name.match(/\.xlsx?$/i)) addExcelFile(f); });
 function handleAddFiles(input){ for(const f of input.files) addExcelFile(f); input.value=''; }
 
 function addExcelFile(file){
@@ -608,11 +688,26 @@ function getExcelMeta(wb){
 
 // ── AI calls ──────────────────────────────────────────────────────────────
 async function aiCall(b64, mime, prompt){
+  // Handle multi-page PDF (stored as JSON array)
+  let contentBlocks = [];
+  try {
+    const pages = JSON.parse(b64);
+    if(Array.isArray(pages)){
+      // Multi-page: send all pages as images
+      for(const p of pages){
+        contentBlocks.push({type:'image',source:{type:'base64',media_type:'image/png',data:p}});
+      }
+    } else { throw new Error('not array'); }
+  } catch {
+    contentBlocks = [{type:'image',source:{type:'base64',media_type:mime,data:b64}}];
+  }
+  contentBlocks.push({type:'text',text:prompt});
+  
   const res=await fetch('https://corsproxy.io/?url=https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({ model:'claude-opus-4-5', max_tokens:2000,
-      messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:prompt}]}]
+      messages:[{role:'user',content:contentBlocks}]
     })
   });
   if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||`API 오류 (${res.status})`); }
