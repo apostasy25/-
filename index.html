@@ -1106,8 +1106,32 @@ function render(caseNum, 기안서, 메일, 홈페이지목록, files, excelMeta
       h+=mkCi('info','입금예정일',`기안서: ${imgDue}`,'메일/엑셀에서 입금예정일 미확인 — 아래 조건 참고');
     }
     // 입금 조건 참고 표시 (메일 또는 계약서)
-    if(mailDueCond) h+=`<div style="margin:4px 0 8px;padding:10px 14px;background:#e8f4fd;border:1.5px solid #90caf9;border-radius:8px;font-size:12px;"><span style="font-weight:700;color:#1565c0">📅 메일 입금 조건</span><br><span style="color:#0d47a1">${mailDueCond}</span></div>`;
-    if(conDueCond) h+=`<div style="margin:4px 0 8px;padding:10px 14px;background:#e8f5e9;border:1.5px solid #a5d6a7;border-radius:8px;font-size:12px;"><span style="font-weight:700;color:#2e7d32">📄 계약서 입금 조건</span><br><span style="color:#1b5e20">${conDueCond}</span></div>`;
+    if(mailDueCond){
+      const hasHoliday = /휴일|공휴일|전일|전영업일|다음\s*영업일/.test(mailDueCond);
+      h+=`<div style="margin:4px 0 8px;padding:10px 14px;background:#e8f4fd;border:1.5px solid #90caf9;border-radius:8px;font-size:12px;">
+        <span style="font-weight:700;color:#1565c0">📅 메일 입금 조건</span><br>
+        <span style="color:#0d47a1">${mailDueCond}</span>
+      </div>`;
+      if(hasHoliday){
+        h+=`<div style="margin:4px 0 8px;padding:10px 14px;background:#fff3cd;border:2px solid #ffc107;border-radius:8px;font-size:12px;">
+          <span style="font-weight:700;color:#856404">⚠️ 휴일 전일/익영업일 지급 조건 있음</span><br>
+          <span style="color:#5a3e00">입금예정일이 공휴일 또는 주말인지 달력에서 직접 확인하세요.</span>
+        </div>`;
+      }
+    }
+    if(conDueCond){
+      const conHasHoliday = /휴일|공휴일|전일|전영업일|다음\s*영업일/.test(conDueCond);
+      h+=`<div style="margin:4px 0 8px;padding:10px 14px;background:#e8f5e9;border:1.5px solid #a5d6a7;border-radius:8px;font-size:12px;">
+        <span style="font-weight:700;color:#2e7d32">📄 계약서 입금 조건</span><br>
+        <span style="color:#1b5e20">${conDueCond}</span>
+      </div>`;
+      if(conHasHoliday){
+        h+=`<div style="margin:4px 0 8px;padding:10px 14px;background:#fff3cd;border:2px solid #ffc107;border-radius:8px;font-size:12px;">
+          <span style="font-weight:700;color:#856404">⚠️ 휴일 전일/익영업일 지급 조건 있음</span><br>
+          <span style="color:#5a3e00">입금예정일이 공휴일 또는 주말인지 달력에서 직접 확인하세요.</span>
+        </div>`;
+      }
+    }
 
     excelHtml=tableHtml+mkGroup(`📊 ${caseNum===4?'':'STEP 3 — '}엑셀 vs 기안서`, h);
     totalFails+=(h.match(/ci fail/g)||[]).length+(allFilesMatch?0:1);
