@@ -682,7 +682,10 @@ function setupDrop(id,handler){
 function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=parseInt(String(v).replace(/[원,\s]/g,''),10); return isNaN(n)?null:n; }
 function normDate(v){
   if(!v) return null;
-  if(v instanceof Date) return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+  if(v instanceof Date){
+    // Use UTC methods to avoid timezone shift (SheetJS stores dates as UTC midnight)
+    return `${v.getUTCFullYear()}-${String(v.getUTCMonth()+1).padStart(2,'0')}-${String(v.getUTCDate()).padStart(2,'0')}`;
+  }
   const s=String(v).trim(); const m=s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
   return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:null;
 }
@@ -746,7 +749,7 @@ async function aiCall(b64, mime, prompt){
   }
   contentBlocks.push({type:'text',text:prompt});
   
-  const res=await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.anthropic.com/v1/messages'),{
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:2000,
@@ -1204,7 +1207,10 @@ function extractDeadlineFromTitle(t){
 function toYYYYMM(d){ if(!d) return null; const m=d.match(/(\d{4})-(\d{2})/); return m?m[1]+m[2]:null; }
 function normDate(v){
   if(!v) return null;
-  if(v instanceof Date) return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}-${String(v.getDate()).padStart(2,'0')}`;
+  if(v instanceof Date){
+    // Use UTC methods to avoid timezone shift (SheetJS stores dates as UTC midnight)
+    return `${v.getUTCFullYear()}-${String(v.getUTCMonth()+1).padStart(2,'0')}-${String(v.getUTCDate()).padStart(2,'0')}`;
+  }
   const s=String(v).trim(); const m=s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
   return m?`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`:null;
 }
