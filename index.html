@@ -360,8 +360,28 @@ table.mt tr.wr td{background:var(--warn-bg)}
 // ── State ────────────────────────────────────────────────────────────────
 let apiKey = localStorage.getItem('tf_api_key') || '';
 let imgB64=null, imgMime='image/png';
-// 메일 다중
+
+// 다중 파일 배열 선언
 let mailImages=[], mailIdCtr=0;
+let webImages=[], webIdCounter=0;
+let bizImages=[], bizIdCtr=0;
+let conImages=[], conIdCtr=0;
+async function pdfToImages(file){
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+  const imgs = [];
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({scale:1.5});
+    const cv = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    imgs.push(cv.toDataURL('image/png').split(',')[1]);
+  }
+  return imgs;
+}
+
+// 메일 다중
 function addMailImage(f){
   const id=++mailIdCtr;
   if(f.type==='application/pdf'){
@@ -453,20 +473,6 @@ function saveKey(){
 }
 
 // ── Image helpers ─────────────────────────────────────────────────────────
-async function pdfToImages(file){
-  const ab = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
-  const imgs = [];
-  for(let i=1;i<=pdf.numPages;i++){
-    const page = await pdf.getPage(i);
-    const vp = page.getViewport({scale:1.5});
-    const cv = document.createElement('canvas');
-    cv.width=vp.width; cv.height=vp.height;
-    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-    imgs.push(cv.toDataURL('image/png').split(',')[1]);
-  }
-  return imgs;
-}
 
 function loadImgTo(file, b64setter, mimeSetter, prevId, imgId, nameId){
   if(file.type==='application/pdf'){
@@ -506,46 +512,6 @@ document.addEventListener('paste',e=>{
   }
 });
 function clearImg(){ imgB64=null; document.getElementById('imgPrev').classList.remove('show'); updateCaseBar(); }
-
-// Mail file handlers
-document.getElementById('mailFile').addEventListener('change',e=>{ for(const f of e.target.files) addMailImage(f); });
-document.getElementById('mailFile').addEventListener('dragover',e=>{ document.getElementById('mailDrop').classList.add('over'); });
-document.getElementById('mailFile').addEventListener('dragleave',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
-document.getElementById('mailFile').addEventListener('drop',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
-const mailDropEl=document.getElementById('mailDrop');
-mailDropEl.addEventListener('dragover',e=>{ e.preventDefault(); mailDropEl.classList.add('over'); });
-mailDropEl.addEventListener('dragleave',e=>{ if(!mailDropEl.contains(e.relatedTarget)) mailDropEl.classList.remove('over'); });
-mailDropEl.addEventListener('drop',e=>{ e.preventDefault(); mailDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
-
-// Web/홈페이지 file handlers
-document.getElementById('webFile').addEventListener('change',e=>{ for(const f of e.target.files) addWebImage(f); });
-document.getElementById('webFile').addEventListener('dragover',e=>{ document.getElementById('webDrop').classList.add('over'); });
-document.getElementById('webFile').addEventListener('dragleave',e=>{ document.getElementById('webDrop').classList.remove('over'); });
-document.getElementById('webFile').addEventListener('drop',e=>{ document.getElementById('webDrop').classList.remove('over'); });
-const webDropEl=document.getElementById('webDrop');
-webDropEl.addEventListener('dragover',e=>{ e.preventDefault(); webDropEl.classList.add('over'); });
-webDropEl.addEventListener('dragleave',e=>{ if(!webDropEl.contains(e.relatedTarget)) webDropEl.classList.remove('over'); });
-webDropEl.addEventListener('drop',e=>{ e.preventDefault(); webDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
-
-// Biz file handlers
-document.getElementById('bizFile').addEventListener('change',e=>{ for(const f of e.target.files) addBizImage(f); });
-document.getElementById('bizFile').addEventListener('dragover',e=>{ document.getElementById('bizDrop').classList.add('over'); });
-document.getElementById('bizFile').addEventListener('dragleave',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
-document.getElementById('bizFile').addEventListener('drop',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
-const bizDropEl=document.getElementById('bizDrop');
-bizDropEl.addEventListener('dragover',e=>{ e.preventDefault(); bizDropEl.classList.add('over'); });
-bizDropEl.addEventListener('dragleave',e=>{ if(!bizDropEl.contains(e.relatedTarget)) bizDropEl.classList.remove('over'); });
-bizDropEl.addEventListener('drop',e=>{ e.preventDefault(); bizDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
-
-// Contract file handlers
-document.getElementById('conFile').addEventListener('change',e=>{ for(const f of e.target.files) addConImage(f); });
-document.getElementById('conFile').addEventListener('dragover',e=>{ document.getElementById('conDrop').classList.add('over'); });
-document.getElementById('conFile').addEventListener('dragleave',e=>{ document.getElementById('conDrop').classList.remove('over'); });
-document.getElementById('conFile').addEventListener('drop',e=>{ document.getElementById('conDrop').classList.remove('over'); });
-const conDropEl=document.getElementById('conDrop');
-conDropEl.addEventListener('dragover',e=>{ e.preventDefault(); conDropEl.classList.add('over'); });
-conDropEl.addEventListener('dragleave',e=>{ if(!conDropEl.contains(e.relatedTarget)) conDropEl.classList.remove('over'); });
-conDropEl.addEventListener('drop',e=>{ e.preventDefault(); conDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
 
 // 사업자등록증 다중
 let bizImages=[],bizIdCtr=0;
@@ -614,6 +580,47 @@ function updateCaseBar(){
 updateCaseBar();
 
 // ── Excel ─────────────────────────────────────────────────────────────────
+// Mail file handlers
+document.getElementById('mailFile').addEventListener('change',e=>{ for(const f of e.target.files) addMailImage(f); });
+document.getElementById('mailFile').addEventListener('dragover',e=>{ document.getElementById('mailDrop').classList.add('over'); });
+document.getElementById('mailFile').addEventListener('dragleave',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
+document.getElementById('mailFile').addEventListener('drop',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
+const mailDropEl=document.getElementById('mailDrop');
+mailDropEl.addEventListener('dragover',e=>{ e.preventDefault(); mailDropEl.classList.add('over'); });
+mailDropEl.addEventListener('dragleave',e=>{ if(!mailDropEl.contains(e.relatedTarget)) mailDropEl.classList.remove('over'); });
+mailDropEl.addEventListener('drop',e=>{ e.preventDefault(); mailDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
+
+// Web/홈페이지 file handlers
+document.getElementById('webFile').addEventListener('change',e=>{ for(const f of e.target.files) addWebImage(f); });
+document.getElementById('webFile').addEventListener('dragover',e=>{ document.getElementById('webDrop').classList.add('over'); });
+document.getElementById('webFile').addEventListener('dragleave',e=>{ document.getElementById('webDrop').classList.remove('over'); });
+document.getElementById('webFile').addEventListener('drop',e=>{ document.getElementById('webDrop').classList.remove('over'); });
+const webDropEl=document.getElementById('webDrop');
+webDropEl.addEventListener('dragover',e=>{ e.preventDefault(); webDropEl.classList.add('over'); });
+webDropEl.addEventListener('dragleave',e=>{ if(!webDropEl.contains(e.relatedTarget)) webDropEl.classList.remove('over'); });
+webDropEl.addEventListener('drop',e=>{ e.preventDefault(); webDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
+
+// Biz file handlers
+document.getElementById('bizFile').addEventListener('change',e=>{ for(const f of e.target.files) addBizImage(f); });
+document.getElementById('bizFile').addEventListener('dragover',e=>{ document.getElementById('bizDrop').classList.add('over'); });
+document.getElementById('bizFile').addEventListener('dragleave',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
+document.getElementById('bizFile').addEventListener('drop',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
+const bizDropEl=document.getElementById('bizDrop');
+bizDropEl.addEventListener('dragover',e=>{ e.preventDefault(); bizDropEl.classList.add('over'); });
+bizDropEl.addEventListener('dragleave',e=>{ if(!bizDropEl.contains(e.relatedTarget)) bizDropEl.classList.remove('over'); });
+bizDropEl.addEventListener('drop',e=>{ e.preventDefault(); bizDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
+
+// Contract file handlers
+document.getElementById('conFile').addEventListener('change',e=>{ for(const f of e.target.files) addConImage(f); });
+document.getElementById('conFile').addEventListener('dragover',e=>{ document.getElementById('conDrop').classList.add('over'); });
+document.getElementById('conFile').addEventListener('dragleave',e=>{ document.getElementById('conDrop').classList.remove('over'); });
+document.getElementById('conFile').addEventListener('drop',e=>{ document.getElementById('conDrop').classList.remove('over'); });
+const conDropEl=document.getElementById('conDrop');
+conDropEl.addEventListener('dragover',e=>{ e.preventDefault(); conDropEl.classList.add('over'); });
+conDropEl.addEventListener('dragleave',e=>{ if(!conDropEl.contains(e.relatedTarget)) conDropEl.classList.remove('over'); });
+conDropEl.addEventListener('drop',e=>{ e.preventDefault(); conDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
+
+
 document.getElementById('xlsFile').addEventListener('change',e=>{ for(const f of e.target.files) addExcelFile(f); });
 // xlsDrop handlers defined below
 function handleAddFiles(input){ for(const f of input.files) addExcelFile(f); input.value=''; }
