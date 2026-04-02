@@ -253,7 +253,7 @@ table.mt tr.wr td{background:var(--warn-bg)}
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">✉️ 메일 캡처 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
         <div class="drop" id="mailDrop" style="padding:16px 12px">
-          <input type="file" id="mailFile" accept="image/*" multiple>
+          <input type="file" id="mailFile" accept="image/*,.pdf" multiple>
           <div class="drop-ic" style="font-size:20px">📧</div>
           <p style="font-size:11px"><strong>메일 캡처 추가</strong></p>
           <small>여러 거래처면 각각 추가</small>
@@ -268,7 +268,7 @@ table.mt tr.wr td{background:var(--warn-bg)}
       <div>
         <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">🌐 홈페이지 캡처 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
         <div class="drop" id="webDrop" style="padding:16px 12px">
-          <input type="file" id="webFile" accept="image/*" multiple>
+          <input type="file" id="webFile" accept="image/*,.pdf" multiple>
           <div class="drop-ic" style="font-size:20px">🖥</div>
           <p style="font-size:11px"><strong>홈페이지 캡처 추가</strong></p>
           <small>여러 플랫폼이면 각각 추가</small>
@@ -514,7 +514,6 @@ document.addEventListener('paste',e=>{
 function clearImg(){ imgB64=null; document.getElementById('imgPrev').classList.remove('show'); updateCaseBar(); }
 
 // 사업자등록증 다중
-let bizImages=[],bizIdCtr=0;
 function addBizImage(f){
   const id=++bizIdCtr;
   if(f.type==='application/pdf'){
@@ -582,6 +581,9 @@ updateCaseBar();
 // ── Excel ─────────────────────────────────────────────────────────────────
 // Mail file handlers
 document.getElementById('mailFile').addEventListener('change',e=>{ for(const f of e.target.files) addMailImage(f); });
+document.getElementById('mailFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('mailDrop').classList.add('over'); });
+document.getElementById('mailFile').addEventListener('dragleave',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
+document.getElementById('mailFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('mailDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
 document.getElementById('mailFile').addEventListener('dragover',e=>{ document.getElementById('mailDrop').classList.add('over'); });
 document.getElementById('mailFile').addEventListener('dragleave',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
 document.getElementById('mailFile').addEventListener('drop',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
@@ -592,6 +594,9 @@ mailDropEl.addEventListener('drop',e=>{ e.preventDefault(); mailDropEl.classList
 
 // Web/홈페이지 file handlers
 document.getElementById('webFile').addEventListener('change',e=>{ for(const f of e.target.files) addWebImage(f); });
+document.getElementById('webFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('webDrop').classList.add('over'); });
+document.getElementById('webFile').addEventListener('dragleave',e=>{ document.getElementById('webDrop').classList.remove('over'); });
+document.getElementById('webFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('webDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
 document.getElementById('webFile').addEventListener('dragover',e=>{ document.getElementById('webDrop').classList.add('over'); });
 document.getElementById('webFile').addEventListener('dragleave',e=>{ document.getElementById('webDrop').classList.remove('over'); });
 document.getElementById('webFile').addEventListener('drop',e=>{ document.getElementById('webDrop').classList.remove('over'); });
@@ -602,6 +607,9 @@ webDropEl.addEventListener('drop',e=>{ e.preventDefault(); webDropEl.classList.r
 
 // Biz file handlers
 document.getElementById('bizFile').addEventListener('change',e=>{ for(const f of e.target.files) addBizImage(f); });
+document.getElementById('bizFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('bizDrop').classList.add('over'); });
+document.getElementById('bizFile').addEventListener('dragleave',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
+document.getElementById('bizFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('bizDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
 document.getElementById('bizFile').addEventListener('dragover',e=>{ document.getElementById('bizDrop').classList.add('over'); });
 document.getElementById('bizFile').addEventListener('dragleave',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
 document.getElementById('bizFile').addEventListener('drop',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
@@ -612,6 +620,9 @@ bizDropEl.addEventListener('drop',e=>{ e.preventDefault(); bizDropEl.classList.r
 
 // Contract file handlers
 document.getElementById('conFile').addEventListener('change',e=>{ for(const f of e.target.files) addConImage(f); });
+document.getElementById('conFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('conDrop').classList.add('over'); });
+document.getElementById('conFile').addEventListener('dragleave',e=>{ document.getElementById('conDrop').classList.remove('over'); });
+document.getElementById('conFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('conDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
 document.getElementById('conFile').addEventListener('dragover',e=>{ document.getElementById('conDrop').classList.add('over'); });
 document.getElementById('conFile').addEventListener('dragleave',e=>{ document.getElementById('conDrop').classList.remove('over'); });
 document.getElementById('conFile').addEventListener('drop',e=>{ document.getElementById('conDrop').classList.remove('over'); });
