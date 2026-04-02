@@ -509,31 +509,43 @@ function clearImg(){ imgB64=null; document.getElementById('imgPrev').classList.r
 
 // Mail file handlers
 document.getElementById('mailFile').addEventListener('change',e=>{ for(const f of e.target.files) addMailImage(f); });
+document.getElementById('mailFile').addEventListener('dragover',e=>{ document.getElementById('mailDrop').classList.add('over'); });
+document.getElementById('mailFile').addEventListener('dragleave',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
+document.getElementById('mailFile').addEventListener('drop',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
 const mailDropEl=document.getElementById('mailDrop');
-mailDropEl.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); mailDropEl.classList.add('over'); });
-mailDropEl.addEventListener('dragleave',()=>mailDropEl.classList.remove('over'));
-mailDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); mailDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
+mailDropEl.addEventListener('dragover',e=>{ e.preventDefault(); mailDropEl.classList.add('over'); });
+mailDropEl.addEventListener('dragleave',e=>{ if(!mailDropEl.contains(e.relatedTarget)) mailDropEl.classList.remove('over'); });
+mailDropEl.addEventListener('drop',e=>{ e.preventDefault(); mailDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
 
 // Web/홈페이지 file handlers
 document.getElementById('webFile').addEventListener('change',e=>{ for(const f of e.target.files) addWebImage(f); });
+document.getElementById('webFile').addEventListener('dragover',e=>{ document.getElementById('webDrop').classList.add('over'); });
+document.getElementById('webFile').addEventListener('dragleave',e=>{ document.getElementById('webDrop').classList.remove('over'); });
+document.getElementById('webFile').addEventListener('drop',e=>{ document.getElementById('webDrop').classList.remove('over'); });
 const webDropEl=document.getElementById('webDrop');
-webDropEl.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); webDropEl.classList.add('over'); });
-webDropEl.addEventListener('dragleave',()=>webDropEl.classList.remove('over'));
-webDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); webDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
+webDropEl.addEventListener('dragover',e=>{ e.preventDefault(); webDropEl.classList.add('over'); });
+webDropEl.addEventListener('dragleave',e=>{ if(!webDropEl.contains(e.relatedTarget)) webDropEl.classList.remove('over'); });
+webDropEl.addEventListener('drop',e=>{ e.preventDefault(); webDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
 
 // Biz file handlers
 document.getElementById('bizFile').addEventListener('change',e=>{ for(const f of e.target.files) addBizImage(f); });
+document.getElementById('bizFile').addEventListener('dragover',e=>{ document.getElementById('bizDrop').classList.add('over'); });
+document.getElementById('bizFile').addEventListener('dragleave',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
+document.getElementById('bizFile').addEventListener('drop',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
 const bizDropEl=document.getElementById('bizDrop');
-bizDropEl.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); bizDropEl.classList.add('over'); });
-bizDropEl.addEventListener('dragleave',()=>bizDropEl.classList.remove('over'));
-bizDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); bizDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
+bizDropEl.addEventListener('dragover',e=>{ e.preventDefault(); bizDropEl.classList.add('over'); });
+bizDropEl.addEventListener('dragleave',e=>{ if(!bizDropEl.contains(e.relatedTarget)) bizDropEl.classList.remove('over'); });
+bizDropEl.addEventListener('drop',e=>{ e.preventDefault(); bizDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
 
 // Contract file handlers
 document.getElementById('conFile').addEventListener('change',e=>{ for(const f of e.target.files) addConImage(f); });
+document.getElementById('conFile').addEventListener('dragover',e=>{ document.getElementById('conDrop').classList.add('over'); });
+document.getElementById('conFile').addEventListener('dragleave',e=>{ document.getElementById('conDrop').classList.remove('over'); });
+document.getElementById('conFile').addEventListener('drop',e=>{ document.getElementById('conDrop').classList.remove('over'); });
 const conDropEl=document.getElementById('conDrop');
-conDropEl.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); conDropEl.classList.add('over'); });
-conDropEl.addEventListener('dragleave',()=>conDropEl.classList.remove('over'));
-conDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); conDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
+conDropEl.addEventListener('dragover',e=>{ e.preventDefault(); conDropEl.classList.add('over'); });
+conDropEl.addEventListener('dragleave',e=>{ if(!conDropEl.contains(e.relatedTarget)) conDropEl.classList.remove('over'); });
+conDropEl.addEventListener('drop',e=>{ e.preventDefault(); conDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
 
 // 사업자등록증 다중
 let bizImages=[],bizIdCtr=0;
@@ -569,6 +581,22 @@ function addImgCard(listId, btnId, id, name, icon, removeFn){
   document.getElementById(btnId).style.display='flex';
 }
 
+function detectCase(){
+  const hasMail=mailImages.length>0, hasWeb=webImages.length>0;
+  if(hasMail && hasWeb) return 3;
+  if(hasMail) return 1;
+  if(hasWeb)  return 2;
+  return 4;
+}
+
+function detectCase(){
+  const hasMail=mailImages.length>0, hasWeb=webImages.length>0;
+  if(hasMail && hasWeb) return 3;
+  if(hasMail) return 1;
+  if(hasWeb)  return 2;
+  return 4;
+}
+
 function updateCaseBar(){
   const c=detectCase();
   const bar=document.getElementById('caseBar');
@@ -587,10 +615,7 @@ updateCaseBar();
 
 // ── Excel ─────────────────────────────────────────────────────────────────
 document.getElementById('xlsFile').addEventListener('change',e=>{ for(const f of e.target.files) addExcelFile(f); });
-const xlsDropEl=document.getElementById('xlsDrop');
-xlsDropEl.addEventListener('dragover',e=>{ e.preventDefault(); xlsDropEl.classList.add('over'); });
-xlsDropEl.addEventListener('dragleave',()=>xlsDropEl.classList.remove('over'));
-xlsDropEl.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); xlsDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) if(f.name.match(/\.xlsx?$/i)) addExcelFile(f); });
+// xlsDrop handlers defined below
 function handleAddFiles(input){ for(const f of input.files) addExcelFile(f); input.value=''; }
 
 function addExcelFile(file){
@@ -630,9 +655,9 @@ function updateTotalBar(){
 
 function setupDrop(id,handler){
   const el=document.getElementById(id);
-  el.addEventListener('dragover',e=>{ e.preventDefault(); el.classList.add('over'); });
+  el.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('over'); });
   el.addEventListener('dragleave',()=>el.classList.remove('over'));
-  el.addEventListener('drop',e=>{ e.preventDefault(); el.classList.remove('over'); if(e.dataTransfer.files[0]) handler(e.dataTransfer.files[0]); });
+  el.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('over'); if(e.dataTransfer.files[0]) handler(e.dataTransfer.files[0]); });
 }
 
 // ── Excel reading ─────────────────────────────────────────────────────────
