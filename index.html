@@ -2,7 +2,6 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.anthropic.com https://cdnjs.cloudflare.com; img-src * data: blob:; connect-src https://api.anthropic.com;">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>기안서 검증기 v7 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -609,10 +608,9 @@ function getExcelMeta(wb){
 
 // ── AI calls ──────────────────────────────────────────────────────────────
 async function aiCall(b64, mime, prompt){
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
+  const res=await fetch('https://corsproxy.io/?url=https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-iab':'true'},
-      mode:'cors',
     body:JSON.stringify({ model:'claude-opus-4-5', max_tokens:2000,
       messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:b64}},{type:'text',text:prompt}]}]
     })
