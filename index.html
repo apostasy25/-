@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v7.3 — 테라핀 정산팀</title>
+<title>기안서 검증기 v7.6 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -82,7 +82,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v7.3 (Date Fixed)</span></h1>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v7.6 (매절/단순 리스트 지원)</span></h1>
     <p>메일 · 홈페이지 · 엑셀 · 서류 — 통합 검증</p>
   </div>
 </div>
@@ -116,9 +116,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀 파일 (다중 선택 가능)</h2></div>
   <div class="cb">
     <div class="drop" id="xlsDrop">
-      <input type="file" id="xlsInput" accept=".xlsx,.xls" multiple style="display:none">
+      <input type="file" id="xlsInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
       <div class="drop-ic">📊</div>
-      <p>엑셀 파일 드래그 앤 드롭 또는 <strong>클릭하여 다중 선택</strong></p>
+      <p>엑셀/CSV 드래그 앤 드롭 또는 <strong>클릭하여 다중 선택</strong></p>
     </div>
     <div id="fileList" class="file-list"></div>
   </div>
@@ -179,7 +179,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 <div class="card rc" id="rc">
   <div id="rsum" style="padding:16px; border-bottom:1px solid var(--border)"></div>
-  <div id="r_result" style="padding:16px"></div>
+  <div id="r_mail"></div>
+  <div id="r_web"></div>
+  <div id="r_docs"></div>
+  <div id="r_excel"></div>
+  <div id="r_internal"></div>
+  <div style="text-align:center"><button style="margin:10px; padding:5px 15px; border:1px solid var(--border); border-radius:5px; background:none; cursor:pointer;" onclick="location.reload()">↩ 초기화</button></div>
 </div>
 
 <script>
@@ -195,14 +200,12 @@ function saveKey(){ apiKey=document.getElementById('apiKey').value.trim(); local
 function normDate(v) {
   if (v === null || v === undefined || v === '') return null;
   
-  // 1) 엑셀 일련번호 (가장 확실하게 타임존 오차를 피하는 방법)
   if (typeof v === 'number') {
     if (v < 10000) return null;
     const d = new Date((v - 25569) * 86400 * 1000);
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
   }
 
-  // 2) Date 객체 (KST 보정)
   if (v instanceof Date) {
     const kst = new Date(v.getTime() + 9 * 60 * 60 * 1000);
     return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
@@ -210,25 +213,26 @@ function normDate(v) {
   
   let s = String(v).trim();
   
-  // 3) SheetJS가 내뱉는 ISO 문자열 (예: "2026-03-30T15:00:00.000Z") 방어
   if (s.includes('T') && s.includes('Z')) {
     const d = new Date(s);
     const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
     return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
   }
 
-  // 4) 한글 포맷 (2026년 3월)
   let m = s.match(/(\d{4})\s*년\s*(\d{1,2})\s*월(?:\s*(\d{1,2})\s*일)?/);
   if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||'01').padStart(2,'0')}`;
 
-  // 5) YYYY-MM-DD
   m = s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
   if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
   
   return null;
 }
+function toYYYYMM(d){ if(!d) return null; const m=d.match(/(\d{4})-(\d{2})/); return m?m[1]+m[2]:null; }
+function fmtAmt(n){ if(n===null||n===undefined) return '—'; return Number(n).toLocaleString('ko-KR')+'원'; }
+function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=parseInt(String(v).replace(/[원,\s]/g,''),10); return isNaN(n)?null:n; }
 
-// --- 2. 드래그 앤 드롭 및 다중 파일 업로드 (기존 로직 유지) ---
+
+// --- 2. 드래그 앤 드롭 및 다중 파일 업로드 ---
 function initDrop(id, inputId, callback) {
   const zone = document.getElementById(id);
   const input = document.getElementById(inputId);
@@ -258,7 +262,7 @@ initDrop('xlsDrop', 'xlsInput', files => {
     const r = new FileReader();
     r.onload = ev => {
       const wb = XLSX.read(ev.target.result, {type:'array', cellDates:true});
-      excelFiles.push({name: f.name, wb: wb});
+      excelFiles.push({name: f.name, wb: wb, total: getExcelTotal(wb)});
       renderXlsList();
     };
     r.readAsArrayBuffer(f);
@@ -267,7 +271,7 @@ initDrop('xlsDrop', 'xlsInput', files => {
 
 function renderXlsList() {
   document.getElementById('fileList').innerHTML = excelFiles.map((f, i) => 
-    `<div class="file-card">📊 ${f.name} <span class="btn-remove" onclick="excelFiles.splice(${i},1);renderXlsList()">✕</span></div>`
+    `<div class="file-card">📊 ${f.name} <strong style="color:var(--ok); margin-left:10px">${fmtAmt(f.total)}</strong> <span class="btn-remove" onclick="event.stopPropagation(); excelFiles.splice(${i},1);renderXlsList()">✕</span></div>`
   ).join('');
 }
 
@@ -276,51 +280,106 @@ initDrop('webDrop', 'webInput', fs => { webFiles.push(...fs); document.getElemen
 initDrop('bizDrop', 'bizInput', fs => { bizFiles.push(...fs); document.getElementById('bizCount').innerText = bizFiles.length+'개 완료'; });
 initDrop('conDrop', 'conInput', fs => { conFiles.push(...fs); document.getElementById('conCount').innerText = conFiles.length+'개 완료'; });
 
-// --- 3. 엑셀 데이터 스캔 ---
+
+// --- 3. 엑셀 데이터 스캔 (매절 지원 추가) ---
+function getExcelTotal(wb){
+  if(wb.SheetNames.includes('정산요약')){
+    const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',UTC:true});
+    const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
+    return parseAmt(map['최종 입금액 (세후)']||map['정산총액']);
+  }
+  if(wb.SheetNames.includes('요약')){
+    const ws=wb.Sheets['요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
+    let amtCol=-1;
+    for(const row of rows.slice(0,8)){ for(let i=0;i<(row.length||0);i++){ if(row[i]&&String(row[i]).trim()==='매출액'){ amtCol=i; break; } } if(amtCol>=0) break; }
+    for(const row of rows){ if(row[1]&&String(row[1])==='총합계'){ if(amtCol>=0) return parseAmt(row[amtCol]); for(let i=14;i>=8;i--){ const v=parseAmt(row[i]); if(v!==null&&v>0) return v; } } }
+  }
+  if(wb.SheetNames.includes('정산용')){
+    const ws=wb.Sheets['정산용']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
+    for(const row of rows) if(row[1]&&String(row[1])==='총합계') return parseAmt(row[19]);
+    for(let i=rows.length-1;i>=0;i--) if(rows[i][19]!==null&&rows[i][19]!==undefined) return parseAmt(rows[i][19]);
+  }
+  
+  // 단일 리스트 / 매절 CSV Fallback (금액이 포함된 열을 찾아 모두 합산)
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, UTC:true});
+  let amtColIndex = -1;
+  let listTotal = 0;
+  
+  for(let r=0; r<rows.length; r++) {
+    const row = rows[r] || [];
+    if(amtColIndex === -1) {
+      for(let c=0; c<row.length; c++) {
+        if(String(row[c]).replace(/\s/g, '').includes('금액')) {
+          amtColIndex = c; break;
+        }
+      }
+    } else {
+      const val = parseAmt(row[amtColIndex]);
+      if(val) listTotal += val;
+    }
+  }
+  return listTotal > 0 ? listTotal : null;
+}
+
 function getExcelMeta(wb) {
   let meta = { 작성일자: null, 서비스월: null };
+  if(!wb || !wb.SheetNames.length) return meta;
   const ws = wb.Sheets[wb.SheetNames[0]];
-  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, UTC: true });
 
-  let headerRowIdx = -1;
-  let colSrv = -1, colJung = -1;
-
-  for (let r = 0; r < Math.min(data.length, 20); r++) {
+  for (let r = 0; r < Math.min(data.length, 50); r++) {
     const row = data[r] || [];
+    if (row[30] && !meta.작성일자) meta.작성일자 = normDate(row[30]);
+    if (row[29] && !meta.서비스월) meta.서비스월 = normDate(row[29]);
+    
     for (let c = 0; c < row.length; c++) {
-      const val = String(row[c] || "").replace(/\s/g, '');
-      if (val === '서비스월') { colSrv = c; headerRowIdx = r; }
-      if (val === '정산월') { colJung = c; headerRowIdx = r; }
-    }
-    if (colSrv !== -1 || colJung !== -1) break;
-  }
-
-  if (headerRowIdx !== -1 && data[headerRowIdx + 1]) {
-    if (colJung !== -1) meta.작성일자 = normDate(data[headerRowIdx + 1][colJung]);
-    if (colSrv !== -1) meta.서비스월 = normDate(data[headerRowIdx + 1][colSrv]);
-  }
-
-  if (!meta.작성일자 || !meta.서비스월) {
-    for (let r = 1; r < Math.min(data.length, 30); r++) {
-      const row = data[r] || [];
-      if (!meta.작성일자 && row[30]) {
-         const d = normDate(row[30]);
-         if (d && d.match(/^\d{4}-\d{2}/)) meta.작성일자 = d;
-      }
-      if (!meta.서비스월 && row[29]) {
-         const d = normDate(row[29]);
-         if (d && d.match(/^\d{4}-\d{2}/)) meta.서비스월 = d;
-      }
+      const v = String(row[c]||"");
+      if (v.includes("정산월") && !meta.작성일자) meta.작성일자 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
+      if (v.includes("서비스월") && !meta.서비스월) meta.서비스월 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
     }
   }
   return meta;
 }
 
-// --- 4. AI 호출 및 대사 실행 ---
+// --- 4. AI 프롬프트 정의 ---
+const PROMPT_기안서=`이 이미지는 한국 그룹웨어의 기안서입니다. 아래 항목을 읽고 JSON만 응답하세요.
+{
+  "제목": "제 목 필드 전체 텍스트",
+  "본문_계산서작성일자": "YYYY-MM-DD",
+  "본문_마감기한": "YYYY-MM-DD",
+  "본문_마감시간": "HH:MM (없으면 null)",
+  "본문_서비스월": "YYYY-MM",
+  "본문_판매분월": "YYYY-MM",
+  "본문_정산금액들": [{"구분":"설명","금액":숫자}],
+  "세금계산서_rows": [{"작성일자":"YYYY-MM-DD","공급가액":숫자,"합계":숫자}],
+  "입금예정일": "YYYY-MM-DD",
+  "발신이메일": "이메일주소 (없으면 null)",
+  "품목명": "품목 내용 전체"
+}`;
+
+const PROMPT_계약서=`이 이미지는 계약서 또는 계약서 일부(부속합의서 등)입니다. 아래 항목을 읽고 JSON만 응답하세요.
+{
+  "RS비율": 숫자만 (예: 70은 70%를 의미, 없으면 null),
+  "총계약금액": 숫자 (매절, 총계, 콘텐츠 제공료 총액 등 명시된 총 금액, 없으면 null),
+  "입금조건": "입금/지급 관련 조건 텍스트 전체 (예: 계약체결 후 15영업일, 익월 말일, 매월 25일 등, 없으면 null)",
+  "플랫폼명": "계약 플랫폼명 (없으면 null)"
+}
+값을 읽을 수 없으면 null`;
+
+const PROMPT_메일=`이 이미지는 거래처에서 온 계산서/세금계산서 발행 요청 메일입니다. 아래 항목을 읽고 JSON만 응답하세요.
+{
+  "작성일자": "YYYY-MM-DD (발행 일자, 작성 일자)",
+  "마감일": "YYYY-MM-DD",
+  "발행이메일": "계산서 발행 수신 이메일",
+  "입금예정일": "YYYY-MM-DD (없으면 null)"
+}`;
+
+// --- 5. AI 호출 및 대사 실행 ---
 async function aiCall(file, prompt) {
   if(!file) return null;
-  const b64 = await new Promise(res => {
-    const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file);
+  const b64 = await new Promise((res, rej) => {
+    const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(file);
   });
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -332,9 +391,20 @@ async function aiCall(file, prompt) {
     })
   });
   const d = await res.json();
+  if(!d.content) return null;
   const txt = d.content[0].text;
   const match = txt.match(/\{[\s\S]*\}/);
   return match ? JSON.parse(match[0]) : null;
+}
+
+function mkCi(status,label,detail,sub,sv1,sv2,lbl1,lbl2){
+  const icons={pass:'✓',fail:'✕',warn:'!',info:'i',skip:'-'};
+  let diff='';
+  if(sv1!==undefined||sv2!==undefined){
+    diff=`<div class="diff"><div class="dr"><span class="dtag src1">${lbl1||'기안서'}</span><span class="dval">${sv1||'—'}</span></div><div class="dr"><span class="dtag src2">${lbl2||'대사 자료'}</span><span class="dval">${sv2||'—'}</span></div></div>`;
+  }
+  const subHtml=sub?`<div class="cl-sub">${sub}</div>`:'';
+  return `<div class="ci ${status}"><div class="cs">${icons[status]||'?'}</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det">${detail}</div>${subHtml}${diff}</div></div>`;
 }
 
 async function run() {
@@ -344,34 +414,84 @@ async function run() {
   
   try {
     setStep(1, 'active');
-    const 기안 = await aiCall(document.getElementById('imgInput').files[0], "기안서에서 '작성일자'(정산월), '서비스월'을 YYYY-MM-DD로 추출.");
+    const 기안 = await aiCall(document.getElementById('imgInput').files[0], PROMPT_기안서);
     setStep(1, 'done');
+
+    setStep(2, mailFiles.length ? 'active' : 'skip');
+    const 메일 = mailFiles.length ? await aiCall(mailFiles[0], PROMPT_메일) : null;
+    if(메일) setStep(2, 'done');
 
     setStep(4, 'active');
     const 엑셀 = getExcelMeta(excelFiles[0].wb);
     setStep(4, 'done');
 
-    const imgDate = normDate(기안?.작성일자 || 기안?.본문_계산서작성일자);
+    setStep(5, conFiles.length ? 'active' : 'skip');
+    const 계약서 = conFiles.length ? await aiCall(conFiles[0], PROMPT_계약서) : null;
+    if(계약서) setStep(5, 'done');
+
+    // 기안서 내부 데이터 정리
+    const taxRows = 기안?.세금계산서_rows || [];
+    const imgTotal = taxRows.reduce((s,r)=>s+(parseAmt(r.공급가액)||0), 0);
+    const xlTotal = excelFiles.reduce((s,f)=>s+(f.total||0), 0);
+    const imgDate = normDate(기안?.본문_계산서작성일자 || 기안?.작성일자);
     const xlDate = 엑셀.작성일자;
     const matchDate = (imgDate === xlDate);
-
     const imgSrv = (기안?.본문_서비스월 || 기안?.서비스월 || "").substring(0,7);
     const xlSrv = (엑셀.서비스월 || "").substring(0,7);
-    const matchSrv = (imgSrv === xlSrv);
-
-    let h = `<div class="chk-group"><div class="gt">엑셀 vs 기안서 비교 결과</div>`;
-    h += `<div class="ci ${matchDate?'pass':'fail'}"><div class="cs">${matchDate?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">작성일자 (정산월)</div><div class="cl-det">기안:${imgDate || '미인식'} / 엑셀:${xlDate || '미인식'}</div></div></div>`;
-    h += `<div class="ci ${matchSrv?'pass':'fail'}"><div class="cs">${matchSrv?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">서비스월</div><div class="cl-det">기안:${imgSrv || '미인식'} / 엑셀:${xlSrv || '미인식'}</div></div></div>`;
-    h += `</div>`;
     
-    document.getElementById('rsum').innerHTML = `<h3>검증 완료</h3>`;
-    document.getElementById('r_result').innerHTML = h;
+    let h = `<div class="chk-group"><div class="gt">엑셀 vs 기안서 비교 결과</div>`;
+    
+    // 금액 비교
+    if (Math.abs(imgTotal - xlTotal) === 0) {
+      h += mkCi('pass', '금액 합계', `${fmtAmt(imgTotal)} — 일치 ✓`);
+    } else {
+      h += mkCi('fail', '금액 합계', '금액 불일치 ⚠', null, fmtAmt(imgTotal), fmtAmt(xlTotal), '기안서', '엑셀');
+    }
+
+    // 날짜/서비스월 비교 (데이터가 없을 시 통과 처리)
+    if(xlDate) h += `<div class="ci ${matchDate?'pass':'fail'}"><div class="cs">${matchDate?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">작성일자 (정산월)</div><div class="cl-det">기안:${imgDate || '미인식'} / 엑셀:${xlDate}</div></div></div>`;
+    else h += mkCi('info', '작성일자', '엑셀에서 정산월을 찾을 수 없습니다. (매절 리스트일 경우 정상)');
+    
+    if(xlSrv) h += `<div class="ci ${imgSrv === xlSrv ?'pass':'fail'}"><div class="cs">${imgSrv === xlSrv?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">서비스월</div><div class="cl-det">기안:${imgSrv || '미인식'} / 엑셀:${xlSrv}</div></div></div>`;
+    
+    h += `</div>`;
+
+    // 메일 대사
+    let mh = '';
+    if(메일) {
+      mh += `<div class="chk-group"><div class="gt">메일 vs 기안서 비교 결과</div>`;
+      mh += cmpDate('계산서 작성일자', imgDate, normDate(메일.작성일자), '기안서', '메일');
+      mh += `</div>`;
+      document.getElementById('r_mail').innerHTML = mh;
+    }
+
+    // 서류 (계약서) 대사
+    let ch = '';
+    if(계약서) {
+      ch += `<div class="chk-group"><div class="gt">계약서 대사 결과</div>`;
+      if(계약서.총계약금액) {
+         const conAmt = parseInt(계약서.총계약금액);
+         if(conAmt === imgTotal) ch += mkCi('pass','계약 총액 (매절)',`${fmtAmt(conAmt)} — 기안서와 일치 ✓`);
+         else ch += mkCi('fail','계약 총액 (매절)','계약서 금액과 기안서 불일치 ⚠',null, fmtAmt(imgTotal), fmtAmt(conAmt),'기안서','계약서');
+      }
+      ch += `</div>`;
+      document.getElementById('r_docs').innerHTML = ch;
+    }
+
+    document.getElementById('rsum').innerHTML = `<h3>✅ 검증 완료</h3>`;
+    document.getElementById('r_excel').innerHTML = h;
     setStep(6, 'done');
     document.getElementById('rc').classList.add('show');
   } catch(e) { alert('오류: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = '🔍 AI 검증 시작'; }
 }
 
 function setStep(n,s){ document.getElementById('ps'+n).className='ps '+s; }
+function cmpDate(label, a, b, lbl1, lbl2){
+  if(!a&&!b) return '';
+  if(!b) return mkCi('info',label,`기안서: ${a}`, '대사 자료에서 확인 불가');
+  if(a===b) return mkCi('pass',label,`${a} — 일치 ✓`);
+  return mkCi('fail',label,'날짜 불일치 ⚠',null,a,b,lbl1,lbl2);
+}
 </script>
 </body>
 </html>
