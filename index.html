@@ -1,530 +1,255 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v7.2 — 테라핀 정산팀</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-if(typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-</script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-:root {
-  --navy:#1a2744;--navy-l:#2a3a60;--accent:#3b6fd4;--accent-l:#e8edf8;
-  --ok:#1a7f4b;--ok-bg:#eafaf1;--err:#c0392b;--err-bg:#fdf0ee;
-  --warn:#b7700a;--warn-bg:#fef9ec;--border:#d8dde8;
-  --text:#1a2744;--sub:#6b7a99;--bg:#f4f6fb;--white:#fff;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding:28px 16px 80px}
-.hd{max-width:760px;margin:0 auto 20px;display:flex;align-items:center;gap:13px}
-.logo{width:42px;height:42px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.logo svg{width:21px;height:21px}
-.hd-txt h1{font-size:17px;font-weight:700;color:var(--navy)}
-.hd-txt p{font-size:11px;color:var(--sub);margin-top:2px}
-.setup-card{background:var(--white);border:1.5px solid #f0c96a;border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
-.setup-hd{background:#fffbee;padding:11px 17px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #f0e4bb}
-.setup-hd h2{font-size:12px;font-weight:600;color:#7a5800}
-.setup-bd{padding:14px 17px}
-.setup-bd p{font-size:11px;color:var(--sub);line-height:1.7;margin-bottom:9px}
-.setup-bd a{color:var(--accent)}
-.api-row{display:flex;gap:7px}
-.api-row input{flex:1;height:36px;border:1.5px solid var(--border);border-radius:7px;padding:0 11px;font-size:12px;font-family:monospace;outline:none;background:#fafbfd}
-.api-row input:focus{border-color:var(--accent)}
-.btn-save{height:36px;padding:0 14px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;cursor:pointer}
-.key-ok{font-size:11px;color:var(--ok);margin-top:5px;display:none}
-.key-ok.show{display:block}
-.card{background:var(--white);border:1px solid var(--border);border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
-.ch{background:var(--navy);padding:12px 18px;display:flex;align-items:center;gap:9px}
-.sb{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
-.ch h2{color:#fff;font-size:13px;font-weight:600}
-.ch .opt{background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-size:10px;padding:2px 8px;border-radius:10px;margin-left:4px}
-.ch .sub{color:rgba(255,255,255,.55);font-size:11px;margin-left:3px}
-.cb{padding:16px 18px}
-.case-bar{max-width:760px;margin:0 auto 13px;padding:10px 15px;border-radius:9px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;transition:all .3s}
-.case-bar.case0{background:#f0f2f7;color:var(--sub);border:1px solid var(--border)}
-.case-bar.case1{background:#e8f5ee;color:var(--ok);border:1px solid #b2e0cc}
-.case-bar.case2{background:#e8f0fd;color:#1d4ed8;border:1px solid #c5d6f5}
-.case-bar.case3{background:#fff8e6;color:var(--warn);border:1px solid #fce4b0}
-.case-bar.case4{background:var(--ok-bg);color:var(--ok);border:1px solid #b2e0cc}
-.drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;transition:all .15s;background:#fafbfd;position:relative}
-.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-l)}
-.drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.drop-ic{font-size:24px;margin-bottom:5px}
-.drop p{font-size:12px;color:var(--sub)}
-.drop p strong{color:var(--accent)}
-.drop small{font-size:11px;color:#a0aabf;display:block;margin-top:3px}
-.img-prev{display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
-.img-prev.show{display:block}
-.img-prev img{width:100%;max-height:240px;object-fit:contain;background:#f0f2f7;display:block}
-.img-prev-bar{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--accent-l);font-size:11px}
-.img-prev-bar .name{color:var(--navy);font-weight:600}
-.btn-clear{background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;font-family:'Noto Sans KR',sans-serif;color:var(--sub);cursor:pointer}
-.btn-clear:hover{border-color:var(--err);color:var(--err)}
-.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:600px){.opt-grid{grid-template-columns:1fr}}
-.file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.file-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:9px}
-.xl-ic{width:28px;height:28px;background:#217346;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
-.fc-info{flex:1;min-width:0}
-.fc-name{font-size:11px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fc-meta{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap}
-.fc-amt{font-size:11px;color:var(--ok);font-weight:600}
-.fc-amt.loading{color:var(--sub)}
-.fc-amt.error{color:var(--err)}
-.type-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px}
-.type-rs{background:#dbeafe;color:#1d4ed8}
-.type-mg{background:#fce7f3;color:#9d174d}
-.btn-remove{width:22px;height:22px;background:#f0f2f7;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sub)}
-.btn-remove:hover{background:var(--err-bg);color:var(--err)}
-.btn-add-file{display:flex;align-items:center;gap:7px;width:100%;height:36px;background:#f7f9fc;border:1.5px dashed var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;color:var(--accent);justify-content:center;margin-top:8px;position:relative}
-.btn-add-file:hover{background:var(--accent-l);border-color:var(--accent)}
-.btn-add-file input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.total-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;background:var(--navy);border-radius:8px;margin-top:10px}
-.total-bar .tbl{font-size:11px;color:rgba(255,255,255,.7);font-weight:600}
-.total-bar .tbv{font-size:13px;color:#fff;font-weight:700}
-.btn-v{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;max-width:760px;margin:7px auto;height:52px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:background .15s}
-.btn-v:hover{background:var(--navy-l)}
-.btn-v:disabled{background:#c0c8d8;cursor:not-allowed}
-.prog{max-width:760px;margin:0 auto 13px;display:none}
-.prog.show{display:block}
-.prog-steps{display:flex;gap:5px}
-.ps{flex:1;padding:7px 6px;border-radius:7px;font-size:10px;font-weight:600;text-align:center;border:1.5px solid var(--border);color:var(--sub);background:#fff;transition:all .3s}
-.ps.active{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
-.ps.done{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
-.ps.skip{border-color:var(--border);color:#c0c8d8;background:#f7f9fc}
-.ps.error{border-color:var(--err);color:var(--err);background:var(--err-bg)}
-.rc{display:none}
-.rc.show{display:block}
-.r-sum{padding:16px 18px;display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--border)}
-.ri{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.ri.ok{background:var(--ok-bg)}
-.ri.fail{background:var(--err-bg)}
-.rt h3{font-size:15px;font-weight:700}
-.rt h3.ok{color:var(--ok)}
-.rt h3.fail{color:var(--err)}
-.rt p{font-size:11px;color:var(--sub);margin-top:2px}
-.chk-group{padding:13px 18px;border-bottom:1px solid var(--border)}
-.chk-group:last-child{border-bottom:none}
-.gt{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:9px;letter-spacing:.5px}
-.cl{display:flex;flex-direction:column;gap:7px}
-.ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent}
-.ci.pass{background:var(--ok-bg);border-color:#b2e0cc}
-.ci.fail{background:var(--err-bg);border-color:#f5c0bb}
-.ci.warn{background:var(--warn-bg);border-color:#fce4b0}
-.ci.info{background:var(--accent-l);border-color:#c5d6f5}
-.ci.skip{background:#f7f9fc;border-color:var(--border)}
-.cs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px;font-weight:700}
-.ci.pass .cs{background:var(--ok);color:#fff}
-.ci.fail .cs{background:var(--err);color:#fff}
-.ci.warn .cs{background:var(--warn);color:#fff}
-.ci.info .cs{background:var(--accent);color:#fff}
-.ci.skip .cs{background:#c0c8d8;color:#fff}
-.cc{flex:1}
-.cl-lbl{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:2px}
-.cl-det{font-size:12px;font-weight:500;color:var(--text)}
-.cl-sub{font-size:11px;color:var(--sub);margin-top:2px}
-.diff{margin-top:5px;display:flex;flex-direction:column;gap:3px}
-.dr{display:flex;align-items:center;gap:6px}
-.dtag{font-size:9px;font-weight:700;padding:1px 7px;border-radius:3px;min-width:56px;text-align:center}
-.dtag.src1{background:#fde8e8;color:#c0392b}
-.dtag.src2{background:#e3f5ec;color:#1a7f4b}
-.dtag.src3{background:#fce7f3;color:#9d174d}
-.dval{font-size:11px;color:var(--text)}
-.mt-wrap{padding:13px 18px;border-bottom:1px solid var(--border)}
-.mt-title{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:8px;letter-spacing:.5px}
-table.mt{width:100%;border-collapse:collapse;font-size:11px}
-table.mt th{background:var(--navy);color:#fff;padding:6px 9px;text-align:left;font-weight:600}
-table.mt td{padding:7px 9px;border-bottom:1px solid var(--border);vertical-align:middle}
-table.mt tr:last-child td{border-bottom:none}
-table.mt tr.pr td{background:var(--ok-bg)}
-table.mt tr.fr td{background:var(--err-bg)}
-table.mt tr.wr td{background:var(--warn-bg)}
-.stag{display:inline-flex;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px}
-.stag.pass{background:var(--ok);color:#fff}
-.stag.fail{background:var(--err);color:#fff}
-.stag.warn{background:var(--warn);color:#fff}
-.tag-mg{background:#fce7f3;color:#9d174d;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:700;display:inline-block}
-.tag-tax{background:#dbeafe;color:#1d4ed8;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:700;display:inline-block}
-.tri-compare{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
-.tri-box{background:#f7f9fc;border:1px solid var(--border);border-radius:7px;padding:8px 10px;text-align:center}
-.tri-box .tb-lbl{font-size:9px;font-weight:700;color:var(--sub);margin-bottom:4px}
-.tri-box .tb-val{font-size:13px;font-weight:700;color:var(--navy)}
-.tri-box.highlight{border-color:var(--accent);background:var(--accent-l)}
-.tri-box .tb-note{font-size:9px;color:var(--warn);margin-top:2px}
-.btn-r{display:block;margin:3px auto 18px;background:none;border:1.5px solid var(--border);border-radius:7px;padding:8px 20px;font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--sub);cursor:pointer}
-.btn-r:hover{border-color:var(--accent);color:var(--accent)}
-.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-.kbd{display:inline-flex;background:var(--navy);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기안서 검증기 v7.2 — 테라핀 정산팀</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        if(typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+        :root {
+            --navy:#1a2744;--navy-l:#2a3a60;--accent:#3b6fd4;--accent-l:#e8edf8;
+            --ok:#1a7f4b;--ok-bg:#eafaf1;--err:#c0392b;--err-bg:#fdf0ee;
+            --warn:#b7700a;--warn-bg:#fef9ec;--border:#d8dde8;
+            --text:#1a2744;--sub:#6b7a99;--bg:#f4f6fb;--white:#fff;
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding:28px 16px 80px}
+        .hd{max-width:760px;margin:0 auto 20px;display:flex;align-items:center;gap:13px}
+        .logo{width:42px;height:42px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .logo svg{width:21px;height:21px}
+        .hd-txt h1{font-size:17px;font-weight:700;color:var(--navy)}
+        .hd-txt p{font-size:11px;color:var(--sub);margin-top:2px}
+        .setup-card{background:var(--white);border:1.5px solid #f0c96a;border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
+        .setup-hd{background:#fffbee;padding:11px 17px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #f0e4bb}
+        .setup-hd h2{font-size:12px;font-weight:600;color:#7a5800}
+        .setup-bd{padding:14px 17px}
+        .setup-bd p{font-size:11px;color:var(--sub);line-height:1.7;margin-bottom:9px}
+        .api-row{display:flex;gap:7px}
+        .api-row input{flex:1;height:36px;border:1.5px solid var(--border);border-radius:7px;padding:0 11px;font-size:12px;font-family:monospace;outline:none;background:#fafbfd}
+        .btn-save{height:36px;padding:0 14px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer}
+        .key-ok{font-size:11px;color:var(--ok);margin-top:5px;display:none}
+        .key-ok.show{display:block}
+        .card{background:var(--white);border:1px solid var(--border);border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
+        .ch{background:var(--navy);padding:12px 18px;display:flex;align-items:center;gap:9px}
+        .sb{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+        .ch h2{color:#fff;font-size:13px;font-weight:600}
+        .cb{padding:16px 18px}
+        .drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;background:#fafbfd;position:relative}
+        .img-prev{display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+        .img-prev.show{display:block}
+        .img-prev img{width:100%;max-height:240px;object-fit:contain;background:#f0f2f7;display:block}
+        .btn-v{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;max-width:760px;margin:7px auto;height:52px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
+        .prog{max-width:760px;margin:0 auto 13px;display:none}
+        .prog.show{display:block}
+        .prog-steps{display:flex;gap:5px}
+        .ps{flex:1;padding:7px 6px;border-radius:7px;font-size:10px;font-weight:600;text-align:center;border:1.5px solid var(--border);color:var(--sub);background:#fff}
+        .ps.active{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
+        .ps.done{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+        .rc{display:none}
+        .rc.show{display:block}
+        .ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent;margin-bottom:7px}
+        .ci.pass{background:var(--ok-bg);border-color:#b2e0cc}
+        .ci.fail{background:var(--err-bg);border-color:#f5c0bb}
+        .cs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700}
+        .ci.pass .cs{background:var(--ok);color:#fff}
+        .ci.fail .cs{background:var(--err);color:#fff}
+        .cl-lbl{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:2px}
+        .cl-det{font-size:12px;font-weight:500}
+        .spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+        @keyframes sp{to{transform:rotate(360deg)}}
+    </style>
 </head>
 <body>
 
 <div class="hd">
-  <div class="logo">
-    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-    </svg>
-  </div>
-  <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v7.2 (Timezone Fixed)</span></h1>
-    <p>메일 · 홈페이지 · 엑셀 · 사업자등록증 · 계약서 — 전체 대사</p>
-  </div>
+    <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+    </div>
+    <div class="hd-txt">
+        <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v7.2</span></h1>
+        <p>메일 · 홈페이지 · 엑셀 · 서류 — 자동 대사</p>
+    </div>
 </div>
 
 <div class="setup-card">
-  <div class="setup-hd"><span>🔑</span><h2>최초 1회 설정 — Anthropic API 키</h2></div>
-  <div class="setup-bd">
-    <p><a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a>에서 발급한 API 키를 입력하세요.</p>
-    <div class="api-row">
-      <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
-      <button class="btn-save" onclick="saveKey()">저장</button>
+    <div class="setup-hd"><h2>🔑 최초 설정</h2></div>
+    <div class="setup-bd">
+        <div class="api-row">
+            <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
+            <button class="btn-save" onclick="saveKey()">저장</button>
+        </div>
+        <div class="key-ok" id="keyOk">✅ 저장됨</div>
     </div>
-    <div class="key-ok" id="keyOk">✅ 저장됨</div>
-  </div>
 </div>
 
 <div class="card">
-  <div class="ch"><span class="sb">STEP 1</span><h2>기안서 화면 캡처</h2><span class="sub">— 제목 + 1.정산요청내역 + 2.정산요청 전체</span></div>
-  <div class="cb">
-    <div style="background:var(--accent-l);border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:11px;color:var(--navy);line-height:1.7">
-      <span class="kbd">Win+Shift+S</span> 캡처 후 <strong>Ctrl+V</strong> 붙여넣기, 또는 파일 드래그 앤 드롭
+    <div class="ch"><span class="sb">STEP 1</span><h2>기안서 이미지</h2></div>
+    <div class="cb">
+        <div class="drop" id="imgDrop">
+            <input type="file" id="imgFile" accept="image/*">
+            <p><strong>이미지 드래그 또는 클릭</strong></p>
+            <small>Ctrl+V 붙여넣기 지원</small>
+        </div>
+        <div class="img-prev" id="imgPrev">
+            <img id="prevImg" src="" alt="">
+        </div>
     </div>
-    <div class="drop" id="imgDrop">
-      <input type="file" id="imgFile" accept="image/*">
-      <div class="drop-ic">🖼</div>
-      <p><strong>기안서 이미지 선택 또는 드롭</strong></p>
-      <small>Ctrl+V 붙여넣기 지원</small>
-    </div>
-    <div class="img-prev" id="imgPrev">
-      <img id="prevImg" src="" alt="">
-      <div class="img-prev-bar"><span class="name" id="imgName">—</span><button class="btn-clear" onclick="clearImg()">✕ 삭제</button></div>
-    </div>
-  </div>
 </div>
 
 <div class="card">
-  <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀 파일</h2><span class="sub">— 첨부 파일이 여러 개면 모두 추가</span></div>
-  <div class="cb">
-    <div class="drop" id="xlsDrop">
-      <input type="file" id="xlsFile" accept=".xlsx,.xls" multiple>
-      <div class="drop-ic">📊</div>
-      <p><strong>클릭 또는 드래그 앤 드롭</strong></p>
-      <small>여러 파일 동시 선택 가능</small>
+    <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀 파일</h2></div>
+    <div class="cb">
+        <div class="drop">
+            <input type="file" id="xlsFile" accept=".xlsx,.xls">
+            <p><strong>엑셀 파일 선택</strong></p>
+        </div>
+        <div id="fileInfo" style="margin-top:10px; font-size:12px; color:var(--navy); font-weight:600"></div>
     </div>
-    <div class="file-list" id="fileList"></div>
-    <button class="btn-add-file" id="addFileBtn" style="display:none">
-      <input type="file" id="addFileInput" accept=".xlsx,.xls" multiple onchange="handleAddFiles(this)">
-      + 파일 추가
-    </button>
-    <div class="total-bar" id="totalBar" style="display:none">
-      <span class="tbl">📊 엑셀 합계</span>
-      <span class="tbv" id="totalBarVal">—</span>
-    </div>
-  </div>
 </div>
 
-<div class="card">
-  <div class="ch"><span class="sb">STEP 3</span><h2>거래처 자료</h2><span class="opt">선택</span><span class="sub">— 있는 것만, 여러 개도 가능</span></div>
-  <div class="cb">
-    <div class="opt-grid">
-      <div>
-        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">✉️ 메일 캡처 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
-        <div class="drop" id="mailDrop" style="padding:16px 12px">
-          <input type="file" id="mailFile" accept="image/*,.pdf" multiple>
-          <div class="drop-ic" style="font-size:20px">📧</div>
-          <p style="font-size:11px"><strong>메일 캡처 추가</strong></p>
-          <small>여러 거래처면 각각 추가</small>
-        </div>
-        <div id="mailList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
-        <button class="btn-add-file" id="mailAddBtn" style="display:none;margin-top:6px">
-          <input type="file" id="mailAddFile" accept="image/*" multiple onchange="handleAddMailFiles(this)">
-          + 메일 추가
-        </button>
-      </div>
-      <div>
-        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">🌐 홈페이지 캡처 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
-        <div class="drop" id="webDrop" style="padding:16px 12px">
-          <input type="file" id="webFile" accept="image/*,.pdf" multiple>
-          <div class="drop-ic" style="font-size:20px">🖥</div>
-          <p style="font-size:11px"><strong>홈페이지 캡처 추가</strong></p>
-          <small>여러 플랫폼이면 각각 추가</small>
-        </div>
-        <div id="webList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
-        <button class="btn-add-file" id="webAddBtn" style="display:none;margin-top:6px">
-          <input type="file" id="webAddFile" accept="image/*" multiple onchange="handleAddWebFiles(this)">
-          + 홈페이지 추가
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="ch"><span class="sb">STEP 4</span><h2>사업자등록증 · 계약서</h2><span class="opt">선택</span><span class="sub">— 있는 것만, 여러 개도 가능</span></div>
-  <div class="cb">
-    <div class="opt-grid">
-      <div>
-        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">🏢 사업자등록증 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
-        <div class="drop" id="bizDrop" style="padding:16px 12px">
-          <input type="file" id="bizFile" accept="image/*,.pdf" multiple>
-          <div class="drop-ic" style="font-size:20px">📄</div>
-          <p style="font-size:11px"><strong>사업자등록증 추가</strong></p>
-          <small>사업자번호 · 상호 확인</small>
-        </div>
-        <div id="bizList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
-        <button class="btn-add-file" id="bizAddBtn" style="display:none;margin-top:6px">
-          <input type="file" id="bizAddFile" accept="image/*,.pdf" multiple onchange="handleAddBizFiles(this)">
-          + 사업자등록증 추가
-        </button>
-      </div>
-      <div>
-        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">📑 계약서 <span style="font-weight:400;color:#a0aabf">(여러 장 가능)</span></div>
-        <div class="drop" id="conDrop" style="padding:16px 12px">
-          <input type="file" id="conFile" accept="image/*,.pdf" multiple>
-          <div class="drop-ic" style="font-size:20px">📝</div>
-          <p style="font-size:11px"><strong>계약서 추가</strong></p>
-          <small>RS 비율 · 입금일 확인</small>
-        </div>
-        <div id="conList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
-        <button class="btn-add-file" id="conAddBtn" style="display:none;margin-top:6px">
-          <input type="file" id="conAddFile" accept="image/*,.pdf" multiple onchange="handleAddConFiles(this)">
-          + 계약서 추가
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="case-bar case0" id="caseBar">
-  <span id="caseIcon">📋</span>
-  <span id="caseText">기안서와 엑셀을 추가하면 검증 케이스가 자동으로 감지됩니다</span>
-</div>
-
-<button class="btn-v" id="vBtn" onclick="run()">
-  <span id="btnTxt">🔍 &nbsp;AI 검증 시작</span>
-</button>
+<button class="btn-v" id="vBtn" onclick="run()">🔍 AI 검증 시작</button>
 
 <div class="prog" id="prog">
-  <div class="prog-steps">
-    <div class="ps" id="ps1">📸 기안서 분석</div>
-    <div class="ps" id="ps2">✉️ 메일 분석</div>
-    <div class="ps" id="ps3">🌐 홈페이지 분석</div>
-    <div class="ps" id="ps4">📊 엑셀 읽기</div>
-    <div class="ps" id="ps5">🏢 서류 분석</div>
-    <div class="ps" id="ps6">⚖️ 전체 대사</div>
-  </div>
+    <div class="prog-steps">
+        <div class="ps" id="ps1">📸 기안 분석</div>
+        <div class="ps" id="ps4">📊 엑셀 분석</div>
+        <div class="ps" id="ps6">⚖️ 전체 대사</div>
+    </div>
 </div>
 
 <div class="card rc" id="rc">
-  <div id="rsum"></div>
-  <div id="r_mail"></div>
-  <div id="r_web"></div>
-  <div id="r_docs"></div>
-  <div id="r_excel"></div>
-  <div id="r_internal"></div>
-  <div style="text-align:center"><button class="btn-r" onclick="resetAll()">↩ 다시 검증하기</button></div>
+    <div id="r_result" style="padding:16px"></div>
 </div>
 
 <script>
-// --- State ---
-let apiKey = localStorage.getItem('tf_api_key') || '';
-let imgB64=null, imgMime='image/png';
-let mailImages=[], mailIdCtr=0;
-let webImages=[], webIdCounter=0;
-let bizImages=[], bizIdCtr=0;
-let conImages=[], conIdCtr=0;
-let excelFiles=[];
-let fileIdCounter=0;
+    let apiKey = localStorage.getItem('tf_api_key') || '';
+    let imgB64 = null, imgMime = 'image/png', excelWb = null;
 
-if(apiKey){ document.getElementById('apiKey').value=apiKey; document.getElementById('keyOk').classList.add('show'); }
-function saveKey(){
-  const v=document.getElementById('apiKey').value.trim();
-  if(!v.startsWith('sk-')){ alert('올바른 API 키 형식이 아닙니다.'); return; }
-  apiKey=v; localStorage.setItem('tf_api_key',v);
-  document.getElementById('keyOk').classList.add('show');
-}
-
-// --- 핵심: 엑셀 날짜 오차 해결 (KST 보정) ---
-function normDate(v) {
-  if (!v) return null;
-  if (v instanceof Date) {
-    // 엑셀 UTC 데이터에 9시간을 더해 한국 시간으로 강제 보정
-    const kstDate = new Date(v.getTime() + (9 * 60 * 60 * 1000));
-    const y = kstDate.getUTCFullYear();
-    const m = String(kstDate.getUTCMonth() + 1).padStart(2, '0');
-    const d = String(kstDate.getUTCDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-  const s = String(v).trim();
-  const m = s.match(/(\d{4})[년\s./-]*(\d{1,2})[월\s./-]*(\d{1,2})?/);
-  if (m) {
-    const year = m[1];
-    const month = m[2].padStart(2, '0');
-    const day = m[3] ? m[3].padStart(2, '0') : "01";
-    return `${year}-${month}-${day}`;
-  }
-  return null;
-}
-
-// --- 엑셀 메타데이터 정밀 추출 (AE, AD열 대응) ---
-function getExcelMeta(wb) {
-  let meta = { 작성일자: null, 서비스월: null, 정산월YYYYMM: null };
-  const sn = wb.SheetNames[0];
-  const ws = wb.Sheets[sn];
-  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, UTC: true });
-
-  for (let r = 0; r < Math.min(data.length, 30); r++) {
-    const row = data[r];
-    if (!row) continue;
-    for (let c = 0; c < row.length; c++) {
-      const val = String(row[c] || "").trim();
-      // AE열(30) 혹은 키워드 '정산월' 찾기
-      if (val.includes("정산월") || c === 30) {
-        const d = (val.match(/\d{4}/)) ? row[c] : (data[r + 1] ? data[r + 1][c] : null);
-        if (d && !meta.작성일자) meta.작성일자 = normDate(d);
-      }
-      // AD열(29) 혹은 키워드 '서비스월' 찾기
-      if (val.includes("서비스월") || c === 29) {
-        const d = (val.match(/\d{4}/)) ? row[c] : (data[r + 1] ? data[r + 1][c] : null);
-        if (d && !meta.서비스월) meta.서비스월 = normDate(d);
-      }
+    if(apiKey){ document.getElementById('apiKey').value=apiKey; document.getElementById('keyOk').classList.add('show'); }
+    function saveKey(){
+        const v=document.getElementById('apiKey').value.trim();
+        apiKey=v; localStorage.setItem('tf_api_key',v);
+        document.getElementById('keyOk').classList.add('show');
     }
-    if (meta.작성일자 && meta.서비스월) break;
-  }
-  if (meta.작성일자) meta.정산월YYYYMM = meta.작성일자.substring(0, 7).replace('-', '');
-  return meta;
-}
 
-// --- AI Call (Haiku 모델 최적화) ---
-async function aiCall(b64, mime, prompt){
-  let contentBlocks = [];
-  try {
-    const pages = JSON.parse(b64);
-    if(Array.isArray(pages)) for(const p of pages) contentBlocks.push({type:'image',source:{type:'base64',media_type:'image/png',data:p}});
-    else throw new Error();
-  } catch {
-    contentBlocks = [{type:'image',source:{type:'base64',media_type:mime,data:b64}}];
-  }
-  contentBlocks.push({type:'text',text:prompt + "\n\n응답은 반드시 JSON 형식이어야 합니다."});
-  
-  const res = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({ 
-      model:'claude-3-haiku-20240307', 
-      max_tokens:1500,
-      messages:[{role:'user',content:contentBlocks}]
-    })
-  });
-  if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||`API 오류`); }
-  const data=await res.json();
-  const txt=data.content[0]?.text||'';
-  const clean=txt.replace(/```json|```/g,'').trim();
-  try{ return JSON.parse(clean); } catch{ throw new Error('AI 응답 파싱 실패'); }
-}
+    // --- 날짜 보정 로직 (31일 문제 해결) ---
+    function normDate(v) {
+        if (!v) return null;
+        if (v instanceof Date) {
+            const kstDate = new Date(v.getTime() + (9 * 60 * 60 * 1000));
+            return `${kstDate.getUTCFullYear()}-${String(kstDate.getUTCMonth()+1).padStart(2,'0')}-${String(kstDate.getUTCDate()).padStart(2,'0')}`;
+        }
+        const m = String(v).match(/(\d{4})[년\s./-]*(\d{1,2})[월\s./-]*(\d{1,2})?/);
+        return m ? `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||"01").padStart(2,'0')}` : null;
+    }
 
-// --- UI 및 파일 처리 로직 ---
-const PROMPT_기안서=`한국 그룹웨어 기안서 이미지입니다. JSON 추출:
-{
-  "제목": "제목",
-  "본문_계산서작성일자": "YYYY-MM-DD",
-  "본문_마감기한": "YYYY-MM-DD",
-  "본문_서비스월": "YYYY-MM",
-  "본문_판매분월": "YYYY-MM",
-  "본문_정산금액들": [{"금액":숫자}],
-  "세금계산서_rows": [{"작성일자":"YYYY-MM-DD","공급가액":숫자}],
-  "입금예정일": "YYYY-MM-DD",
-  "품목명": "텍스트"
-}`;
+    function getExcelMeta(wb) {
+        let meta = { 작성일자: null, 서비스월: null };
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, UTC: true });
+        for (let r = 0; r < Math.min(data.length, 30); r++) {
+            const row = data[r];
+            if (!row) continue;
+            for (let c = 0; c < row.length; c++) {
+                const val = String(row[c] || "").trim();
+                if (val.includes("정산월") || c === 30) {
+                    const d = (val.match(/\d{4}/)) ? row[c] : (data[r+1]?data[r+1][c]:null);
+                    if (d && !meta.작성일자) meta.작성일자 = normDate(d);
+                }
+                if (val.includes("서비스월") || c === 29) {
+                    const d = (val.match(/\d{4}/)) ? row[c] : (data[r+1]?data[r+1][c]:null);
+                    if (d && !meta.서비스월) meta.서비스월 = normDate(d);
+                }
+            }
+        }
+        return meta;
+    }
 
-async function run(){
-  if(!apiKey || !imgB64 || excelFiles.length === 0) { alert('필수 항목을 모두 입력하세요.'); return; }
-  const btn=document.getElementById('vBtn');
-  btn.disabled=true; btn.innerHTML='<div class="spin"></div>';
-  document.getElementById('prog').classList.add('show');
-  for(let i=1;i<=6;i++) setStep(i,'');
+    // --- 파일 처리 ---
+    document.getElementById('imgFile').onchange = e => {
+        const f = e.target.files[0];
+        const r = new FileReader();
+        r.onload = ev => {
+            imgB64 = ev.target.result.split(',')[1];
+            document.getElementById('prevImg').src = ev.target.result;
+            document.getElementById('imgPrev').classList.add('show');
+        };
+        r.readAsDataURL(f);
+    };
 
-  try {
-    setStep(1,'active');
-    const 기안서 = await aiCall(imgB64, imgMime, PROMPT_기안서);
-    setStep(1,'done');
-    
-    setStep(4,'active');
-    const excelMeta = getExcelMeta(excelFiles[0].wb);
-    setStep(4,'done');
+    document.getElementById('xlsFile').onchange = e => {
+        const f = e.target.files[0];
+        const r = new FileReader();
+        r.onload = ev => {
+            excelWb = XLSX.read(ev.target.result, {type:'array', cellDates:true});
+            document.getElementById('fileInfo').textContent = "📊 읽기 완료: " + f.name;
+        };
+        r.readAsArrayBuffer(f);
+    };
 
-    setStep(6,'active');
-    renderResult(기안서, excelMeta);
-    setStep(6,'done');
-  } catch(err) {
-    alert(err.message);
-  } finally {
-    btn.disabled=false; btn.innerHTML='🔍 &nbsp;AI 검증 시작';
-  }
-}
+    async function aiCall(b64, prompt) {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify({
+                model: 'claude-3-haiku-20240307',
+                max_tokens: 1000,
+                messages: [{role:'user', content:[{type:'image', source:{type:'base64', media_type:'image/png', data:b64}}, {type:'text', text:prompt + "\nJSON format only."}]}]
+            })
+        });
+        const d = await res.json();
+        return JSON.parse(d.content[0].text.replace(/```json|```/g, ''));
+    }
 
-function renderResult(기안서, excelMeta) {
-  const rSum = document.getElementById('r_excel');
-  const imgDate = normDate(기안서.본문_계산서작성일자);
-  const xlDate = excelMeta.작성일자;
+    async function run() {
+        if(!apiKey || !imgB64 || !excelWb) return alert('모든 항목을 준비해주세요.');
+        const btn = document.getElementById('vBtn');
+        btn.disabled = true; btn.innerHTML = '<div class="spin"></div>';
+        document.getElementById('prog').classList.add('show');
+        
+        try {
+            document.getElementById('ps1').className = 'ps active';
+            const 기안 = await aiCall(imgB64, "기안서에서 '본문_계산서작성일자', '본문_서비스월'을 YYYY-MM-DD 형식으로 추출해줘.");
+            document.getElementById('ps1').className = 'ps done';
 
-  let h = `<div class="chk-group"><div class="gt">엑셀 vs 기안서 비교</div>`;
-  
-  // 날짜 비교 로직
-  if(imgDate === xlDate) {
-    h += `<div class="ci pass"><div class="cs">✓</div><div class="cc"><div class="cl-lbl">작성일자 일치</div><div class="cl-det">${xlDate} — 정상</div></div></div>`;
-  } else {
-    h += `<div class="ci fail"><div class="cs">✕</div><div class="cc"><div class="cl-lbl">작성일자 불일치</div><div class="cl-det">기안서:${imgDate} / 엑셀:${xlDate}</div></div></div>`;
-  }
+            document.getElementById('ps4').className = 'ps active';
+            const 엑셀 = getExcelMeta(excelWb);
+            document.getElementById('ps4').className = 'ps done';
 
-  // 서비스월 비교
-  const imgYM = 기안서.본문_서비스월 ? 기안서.본문_서비스월.substring(0,7) : "";
-  const xlYM = excelMeta.서비스월 ? excelMeta.서비스월.substring(0,7) : "";
-  if(imgYM === xlYM) {
-    h += `<div class="ci pass"><div class="cs">✓</div><div class="cc"><div class="cl-lbl">서비스월 일치</div><div class="cl-det">${xlYM} — 정상</div></div></div>`;
-  } else {
-    h += `<div class="ci fail"><div class="cs">✕</div><div class="cc"><div class="cl-lbl">서비스월 불일치</div><div class="cl-det">기안서:${imgYM} / 엑셀:${xlYM}</div></div></div>`;
-  }
+            document.getElementById('ps6').className = 'ps active';
+            const imgDate = normDate(기안.본문_계산서작성일자);
+            const imgSrv = (기안.본문_서비스월||"").substring(0,7);
+            const xlDate = 엑셀.작성일자;
+            const xlSrv = (엑셀.서비스월||"").substring(0,7);
 
-  h += `</div>`;
-  rSum.innerHTML = h;
-  document.getElementById('rc').classList.add('show');
-}
+            let h = '';
+            const matchDate = imgDate === xlDate;
+            h += `<div class="ci ${matchDate?'pass':'fail'}"><div class="cs">${matchDate?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">작성일자 (정산월)</div><div class="cl-det">기안:${imgDate} / 엑셀:${xlDate}</div></div></div>`;
+            
+            const matchSrv = imgSrv === xlSrv;
+            h += `<div class="ci ${matchSrv?'pass':'fail'}"><div class="cs">${matchSrv?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">서비스월</div><div class="cl-det">기안:${imgSrv} / 엑셀:${xlSrv}</div></div></div>`;
 
-// --- 기타 헬퍼 함수들 (파일 로드/드롭 등) ---
-function setStep(n,s){ document.getElementById('ps'+n).className='ps '+s; }
-function setupDrop(id,handler){
-  const el=document.getElementById(id);
-  el.addEventListener('dragover',e=>{ e.preventDefault(); el.classList.add('over'); });
-  el.addEventListener('dragleave',()=>el.classList.remove('over'));
-  el.addEventListener('drop',e=>{ e.preventDefault(); el.classList.remove('over'); if(e.dataTransfer.files[0]) handler(e.dataTransfer.files[0]); });
-}
-function handleAddFiles(input){ for(const f of input.files) addExcelFile(f); input.value=''; }
-function addExcelFile(file){
-  const id=++fileIdCounter;
-  const entry={id,name:file.name,wb:null,total:null};
-  excelFiles.push(entry);
-  const r=new FileReader();
-  r.onload=e=>{
-    entry.wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
-    renderFileCard(entry);
-  };
-  r.readAsArrayBuffer(file);
-}
-function renderFileCard(entry){
-  const list=document.getElementById('fileList');
-  const card=document.createElement('div');
-  card.className='file-card';
-  card.innerHTML=`<div class="xl-ic">XL</div><div class="fc-info">${entry.name}</div>`;
-  list.appendChild(card);
-  document.getElementById('addFileBtn').style.display='flex';
-}
-function clearImg(){ imgB64=null; document.getElementById('imgPrev').classList.remove('show'); }
-function resetAll(){ document.getElementById('rc').classList.remove('show'); window.scrollTo(0,0); }
+            document.getElementById('r_result').innerHTML = h;
+            document.getElementById('ps6').className = 'ps done';
+            document.getElementById('rc').classList.add('show');
+        } catch(e) {
+            alert('오류: ' + e.message);
+        } finally {
+            btn.disabled = false; btn.innerHTML = '🔍 AI 검증 시작';
+        }
+    }
 </script>
 </body>
 </html>
