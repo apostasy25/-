@@ -3,20 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v7.3 — 테라핀 정산팀</title>
+<title>기안서 검증기 v7.4 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 if(typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 </script>
 <style>
+/* 기존 스타일 유지 */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-:root {
-  --navy:#1a2744;--navy-l:#2a3a60;--accent:#3b6fd4;--accent-l:#e8edf8;
-  --ok:#1a7f4b;--ok-bg:#eafaf1;--err:#c0392b;--err-bg:#fdf0ee;
-  --warn:#b7700a;--warn-bg:#fef9ec;--border:#d8dde8;
-  --text:#1a2744;--sub:#6b7a99;--bg:#f4f6fb;--white:#fff;
-}
+:root { --navy:#1a2744;--navy-l:#2a3a60;--accent:#3b6fd4;--accent-l:#e8edf8;--ok:#1a7f4b;--ok-bg:#eafaf1;--err:#c0392b;--err-bg:#fdf0ee;--warn:#b7700a;--warn-bg:#fef9ec;--border:#d8dde8;--text:#1a2744;--sub:#6b7a99;--bg:#f4f6fb;--white:#fff; }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding:28px 16px 80px}
 .hd{max-width:760px;margin:0 auto 20px;display:flex;align-items:center;gap:13px}
@@ -38,16 +34,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .sb{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
 .ch h2{color:#fff;font-size:13px;font-weight:600}
 .cb{padding:16px 18px}
-.drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;background:#fafbfd;position:relative;transition:all .2s}
-.drop.over{border-color:var(--accent);background:var(--accent-l)}
+.drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;background:#fafbfd;position:relative}
 .drop-ic{font-size:24px;margin-bottom:5px}
-.drop p{font-size:12px;color:var(--sub)}
+.drop p{font-size:12px}
 .img-prev{display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
 .img-prev.show{display:block}
 .img-prev img{width:100%;max-height:240px;object-fit:contain;background:#f0f2f7;display:block}
-.file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.file-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:9px}
-.btn-remove{margin-left:auto;cursor:pointer;border:none;background:none;color:var(--err);font-weight:700}
 .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:600px){.opt-grid{grid-template-columns:1fr}}
 .btn-v{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;max-width:760px;margin:7px auto;height:52px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
@@ -74,19 +66,15 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <body>
 
 <div class="hd">
-  <div class="logo">
-    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-    </svg>
-  </div>
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v7.3 (Full Fixed)</span></h1>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v7.4 (Timezone Final)</span></h1>
     <p>메일 · 홈페이지 · 엑셀 · 서류 — 통합 검증</p>
   </div>
 </div>
 
 <div class="setup-card">
-  <div class="setup-hd"><h2>🔑 API 설정</h2></div>
+  <div class="setup-hd"><h2>🔑 최초 설정</h2></div>
   <div class="setup-bd">
     <div class="api-row">
       <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
@@ -99,26 +87,26 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 <div class="card">
   <div class="ch"><span class="sb">STEP 1</span><h2>기안서 화면 캡처</h2></div>
   <div class="cb">
-    <div class="drop" id="imgDrop">
-      <input type="file" id="imgInput" accept="image/*" style="display:none">
+    <div class="drop" id="imgDrop" onclick="document.getElementById('imgFile').click()">
+      <input type="file" id="imgFile" accept="image/*" style="display:none">
       <div class="drop-ic">🖼</div>
-      <p>이미지 드래그 앤 드롭 또는 <strong>클릭하여 선택</strong></p>
+      <p><strong>이미지 선택 또는 드롭</strong></p>
     </div>
     <div class="img-prev" id="imgPrev">
-      <img id="prevImg" src="">
+      <img id="prevImg" src="" alt="">
     </div>
   </div>
 </div>
 
 <div class="card">
-  <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀 파일 (다중 선택 가능)</h2></div>
+  <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀 파일</h2></div>
   <div class="cb">
-    <div class="drop" id="xlsDrop">
-      <input type="file" id="xlsInput" accept=".xlsx,.xls" multiple style="display:none">
+    <div class="drop" id="xlsDrop" onclick="document.getElementById('xlsFile').click()">
+      <input type="file" id="xlsFile" accept=".xlsx,.xls" style="display:none">
       <div class="drop-ic">📊</div>
-      <p>엑셀 파일 드래그 앤 드롭 또는 <strong>클릭하여 다중 선택</strong></p>
+      <p><strong>엑셀 파일 선택</strong></p>
     </div>
-    <div id="fileList" class="file-list"></div>
+    <div id="fileInfo" style="margin-top:10px; font-size:12px; color:var(--navy); font-weight:600"></div>
   </div>
 </div>
 
@@ -126,37 +114,13 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div class="ch"><span class="sb">STEP 3</span><h2>거래처 자료 (선택)</h2></div>
   <div class="cb">
     <div class="opt-grid">
-      <div class="drop" id="mailDrop">
-        <input type="file" id="mailInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">📧</div>
-        <p>메일 캡처 (다중)</p>
-        <div id="mailCount" style="font-size:10px; color:var(--accent)"></div>
+      <div class="drop" onclick="document.getElementById('mailFile').click()">
+        <input type="file" id="mailFile" accept="image/*,.pdf" style="display:none">
+        <p style="font-size:11px">✉️ 메일 추가</p>
       </div>
-      <div class="drop" id="webDrop">
-        <input type="file" id="webInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">🌐</div>
-        <p>홈페이지 캡처 (다중)</p>
-        <div id="webCount" style="font-size:10px; color:var(--accent)"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="ch"><span class="sb">STEP 4</span><h2>서류 자료 (선택)</h2></div>
-  <div class="cb">
-    <div class="opt-grid">
-      <div class="drop" id="bizDrop">
-        <input type="file" id="bizInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">🏢</div>
-        <p>사업자등록증</p>
-        <div id="bizCount" style="font-size:10px; color:var(--accent)"></div>
-      </div>
-      <div class="drop" id="conDrop">
-        <input type="file" id="conInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">📑</div>
-        <p>계약서</p>
-        <div id="conCount" style="font-size:10px; color:var(--accent)"></div>
+      <div class="drop" onclick="document.getElementById('webFile').click()">
+        <input type="file" id="webFile" accept="image/*,.pdf" style="display:none">
+        <p style="font-size:11px">🌐 홈페이지 추가</p>
       </div>
     </div>
   </div>
@@ -166,131 +130,120 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 <div class="prog" id="prog">
   <div class="prog-steps">
-    <div class="ps" id="ps1">📸 기안서</div>
-    <div class="ps" id="ps2">✉️ 메일</div>
-    <div class="ps" id="ps3">🌐 홈페이지</div>
-    <div class="ps" id="ps4">📊 엑셀</div>
-    <div class="ps" id="ps5">🏢 서류</div>
-    <div class="ps" id="ps6">⚖️ 대사</div>
+    <div class="ps" id="ps1">📸 기안 분석</div>
+    <div class="ps" id="ps4">📊 엑셀 읽기</div>
+    <div class="ps" id="ps6">⚖️ 전체 대사</div>
   </div>
 </div>
 
 <div class="card rc" id="rc">
-  <div id="rsum" style="padding:16px; border-bottom:1px solid var(--border)"></div>
   <div id="r_result" style="padding:16px"></div>
 </div>
 
 <script>
 let apiKey = localStorage.getItem('tf_api_key') || '';
-let imgB64 = null;
-let excelFiles = [];
-let mailFiles = [], webFiles = [], bizFiles = [], conFiles = [];
+let imgB64 = null, excelWb = null;
 
 if(apiKey){ document.getElementById('apiKey').value=apiKey; document.getElementById('keyOk').classList.add('show'); }
-function saveKey(){ apiKey=document.getElementById('apiKey').value.trim(); localStorage.setItem('tf_api_key',apiKey); document.getElementById('keyOk').classList.add('show'); }
+function saveKey(){
+  apiKey = document.getElementById('apiKey').value.trim();
+  localStorage.setItem('tf_api_key', apiKey);
+  document.getElementById('keyOk').classList.add('show');
+}
 
-// --- 1. 날짜 보정 핵심 로직 (31일 오차 해결) ---
+// --- 핵심 보정 로직 (+9시간 오차 해결) ---
 function normDate(v) {
   if (!v) return null;
+  
+  // Date 객체인 경우 (엑셀에서 읽어온 경우)
   if (v instanceof Date) {
-    // 엑셀 UTC 00:00 문제를 해결하기 위해 9시간을 강제로 더함
-    const kst = new Date(v.getTime() + (9 * 60 * 60 * 1000));
-    const y = kst.getUTCFullYear();
-    const m = String(kst.getUTCMonth() + 1).padStart(2, '0');
-    const d = String(kst.getUTCDate()).padStart(2, '0');
+    // 엑셀의 UTC 00:00 시간을 한국 시간(+9)으로 강제 변환
+    const kstDate = new Date(v.getTime() + (9 * 60 * 60 * 1000));
+    const y = kstDate.getUTCFullYear();
+    const m = String(kstDate.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(kstDate.getUTCDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
   }
+  
+  // 문자열로 들어온 경우 (2026년 3월 등)
   const s = String(v).trim();
   const m = s.match(/(\d{4})[년\s./-]*(\d{1,2})[월\s./-]*(\d{1,2})?/);
-  return m ? `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||"01").padStart(2,'0')}` : null;
-}
-
-// --- 2. 드래그 앤 드롭 및 다중 파일 업로드 시스템 ---
-function initDrop(id, inputId, callback) {
-  const zone = document.getElementById(id);
-  const input = document.getElementById(inputId);
-  zone.onclick = () => input.click();
-  zone.ondragover = e => { e.preventDefault(); zone.classList.add('over'); };
-  zone.ondragleave = () => zone.classList.remove('over');
-  zone.ondrop = e => {
-    e.preventDefault(); zone.classList.remove('over');
-    callback(e.dataTransfer.files);
-  };
-  input.onchange = e => callback(e.target.files);
-}
-
-// 기안서 이미지 처리
-initDrop('imgDrop', 'imgInput', files => {
-  const f = files[0];
-  const r = new FileReader();
-  r.onload = ev => {
-    imgB64 = ev.target.result.split(',')[1];
-    document.getElementById('prevImg').src = ev.target.result;
-    document.getElementById('imgPrev').classList.add('show');
-  };
-  r.readAsDataURL(f);
-});
-
-// 엑셀 다중 처리
-initDrop('xlsDrop', 'xlsInput', files => {
-  for (let f of files) {
-    const r = new FileReader();
-    r.onload = ev => {
-      const wb = XLSX.read(ev.target.result, {type:'array', cellDates:true});
-      excelFiles.push({name: f.name, wb: wb});
-      renderXlsList();
-    };
-    r.readAsArrayBuffer(f);
+  if (m) {
+    const year = m[1];
+    const month = m[2].padStart(2, '0');
+    const day = m[3] ? m[3].padStart(2, '0') : "01";
+    return `${year}-${month}-${day}`;
   }
-});
-
-function renderXlsList() {
-  document.getElementById('fileList').innerHTML = excelFiles.map((f, i) => 
-    `<div class="file-card">📊 ${f.name} <span class="btn-remove" onclick="excelFiles.splice(${i},1);renderXlsList()">✕</span></div>`
-  ).join('');
+  return null;
 }
 
-// 기타 자료 처리 (다중 업로드 지원)
-initDrop('mailDrop', 'mailInput', fs => { mailFiles.push(...fs); document.getElementById('mailCount').innerText = mailFiles.length+'개 완료'; });
-initDrop('webDrop', 'webInput', fs => { webFiles.push(...fs); document.getElementById('webCount').innerText = webFiles.length+'개 완료'; });
-initDrop('bizDrop', 'bizInput', fs => { bizFiles.push(...fs); document.getElementById('bizCount').innerText = bizFiles.length+'개 완료'; });
-initDrop('conDrop', 'conInput', fs => { conFiles.push(...fs); document.getElementById('conCount').innerText = conFiles.length+'개 완료'; });
-
-// --- 3. 엑셀 데이터 스캔 (AE열 우선순위) ---
+// --- 엑셀 AE(30), AD(29)열 직접 타겟팅 ---
 function getExcelMeta(wb) {
+  if (!wb || !wb.SheetNames.length) return { 작성일자: null, 서비스월: null };
   let meta = { 작성일자: null, 서비스월: null };
   const ws = wb.Sheets[wb.SheetNames[0]];
   const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, UTC: true });
 
-  for (let r = 0; r < Math.min(data.length, 50); r++) {
+  // AE열(30)과 AD열(29) 데이터를 2행부터 스캔
+  for (let r = 1; r < Math.min(data.length, 50); r++) {
     const row = data[r] || [];
-    // AE열(30) 정산월, AD열(29) 서비스월
-    if (row[30] && !meta.작성일자) meta.작성일자 = normDate(row[30]);
-    if (row[29] && !meta.서비스월) meta.서비스월 = normDate(row[29]);
-    
-    // 키워드 기반 백업 스캔
-    for (let c = 0; c < row.length; c++) {
-      const v = String(row[c]||"");
-      if (v.includes("정산월") && !meta.작성일자) meta.작성일자 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
-      if (v.includes("서비스월") && !meta.서비스월) meta.서비스월 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
+    // 1. AE열(index 30) - 정산월 데이터 확인
+    if (row[30] && !meta.작성일자) {
+       meta.작성일자 = normDate(row[30]);
     }
+    // 2. AD열(index 29) - 서비스월 데이터 확인
+    if (row[29] && !meta.서비스월) {
+       meta.서비스월 = normDate(row[29]);
+    }
+    if (meta.작성일자 && meta.서비스월) break;
   }
   return meta;
 }
 
-// --- 4. AI 호출 및 대사 실행 ---
-async function aiCall(file, prompt) {
-  if(!file) return null;
-  const b64 = await new Promise(res => {
-    const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file);
-  });
+// --- 드래그 앤 드롭 설정 ---
+function initDrop(id, callback) {
+  const el = document.getElementById(id);
+  el.ondragover = e => { e.preventDefault(); el.style.borderColor = "var(--accent)"; };
+  el.ondragleave = () => el.style.borderColor = "var(--border)";
+  el.ondrop = e => { e.preventDefault(); callback(e.dataTransfer.files[0]); };
+}
+
+initDrop('imgDrop', file => handleImg(file));
+initDrop('xlsDrop', file => handleXls(file));
+
+document.getElementById('imgFile').onchange = e => handleImg(e.target.files[0]);
+document.getElementById('xlsFile').onchange = e => handleXls(e.target.files[0]);
+
+function handleImg(file) {
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    imgB64 = ev.target.result.split(',')[1];
+    document.getElementById('prevImg').src = ev.target.result;
+    document.getElementById('imgPrev').classList.add('show');
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleXls(file) {
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    excelWb = XLSX.read(ev.target.result, {type:'array', cellDates:true});
+    document.getElementById('fileInfo').textContent = "📊 등록 완료: " + file.name;
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// --- AI 분석 호출 (Haiku) ---
+async function aiCall(b64, prompt) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
     body: JSON.stringify({
       model: 'claude-3-haiku-20240307',
       max_tokens: 1000,
-      messages: [{role:'user', content:[{type:'image', source:{type:'base64', media_type:'image/png', data:b64}}, {type:'text', text:prompt + "\nJSON format only."}]}]
+      messages: [{role:'user', content:[{type:'image', source:{type:'base64', media_type:'image/png', data:b64}}, {type:'text', text:prompt + "\nJSON ONLY."}]}]
     })
   });
   const d = await res.json();
@@ -300,33 +253,37 @@ async function aiCall(file, prompt) {
 }
 
 async function run() {
-  if(!apiKey || !imgB64 || excelFiles.length === 0) return alert('기안서와 엑셀 파일을 먼저 등록해주세요.');
+  if(!apiKey || !imgB64 || !excelWb) return alert('기안서와 엑셀을 모두 등록하세요.');
   const btn = document.getElementById('vBtn'); btn.disabled = true; btn.innerHTML = '<div class="spin"></div>';
   document.getElementById('prog').classList.add('show');
   
   try {
-    // 기안서 분석
     setStep(1, 'active');
-    const 기안 = await aiCall(document.getElementById('imgInput').files[0], "기안서에서 '작성일자'(정산월), '서비스월'을 YYYY-MM-DD로 추출.");
+    const 기안 = await aiCall(imgB64, "기안서에서 '작성일자', '서비스월'을 추출하세요.");
     setStep(1, 'done');
 
-    // 엑셀 분석 (첫 번째 파일 기준)
     setStep(4, 'active');
-    const 엑셀 = getExcelMeta(excelFiles[0].wb);
+    const 엑셀 = getExcelMeta(excelWb);
     setStep(4, 'done');
 
-    // 결과 렌더링
-    const imgDate = normDate(기안?.작성일자 || 기안?.본문_계산서작성일자);
+    // 대사 결과 비교
+    const imgDate = normDate(기안?.본문_계산서작성일자 || 기안?.작성일자);
     const xlDate = 엑셀.작성일자;
-    const match = (imgDate === xlDate);
+    const matchDate = (imgDate === xlDate);
 
-    let h = `<div class="ci ${match?'pass':'fail'}"><div class="cs">${match?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">작성일자 (정산월) 대사</div><div class="cl-det">기안:${imgDate} / 엑셀:${xlDate}</div></div></div>`;
-    
-    document.getElementById('rsum').innerHTML = `<h3>검증 완료</h3>`;
+    const imgSrv = (기안?.본문_서비스월 || 기안?.서비스월 || "").substring(0,7);
+    const xlSrv = (엑셀.서비스월 || "").substring(0,7);
+    const matchSrv = (imgSrv === xlSrv);
+
+    let h = `<div class="chk-group"><div class="gt">엑셀 vs 기안서 비교 결과</div>`;
+    h += `<div class="ci ${matchDate?'pass':'fail'}"><div class="cs">${matchDate?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">작성일자 (AE열 정산월)</div><div class="cl-det">기안:${imgDate} / 엑셀:${xlDate}</div></div></div>`;
+    h += `<div class="ci ${matchSrv?'pass':'fail'}"><div class="cs">${matchSrv?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">서비스월 (AD열)</div><div class="cl-det">기안:${imgSrv} / 엑셀:${xlSrv}</div></div></div>`;
+    h += `</div>`;
+
     document.getElementById('r_result').innerHTML = h;
     setStep(6, 'done');
     document.getElementById('rc').classList.add('show');
-  } catch(e) { alert('오류: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = '🔍 AI 검증 시작'; }
+  } catch(e) { alert('에러: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = '🔍 &nbsp;AI 검증 시작'; }
 }
 
 function setStep(n,s){ document.getElementById('ps'+n).className='ps '+s; }
