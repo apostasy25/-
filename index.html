@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v7.7 — 테라핀 정산팀</title>
+<title>기안서 검증기 v7.8 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -24,56 +24,155 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .logo svg{width:21px;height:21px}
 .hd-txt h1{font-size:17px;font-weight:700;color:var(--navy)}
 .hd-txt p{font-size:11px;color:var(--sub);margin-top:2px}
+/* setup */
 .setup-card{background:var(--white);border:1.5px solid #f0c96a;border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
 .setup-hd{background:#fffbee;padding:11px 17px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #f0e4bb}
 .setup-hd h2{font-size:12px;font-weight:600;color:#7a5800}
 .setup-bd{padding:14px 17px}
+.setup-bd p{font-size:11px;color:var(--sub);line-height:1.7;margin-bottom:9px}
+.setup-bd a{color:var(--accent)}
 .api-row{display:flex;gap:7px}
 .api-row input{flex:1;height:36px;border:1.5px solid var(--border);border-radius:7px;padding:0 11px;font-size:12px;font-family:monospace;outline:none;background:#fafbfd}
-.btn-save{height:36px;padding:0 14px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer}
+.api-row input:focus{border-color:var(--accent)}
+.btn-save{height:36px;padding:0 14px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;cursor:pointer}
 .key-ok{font-size:11px;color:var(--ok);margin-top:5px;display:none}
 .key-ok.show{display:block}
+/* card */
 .card{background:var(--white);border:1px solid var(--border);border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
 .ch{background:var(--navy);padding:12px 18px;display:flex;align-items:center;gap:9px}
 .sb{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
 .ch h2{color:#fff;font-size:13px;font-weight:600}
+.ch .opt{background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-size:10px;padding:2px 8px;border-radius:10px;margin-left:4px}
+.ch .sub{color:rgba(255,255,255,.55);font-size:11px;margin-left:3px}
 .cb{padding:16px 18px}
-.drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;background:#fafbfd;position:relative;transition:all .2s}
-.drop.over{border-color:var(--accent);background:var(--accent-l)}
+/* case detector */
+.case-bar{max-width:760px;margin:0 auto 13px;padding:10px 15px;border-radius:9px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;transition:all .3s}
+.case-bar.case0{background:#f0f2f7;color:var(--sub);border:1px solid var(--border)}
+.case-bar.case1{background:#e8f5ee;color:var(--ok);border:1px solid #b2e0cc}
+.case-bar.case2{background:#e8f0fd;color:#1d4ed8;border:1px solid #c5d6f5}
+.case-bar.case3{background:#fff8e6;color:var(--warn);border:1px solid #fce4b0}
+.case-bar.case4{background:var(--ok-bg);color:var(--ok);border:1px solid #b2e0cc}
+/* drop */
+.drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;transition:all .15s;background:#fafbfd;position:relative}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-l)}
+.drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .drop-ic{font-size:24px;margin-bottom:5px}
 .drop p{font-size:12px;color:var(--sub)}
+.drop p strong{color:var(--accent)}
+.drop small{font-size:11px;color:#a0aabf;display:block;margin-top:3px}
+/* image preview */
 .img-prev{display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
 .img-prev.show{display:block}
 .img-prev img{width:100%;max-height:240px;object-fit:contain;background:#f0f2f7;display:block}
-.file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.file-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:9px; font-size:12px; color:var(--navy)}
-.btn-remove{margin-left:auto;cursor:pointer;border:none;background:none;color:var(--err);font-weight:700}
+.img-prev-bar{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--accent-l);font-size:11px}
+.img-prev-bar .name{color:var(--navy);font-weight:600}
+.btn-clear{background:none;border:1px solid var(--border);border-radius:5px;padding:2px 8px;font-size:10px;font-family:'Noto Sans KR',sans-serif;color:var(--sub);cursor:pointer}
+.btn-clear:hover{border-color:var(--err);color:var(--err)}
+/* optional pair layout */
 .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:600px){.opt-grid{grid-template-columns:1fr}}
-.btn-v{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;max-width:760px;margin:7px auto;height:52px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
+/* file cards */
+.file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.file-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:9px}
+.xl-ic{width:28px;height:28px;background:#217346;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0}
+.fc-info{flex:1;min-width:0}
+.fc-name{font-size:11px;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc-meta{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap}
+.fc-amt{font-size:11px;color:var(--ok);font-weight:600}
+.fc-amt.loading{color:var(--sub)}
+.fc-amt.error{color:var(--err)}
+.type-badge{font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px}
+.type-rs{background:#dbeafe;color:#1d4ed8}
+.type-mg{background:#fce7f3;color:#9d174d}
+.btn-remove{width:22px;height:22px;background:#f0f2f7;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sub)}
+.btn-remove:hover{background:var(--err-bg);color:var(--err)}
+.btn-add-file{display:flex;align-items:center;gap:7px;width:100%;height:36px;background:#f7f9fc;border:1.5px dashed var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;color:var(--accent);justify-content:center;margin-top:8px;position:relative}
+.btn-add-file:hover{background:var(--accent-l);border-color:var(--accent)}
+.btn-add-file input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.total-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 13px;background:var(--navy);border-radius:8px;margin-top:10px}
+.total-bar .tbl{font-size:11px;color:rgba(255,255,255,.7);font-weight:600}
+.total-bar .tbv{font-size:13px;color:#fff;font-weight:700}
+/* button */
+.btn-v{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;max-width:760px;margin:7px auto;height:52px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Noto Sans KR',sans-serif;cursor:pointer;transition:background .15s}
+.btn-v:hover{background:var(--navy-l)}
+.btn-v:disabled{background:#c0c8d8;cursor:not-allowed}
+/* progress */
 .prog{max-width:760px;margin:0 auto 13px;display:none}
 .prog.show{display:block}
 .prog-steps{display:flex;gap:5px}
-.ps{flex:1;padding:7px 6px;border-radius:7px;font-size:10px;font-weight:600;text-align:center;border:1.5px solid var(--border);color:var(--sub);background:#fff}
+.ps{flex:1;padding:7px 6px;border-radius:7px;font-size:10px;font-weight:600;text-align:center;border:1.5px solid var(--border);color:var(--sub);background:#fff;transition:all .3s}
 .ps.active{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
 .ps.done{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.ps.skip{border-color:var(--border);color:#c0c8d8;background:#f7f9fc}
+.ps.error{border-color:var(--err);color:var(--err);background:var(--err-bg)}
+/* result */
 .rc{display:none}
 .rc.show{display:block}
-.ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent;margin-bottom:7px}
-.ci.pass{background:var(--ok-bg);border-color:#b2e0cc}
-.ci.fail{background:var(--err-bg);border-color:#f5c0bb}
-.ci.info{background:var(--accent-l);border-color:#c5d6f5}
-.cs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700}
-.ci.pass .cs{background:var(--ok);color:#fff}
-.ci.fail .cs{background:var(--err);color:#fff}
-.ci.info .cs{background:var(--accent);color:#fff}
-.cl-lbl{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:2px}
-.cl-det{font-size:12px;font-weight:500}
+.r-sum{padding:16px 18px;display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--border)}
+.ri{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ri.ok{background:var(--ok-bg)}
+.ri.fail{background:var(--err-bg)}
+.rt h3{font-size:15px;font-weight:700}
+.rt h3.ok{color:var(--ok)}
+.rt h3.fail{color:var(--err)}
+.rt p{font-size:11px;color:var(--sub);margin-top:2px}
+/* check group */
 .chk-group{padding:13px 18px;border-bottom:1px solid var(--border)}
 .chk-group:last-child{border-bottom:none}
-.gt{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:9px;}
+.gt{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:9px;letter-spacing:.5px}
+.cl{display:flex;flex-direction:column;gap:7px}
+.ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent}
+.ci.pass{background:var(--ok-bg);border-color:#b2e0cc}
+.ci.fail{background:var(--err-bg);border-color:#f5c0bb}
+.ci.warn{background:var(--warn-bg);border-color:#fce4b0}
+.ci.info{background:var(--accent-l);border-color:#c5d6f5}
+.ci.skip{background:#f7f9fc;border-color:var(--border)}
+.cs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px;font-weight:700}
+.ci.pass .cs{background:var(--ok);color:#fff}
+.ci.fail .cs{background:var(--err);color:#fff}
+.ci.warn .cs{background:var(--warn);color:#fff}
+.ci.info .cs{background:var(--accent);color:#fff}
+.ci.skip .cs{background:#c0c8d8;color:#fff}
+.cc{flex:1}
+.cl-lbl{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:2px}
+.cl-det{font-size:12px;font-weight:500;color:var(--text)}
+.cl-sub{font-size:11px;color:var(--sub);margin-top:2px}
+.diff{margin-top:5px;display:flex;flex-direction:column;gap:3px}
+.dr{display:flex;align-items:center;gap:6px}
+.dtag{font-size:9px;font-weight:700;padding:1px 7px;border-radius:3px;min-width:56px;text-align:center}
+.dtag.src1{background:#fde8e8;color:#c0392b}
+.dtag.src2{background:#e3f5ec;color:#1a7f4b}
+.dtag.src3{background:#fce7f3;color:#9d174d}
+.dval{font-size:11px;color:var(--text)}
+/* match table */
+.mt-wrap{padding:13px 18px;border-bottom:1px solid var(--border)}
+.mt-title{font-size:10px;font-weight:700;color:var(--sub);margin-bottom:8px;letter-spacing:.5px}
+table.mt{width:100%;border-collapse:collapse;font-size:11px}
+table.mt th{background:var(--navy);color:#fff;padding:6px 9px;text-align:left;font-weight:600}
+table.mt td{padding:7px 9px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.mt tr:last-child td{border-bottom:none}
+table.mt tr.pr td{background:var(--ok-bg)}
+table.mt tr.fr td{background:var(--err-bg)}
+table.mt tr.wr td{background:var(--warn-bg)}
+.stag{display:inline-flex;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px}
+.stag.pass{background:var(--ok);color:#fff}
+.stag.fail{background:var(--err);color:#fff}
+.stag.warn{background:var(--warn);color:#fff}
+.tag-mg{background:#fce7f3;color:#9d174d;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:700;display:inline-block}
+.tag-tax{background:#dbeafe;color:#1d4ed8;font-size:9px;padding:1px 5px;border-radius:2px;font-weight:700;display:inline-block}
+/* 3-amount compare */
+.tri-compare{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.tri-box{background:#f7f9fc;border:1px solid var(--border);border-radius:7px;padding:8px 10px;text-align:center}
+.tri-box .tb-lbl{font-size:9px;font-weight:700;color:var(--sub);margin-bottom:4px}
+.tri-box .tb-val{font-size:13px;font-weight:700;color:var(--navy)}
+.tri-box.highlight{border-color:var(--accent);background:var(--accent-l)}
+.tri-box .tb-note{font-size:9px;color:var(--warn);margin-top:2px}
+/* btn reset */
+.btn-r{display:block;margin:3px auto 18px;background:none;border:1.5px solid var(--border);border-radius:7px;padding:8px 20px;font-size:12px;font-family:'Noto Sans KR',sans-serif;color:var(--sub);cursor:pointer}
+.btn-r:hover{border-color:var(--accent);color:var(--accent)}
 .spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
+.kbd{display:inline-flex;background:var(--navy);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px}
 </style>
 </head>
 <body>
@@ -85,14 +184,15 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v7.7 (PDF 완벽 지원 및 메일 고도화)</span></h1>
-    <p>메일 · 홈페이지 · 엑셀 · 서류 — 통합 검증</p>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v7.8 (PDF + 매절 지원)</span></h1>
+    <p>메일 · 홈페이지 · 엑셀 · 사업자등록증 · 계약서 — 전체 대사</p>
   </div>
 </div>
 
 <div class="setup-card">
-  <div class="setup-hd"><h2>🔑 API 설정</h2></div>
+  <div class="setup-hd"><span>🔑</span><h2>최초 1회 설정 — Anthropic API 키</h2></div>
   <div class="setup-bd">
+    <p><a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a>에서 발급한 API 키를 입력하세요.</p>
     <div class="api-row">
       <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
       <button class="btn-save" onclick="saveKey()">저장</button>
@@ -102,141 +202,160 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 </div>
 
 <div class="card">
-  <div class="ch"><span class="sb">STEP 1</span><h2>기안서 화면 캡처 (PDF 지원)</h2></div>
+  <div class="ch"><span class="sb">STEP 1</span><h2>기안서 화면 캡처 또는 PDF</h2><span class="sub">— 제목 + 1.정산요청내역 + 2.정산요청 전체</span></div>
   <div class="cb">
+    <div style="background:var(--accent-l);border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:11px;color:var(--navy);line-height:1.7">
+      <span class="kbd">Win+Shift+S</span> 캡처 후 <strong>Ctrl+V</strong> 붙여넣기, 또는 파일 드래그 앤 드롭
+    </div>
     <div class="drop" id="imgDrop">
-      <input type="file" id="imgInput" accept="image/*,.pdf" style="display:none">
+      <input type="file" id="imgFile" accept="image/*,.pdf">
       <div class="drop-ic">🖼</div>
-      <p>이미지/PDF 드래그 앤 드롭 또는 <strong>클릭하여 선택</strong></p>
+      <p><strong>기안서 파일 선택 또는 드롭</strong></p>
+      <small>PDF 파일 완벽 지원</small>
     </div>
     <div class="img-prev" id="imgPrev">
-      <img id="prevImg" src="">
+      <img id="prevImg" src="" alt="">
+      <div class="img-prev-bar"><span class="name" id="imgName">—</span><button class="btn-clear" onclick="clearImg()">✕ 삭제</button></div>
     </div>
   </div>
 </div>
 
 <div class="card">
-  <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀 파일 (다중 선택 가능)</h2></div>
+  <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀/CSV 파일</h2><span class="sub">— 첨부 파일이 여러 개면 모두 추가</span></div>
   <div class="cb">
     <div class="drop" id="xlsDrop">
-      <input type="file" id="xlsInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
+      <input type="file" id="xlsFile" accept=".xlsx,.xls,.csv" multiple>
       <div class="drop-ic">📊</div>
-      <p>엑셀 파일 드래그 앤 드롭 또는 <strong>클릭하여 다중 선택</strong></p>
+      <p><strong>클릭 또는 드래그 앤 드롭</strong></p>
+      <small>여러 파일 동시 선택 가능</small>
     </div>
-    <div id="fileList" class="file-list"></div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="ch"><span class="sb">STEP 3</span><h2>거래처 자료 (선택)</h2></div>
-  <div class="cb">
-    <div class="opt-grid">
-      <div class="drop" id="mailDrop">
-        <input type="file" id="mailInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">📧</div>
-        <p>메일 캡처 (다중)</p>
-        <div id="mailCount" style="font-size:10px; color:var(--accent)"></div>
-      </div>
-      <div class="drop" id="webDrop">
-        <input type="file" id="webInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">🌐</div>
-        <p>홈페이지 캡처 (다중)</p>
-        <div id="webCount" style="font-size:10px; color:var(--accent)"></div>
-      </div>
+    <div class="file-list" id="fileList"></div>
+    <button class="btn-add-file" id="addFileBtn" style="display:none">
+      <input type="file" id="addFileInput" accept=".xlsx,.xls,.csv" multiple onchange="handleAddFiles(this)">
+      + 파일 추가
+    </button>
+    <div class="total-bar" id="totalBar" style="display:none">
+      <span class="tbl">📊 합계</span>
+      <span class="tbv" id="totalBarVal">—</span>
     </div>
   </div>
 </div>
 
 <div class="card">
-  <div class="ch"><span class="sb">STEP 4</span><h2>서류 자료 (선택)</h2></div>
+  <div class="ch"><span class="sb">STEP 3</span><h2>거래처 자료</h2><span class="opt">선택</span><span class="sub">— 있는 것만, 여러 개도 가능</span></div>
   <div class="cb">
     <div class="opt-grid">
-      <div class="drop" id="bizDrop">
-        <input type="file" id="bizInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">🏢</div>
-        <p>사업자등록증</p>
-        <div id="bizCount" style="font-size:10px; color:var(--accent)"></div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">✉️ 메일 캡처 <span style="font-weight:400;color:#a0aabf">(여러 장/PDF 가능)</span></div>
+        <div class="drop" id="mailDrop" style="padding:16px 12px">
+          <input type="file" id="mailFile" accept="image/*,.pdf" multiple>
+          <div class="drop-ic" style="font-size:20px">📧</div>
+          <p style="font-size:11px"><strong>메일 자료 추가</strong></p>
+          <small>오타 날짜도 자동 검증</small>
+        </div>
+        <div id="mailList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+        <button class="btn-add-file" id="mailAddBtn" style="display:none;margin-top:6px">
+          <input type="file" id="mailAddFile" accept="image/*,.pdf" multiple onchange="handleAddMailFiles(this)">
+          + 메일 추가
+        </button>
       </div>
-      <div class="drop" id="conDrop">
-        <input type="file" id="conInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">📑</div>
-        <p>계약서</p>
-        <div id="conCount" style="font-size:10px; color:var(--accent)"></div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">🌐 홈페이지 캡처 <span style="font-weight:400;color:#a0aabf">(여러 장/PDF 가능)</span></div>
+        <div class="drop" id="webDrop" style="padding:16px 12px">
+          <input type="file" id="webFile" accept="image/*,.pdf" multiple>
+          <div class="drop-ic" style="font-size:20px">🖥</div>
+          <p style="font-size:11px"><strong>홈페이지 캡처 추가</strong></p>
+        </div>
+        <div id="webList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+        <button class="btn-add-file" id="webAddBtn" style="display:none;margin-top:6px">
+          <input type="file" id="webAddFile" accept="image/*,.pdf" multiple onchange="handleAddWebFiles(this)">
+          + 홈페이지 추가
+        </button>
       </div>
     </div>
   </div>
 </div>
 
-<button class="btn-v" id="vBtn" onclick="run()">🔍 &nbsp;AI 검증 시작</button>
+<div class="card">
+  <div class="ch"><span class="sb">STEP 4</span><h2>사업자등록증 · 계약서</h2><span class="opt">선택</span><span class="sub">— 있는 것만, 여러 개도 가능</span></div>
+  <div class="cb">
+    <div class="opt-grid">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">🏢 사업자등록증 <span style="font-weight:400;color:#a0aabf">(여러 장/PDF 가능)</span></div>
+        <div class="drop" id="bizDrop" style="padding:16px 12px">
+          <input type="file" id="bizFile" accept="image/*,.pdf" multiple>
+          <div class="drop-ic" style="font-size:20px">📄</div>
+          <p style="font-size:11px"><strong>사업자등록증 추가</strong></p>
+        </div>
+        <div id="bizList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+        <button class="btn-add-file" id="bizAddBtn" style="display:none;margin-top:6px">
+          <input type="file" id="bizAddFile" accept="image/*,.pdf" multiple onchange="handleAddBizFiles(this)">
+          + 사업자등록증 추가
+        </button>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:8px">📑 계약서 <span style="font-weight:400;color:#a0aabf">(여러 장/PDF 가능)</span></div>
+        <div class="drop" id="conDrop" style="padding:16px 12px">
+          <input type="file" id="conFile" accept="image/*,.pdf" multiple>
+          <div class="drop-ic" style="font-size:20px">📝</div>
+          <p style="font-size:11px"><strong>계약서 추가</strong></p>
+          <small>RS 비율 · 입금일 확인</small>
+        </div>
+        <div id="conList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+        <button class="btn-add-file" id="conAddBtn" style="display:none;margin-top:6px">
+          <input type="file" id="conAddFile" accept="image/*,.pdf" multiple onchange="handleAddConFiles(this)">
+          + 계약서 추가
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="case-bar case0" id="caseBar">
+  <span id="caseIcon">📋</span>
+  <span id="caseText">기안서와 엑셀을 추가하면 검증 케이스가 자동으로 감지됩니다</span>
+</div>
+
+<button class="btn-v" id="vBtn" onclick="run()">
+  <span id="btnTxt">🔍 &nbsp;AI 검증 시작</span>
+</button>
 
 <div class="prog" id="prog">
   <div class="prog-steps">
-    <div class="ps" id="ps1">📸 기안서</div>
-    <div class="ps" id="ps2">✉️ 메일</div>
-    <div class="ps" id="ps3">🌐 홈페이지</div>
-    <div class="ps" id="ps4">📊 엑셀</div>
-    <div class="ps" id="ps5">🏢 서류</div>
-    <div class="ps" id="ps6">⚖️ 대사</div>
+    <div class="ps" id="ps1">📸 기안서 분석</div>
+    <div class="ps" id="ps2">✉️ 메일 분석</div>
+    <div class="ps" id="ps3">🌐 홈페이지 분석</div>
+    <div class="ps" id="ps4">📊 엑셀 읽기</div>
+    <div class="ps" id="ps5">🏢 서류 분석</div>
+    <div class="ps" id="ps6">⚖️ 전체 대사</div>
   </div>
 </div>
 
 <div class="card rc" id="rc">
-  <div id="rsum" style="padding:16px; border-bottom:1px solid var(--border)"></div>
+  <div id="rsum"></div>
   <div id="r_mail"></div>
   <div id="r_web"></div>
   <div id="r_docs"></div>
   <div id="r_excel"></div>
   <div id="r_internal"></div>
-  <div style="text-align:center"><button style="margin:10px; padding:5px 15px; border:1px solid var(--border); border-radius:5px; background:none; cursor:pointer;" onclick="location.reload()">↩ 초기화</button></div>
+  <div style="text-align:center"><button class="btn-r" onclick="resetAll()">↩ 다시 검증하기</button></div>
 </div>
 
 <script>
-// --- 전역 변수 ---
+// ── State ────────────────────────────────────────────────────────────────
 let apiKey = localStorage.getItem('tf_api_key') || '';
-let imgFileObj = null; // 기안서 파일 객체 저장
-let excelFiles = [];
-let mailFiles = [], webFiles = [], bizFiles = [], conFiles = [];
+let imgB64=null, imgMime='image/png';
 
-if(apiKey){ document.getElementById('apiKey').value=apiKey; document.getElementById('keyOk').classList.add('show'); }
-function saveKey(){ apiKey=document.getElementById('apiKey').value.trim(); localStorage.setItem('tf_api_key',apiKey); document.getElementById('keyOk').classList.add('show'); }
-
-// --- 날짜 보정 공통 로직 ---
-function normDate(v) {
-  if (v === null || v === undefined || v === '') return null;
-  if (typeof v === 'number') {
-    if (v < 10000) return null;
-    const d = new Date((v - 25569) * 86400 * 1000);
-    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
-  }
-  if (v instanceof Date) {
-    const kst = new Date(v.getTime() + 9 * 60 * 60 * 1000);
-    return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
-  }
-  let s = String(v).trim();
-  if (s.includes('T') && s.includes('Z')) {
-    const d = new Date(s);
-    const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-    return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
-  }
-  let m = s.match(/(\d{4})\s*년\s*(\d{1,2})\s*월(?:\s*(\d{1,2})\s*일)?/);
-  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||'01').padStart(2,'0')}`;
-
-  m = s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
-  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-  
-  return s; // 못 찾으면 문자열 그대로 반환 (AI가 보내준 "2026-04" 등을 유지하기 위해)
-}
-
-function fmtAmt(n){ if(n===null||n===undefined) return '—'; return Number(n).toLocaleString('ko-KR')+'원'; }
-function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=parseInt(String(v).replace(/[원,\s]/g,''),10); return isNaN(n)?null:n; }
-
-// --- PDF 렌더링 엔진 ---
+// 다중 파일 배열 선언
+let mailImages=[], mailIdCtr=0;
+let webImages=[], webIdCounter=0;
+let bizImages=[], bizIdCtr=0;
+let conImages=[], conIdCtr=0;
 async function pdfToImages(file){
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:ab}).promise;
   const imgs = [];
-  const maxPages = Math.min(pdf.numPages, 3); // 토큰 절약을 위해 최대 3페이지만
-  for(let i=1;i<=maxPages;i++){
+  for(let i=1;i<=Math.min(pdf.numPages, 3);i++){
     const page = await pdf.getPage(i);
     const vp = page.getViewport({scale:1.5});
     const cv = document.createElement('canvas');
@@ -247,77 +366,333 @@ async function pdfToImages(file){
   return imgs;
 }
 
-// --- 드래그 앤 드롭 방어 로직 ---
-function initDrop(id, inputId, callback) {
-  const zone = document.getElementById(id);
-  const input = document.getElementById(inputId);
-  zone.onclick = () => input.click();
-  zone.ondragover = e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('over'); };
-  zone.ondragleave = e => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('over'); };
-  zone.ondrop = e => {
-    e.preventDefault(); e.stopPropagation(); zone.classList.remove('over');
-    if(e.dataTransfer.files && e.dataTransfer.files.length > 0) callback(e.dataTransfer.files);
-  };
-  input.onchange = e => {
-    if(e.target.files && e.target.files.length > 0) callback(e.target.files);
-  };
+// 메일 다중
+function addMailImage(f){
+  const id=++mailIdCtr;
+  if(f.type==='application/pdf'){
+    pdfToImages(f).then(imgs=>{
+      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
+      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      mailImages.push({id,b64,mime:'image/png',name:label});
+      addImgCard('mailList','mailAddBtn',id,label,'📧','removeMailImage');
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
+  const mime=f.type||'image/png',r=new FileReader();
+  r.onload=e=>{ mailImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('mailList','mailAddBtn',id,f.name,'📧','removeMailImage'); };
+  r.readAsDataURL(f);
 }
 
-// 기안서 등록 (PDF 및 이미지 통합 지원)
-initDrop('imgDrop', 'imgInput', async files => {
-  const f = files[0];
-  imgFileObj = f; // AI 호출 시 사용하기 위해 원본 파일 저장
-  if(f.type === 'application/pdf'){
-    const imgs = await pdfToImages(f);
-    document.getElementById('prevImg').src = 'data:image/png;base64,' + imgs[0];
-  } else {
-    const r = new FileReader();
-    r.onload = ev => document.getElementById('prevImg').src = ev.target.result;
-    r.readAsDataURL(f);
-  }
-  document.getElementById('imgPrev').classList.add('show');
-});
-
-// 엑셀 등록
-initDrop('xlsDrop', 'xlsInput', files => {
-  for (let f of files) {
-    const r = new FileReader();
-    r.onload = ev => {
-      const wb = XLSX.read(ev.target.result, {type:'array', cellDates:true});
-      excelFiles.push({name: f.name, wb: wb, total: getExcelTotal(wb)});
-      renderXlsList();
-    };
-    r.readAsArrayBuffer(f);
-  }
-});
-function renderXlsList() {
-  document.getElementById('fileList').innerHTML = excelFiles.map((f, i) => 
-    `<div class="file-card">📊 ${f.name} <strong style="color:var(--ok); margin-left:10px">${fmtAmt(f.total)}</strong> <span class="btn-remove" onclick="event.stopPropagation(); excelFiles.splice(${i},1);renderXlsList()">✕</span></div>`
-  ).join('');
+function renderWebCard(id, name) {
+  const list = document.getElementById('webList');
+  const card = document.createElement('div');
+  card.id = 'web-' + id;
+  card.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f7f9fc;border:1px solid var(--border);border-radius:8px;margin-top:4px';
+  const shortName = name.length > 28 ? name.slice(0,26)+'...' : name;
+  card.innerHTML = '<span style="font-size:16px">🖥</span><span style="flex:1;font-size:11px;font-weight:600;color:var(--navy);">'+shortName+'</span><button class="btn-remove" onclick="removeWebImage('+id+')">×</button>';
+  list.appendChild(card);
 }
 
-// 기타 파일 등록
-initDrop('mailDrop', 'mailInput', fs => { mailFiles.push(...fs); document.getElementById('mailCount').innerText = mailFiles.length+'개 완료'; });
-initDrop('webDrop', 'webInput', fs => { webFiles.push(...fs); document.getElementById('webCount').innerText = webFiles.length+'개 완료'; });
-initDrop('bizDrop', 'bizInput', fs => { bizFiles.push(...fs); document.getElementById('bizCount').innerText = bizFiles.length+'개 완료'; });
-initDrop('conDrop', 'conInput', fs => { conFiles.push(...fs); document.getElementById('conCount').innerText = conFiles.length+'개 완료'; });
+function removeWebImage(id) {
+  webImages = webImages.filter(w => w.id !== id);
+  document.getElementById('web-' + id)?.remove();
+  if(webImages.length === 0) document.getElementById('webAddBtn').style.display = 'none';
+  updateCaseBar();
+}
 
-// --- 엑셀 파싱 로직 ---
+function addWebImage(f){
+  const id=++webIdCounter;
+  if(f.type==='application/pdf'){
+    pdfToImages(f).then(imgs=>{
+      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
+      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      webImages.push({id,b64,mime:'image/png',name:label});
+      renderWebCard(id,label);
+      document.getElementById('webAddBtn').style.display='flex';
+      updateCaseBar();
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
+  const mime=f.type||'image/png',r=new FileReader();
+  r.onload=e=>{
+    webImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name});
+    renderWebCard(id,f.name);
+    document.getElementById('webAddBtn').style.display='flex';
+    updateCaseBar();
+  };
+  r.readAsDataURL(f);
+}
+
+function addConImage(f){
+  const id=++conIdCtr;
+  if(f.type==='application/pdf'){
+    pdfToImages(f).then(imgs=>{
+      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
+      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      conImages.push({id,b64,mime:'image/png',name:label});
+      addImgCard('conList','conAddBtn',id,label,'📝','removeConImage');
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
+  const mime=f.type||'image/png',r=new FileReader();
+  r.onload=e=>{ conImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('conList','conAddBtn',id,f.name,'📝','removeConImage'); };
+  r.readAsDataURL(f);
+}
+
+function removeConImage(id){ conImages=conImages.filter(w=>w.id!==id); document.getElementById('con-'+id)?.remove(); if(conImages.length===0) document.getElementById('conAddBtn').style.display='none'; }
+
+function handleAddWebFiles(input) {
+  for(const f of input.files) addWebImage(f);
+  input.value = '';
+}
+
+let excelFiles=[];
+let fileIdCounter=0;
+
+if(apiKey){ document.getElementById('apiKey').value=apiKey; document.getElementById('keyOk').classList.add('show'); }
+function saveKey(){
+  const v=document.getElementById('apiKey').value.trim();
+  if(!v.startsWith('sk-')){ alert('올바른 API 키 형식이 아닙니다.'); return; }
+  apiKey=v; localStorage.setItem('tf_api_key',v);
+  document.getElementById('keyOk').classList.add('show');
+}
+
+// ── Image helpers ─────────────────────────────────────────────────────────
+
+function loadImgTo(file, b64setter, mimeSetter, prevId, imgId, nameId){
+  if(file.type==='application/pdf'){
+    mimeSetter('image/png');
+    pdfToImages(file).then(imgs=>{
+      if(!imgs.length) return;
+      b64setter(imgs.length===1 ? imgs[0] : JSON.stringify(imgs));
+      document.getElementById(imgId).src='data:image/png;base64,'+imgs[0];
+      document.getElementById(nameId).textContent=file.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      document.getElementById(prevId).classList.add('show');
+      updateCaseBar();
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
+  mimeSetter(file.type||'image/png');
+  const r=new FileReader();
+  r.onload=e=>{
+    b64setter(e.target.result.split(',')[1]);
+    document.getElementById(imgId).src=e.target.result;
+    document.getElementById(nameId).textContent=file.name;
+    document.getElementById(prevId).classList.add('show');
+    updateCaseBar();
+  };
+  r.readAsDataURL(file);
+}
+
+// Main image
+document.getElementById('imgFile').addEventListener('change',e=>{ if(e.target.files[0]) loadImgTo(e.target.files[0], v=>imgB64=v, v=>imgMime=v, 'imgPrev','prevImg','imgName'); });
+setupDrop('imgDrop', f=>loadImgTo(f, v=>imgB64=v, v=>imgMime=v, 'imgPrev','prevImg','imgName'));
+document.addEventListener('paste',e=>{
+  for(const item of (e.clipboardData?.items||[])){
+    if(item.type.startsWith('image/')){
+      loadImgTo(item.getAsFile(), v=>imgB64=v, v=>imgMime=v, 'imgPrev','prevImg','imgName');
+      flash('imgDrop');
+    }
+  }
+});
+function clearImg(){ imgB64=null; document.getElementById('imgPrev').classList.remove('show'); updateCaseBar(); }
+
+// 사업자등록증 다중
+function addBizImage(f){
+  const id=++bizIdCtr;
+  if(f.type==='application/pdf'){
+    pdfToImages(f).then(imgs=>{
+      const b64=imgs.length===1?imgs[0]:JSON.stringify(imgs);
+      const label=f.name+(imgs.length>1?' ('+imgs.length+'페이지)':'');
+      bizImages.push({id,b64,mime:'image/png',name:label});
+      addImgCard('bizList','bizAddBtn',id,label,'📄','removeBizImage');
+    }).catch(e=>alert('PDF 변환 실패: '+e.message));
+    return;
+  }
+  const mime=f.type||'image/png',r=new FileReader();
+  r.onload=e=>{ bizImages.push({id,b64:e.target.result.split(',')[1],mime,name:f.name}); addImgCard('bizList','bizAddBtn',id,f.name,'📄','removeBizImage'); };
+  r.readAsDataURL(f);
+}
+
+function removeMailImage(id){ mailImages=mailImages.filter(w=>w.id!==id); document.getElementById('mai-'+id)?.remove(); if(mailImages.length===0) document.getElementById('mailAddBtn').style.display='none'; updateCaseBar(); }
+function removeBizImage(id){ bizImages=bizImages.filter(w=>w.id!==id); document.getElementById('biz-'+id)?.remove(); if(bizImages.length===0) document.getElementById('bizAddBtn').style.display='none'; }
+
+// 공통 카드 추가 헬퍼
+function addImgCard(listId, btnId, id, name, icon, removeFn){
+  const prefix = removeFn.replace('remove','').replace('Image','').toLowerCase().slice(0,3);
+  const list=document.getElementById(listId);
+  const card=document.createElement('div');
+  card.id=prefix+'-'+id;
+  card.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f7f9fc;border:1px solid var(--border);border-radius:8px;margin-top:4px';
+  const shortName=name.length>26?name.slice(0,24)+'...':name;
+  card.innerHTML='<span style="font-size:15px">'+icon+'</span><span style="flex:1;font-size:11px;font-weight:600;color:var(--navy);">'+shortName+'</span><button class="btn-remove" onclick="'+removeFn+'('+id+')">×</button>';
+  list.appendChild(card);
+  document.getElementById(btnId).style.display='flex';
+}
+
+function detectCase(){
+  const hasMail=mailImages.length>0, hasWeb=webImages.length>0;
+  if(hasMail && hasWeb) return 3;
+  if(hasMail) return 1;
+  if(hasWeb)  return 2;
+  return 4;
+}
+
+function updateCaseBar(){
+  const c=detectCase();
+  const bar=document.getElementById('caseBar');
+  const cases={
+    1:{cls:'case1',ic:'✉️',txt:'케이스 1 — 메일 + 엑셀 대사 (메일→기안서 → 엑셀→기안서)'},
+    2:{cls:'case2',ic:'🌐',txt:'케이스 2 — 홈페이지 + 엑셀 대사 (홈페이지→기안서 → 엑셀→기안서)'},
+    3:{cls:'case3',ic:'📨',txt:'케이스 3 — 메일 + 홈페이지 + 엑셀 3중 대사'},
+    4:{cls:'case4',ic:'📊',txt:'케이스 4 — 엑셀 + 기안서 대사'}
+  };
+  const info=cases[c];
+  bar.className='case-bar '+info.cls;
+  document.getElementById('caseIcon').textContent=info.ic;
+  document.getElementById('caseText').textContent=info.txt;
+}
+updateCaseBar();
+
+// ── Excel ─────────────────────────────────────────────────────────────────
+// Mail file handlers
+document.getElementById('mailFile').addEventListener('change',e=>{ for(const f of e.target.files) addMailImage(f); });
+document.getElementById('mailFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('mailDrop').classList.add('over'); });
+document.getElementById('mailFile').addEventListener('dragleave',e=>{ document.getElementById('mailDrop').classList.remove('over'); });
+document.getElementById('mailFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('mailDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
+const mailDropEl=document.getElementById('mailDrop');
+mailDropEl.addEventListener('dragover',e=>{ e.preventDefault(); mailDropEl.classList.add('over'); });
+mailDropEl.addEventListener('dragleave',e=>{ if(!mailDropEl.contains(e.relatedTarget)) mailDropEl.classList.remove('over'); });
+mailDropEl.addEventListener('drop',e=>{ e.preventDefault(); mailDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addMailImage(f); });
+
+// Web/홈페이지 file handlers
+document.getElementById('webFile').addEventListener('change',e=>{ for(const f of e.target.files) addWebImage(f); });
+document.getElementById('webFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('webDrop').classList.add('over'); });
+document.getElementById('webFile').addEventListener('dragleave',e=>{ document.getElementById('webDrop').classList.remove('over'); });
+document.getElementById('webFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('webDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
+const webDropEl=document.getElementById('webDrop');
+webDropEl.addEventListener('dragover',e=>{ e.preventDefault(); webDropEl.classList.add('over'); });
+webDropEl.addEventListener('dragleave',e=>{ if(!webDropEl.contains(e.relatedTarget)) webDropEl.classList.remove('over'); });
+webDropEl.addEventListener('drop',e=>{ e.preventDefault(); webDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addWebImage(f); });
+
+// Biz file handlers
+document.getElementById('bizFile').addEventListener('change',e=>{ for(const f of e.target.files) addBizImage(f); });
+document.getElementById('bizFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('bizDrop').classList.add('over'); });
+document.getElementById('bizFile').addEventListener('dragleave',e=>{ document.getElementById('bizDrop').classList.remove('over'); });
+document.getElementById('bizFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('bizDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
+const bizDropEl=document.getElementById('bizDrop');
+bizDropEl.addEventListener('dragover',e=>{ e.preventDefault(); bizDropEl.classList.add('over'); });
+bizDropEl.addEventListener('dragleave',e=>{ if(!bizDropEl.contains(e.relatedTarget)) bizDropEl.classList.remove('over'); });
+bizDropEl.addEventListener('drop',e=>{ e.preventDefault(); bizDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addBizImage(f); });
+
+// Contract file handlers
+document.getElementById('conFile').addEventListener('change',e=>{ for(const f of e.target.files) addConImage(f); });
+document.getElementById('conFile').addEventListener('dragover',e=>{ e.preventDefault(); document.getElementById('conDrop').classList.add('over'); });
+document.getElementById('conFile').addEventListener('dragleave',e=>{ document.getElementById('conDrop').classList.remove('over'); });
+document.getElementById('conFile').addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); document.getElementById('conDrop').classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
+const conDropEl=document.getElementById('conDrop');
+conDropEl.addEventListener('dragover',e=>{ e.preventDefault(); conDropEl.classList.add('over'); });
+conDropEl.addEventListener('dragleave',e=>{ if(!conDropEl.contains(e.relatedTarget)) conDropEl.classList.remove('over'); });
+conDropEl.addEventListener('drop',e=>{ e.preventDefault(); conDropEl.classList.remove('over'); for(const f of e.dataTransfer.files) addConImage(f); });
+
+document.getElementById('xlsFile').addEventListener('change',e=>{ for(const f of e.target.files) addExcelFile(f); });
+function handleAddFiles(input){ for(const f of input.files) addExcelFile(f); input.value=''; }
+
+function addExcelFile(file){
+  const id=++fileIdCounter;
+  const entry={id,name:file.name,wb:null,total:null,type:null};
+  excelFiles.push(entry); renderFileCard(entry,'loading');
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      entry.wb=wb; entry.total=getExcelTotal(wb); entry.type=detectType(wb);
+      renderFileCard(entry,'loaded'); updateTotalBar();
+    }catch{ renderFileCard(entry,'error'); }
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function removeFile(id){ excelFiles=excelFiles.filter(f=>f.id!==id); document.getElementById('fc-'+id)?.remove(); updateTotalBar(); if(excelFiles.length===0){ document.getElementById('addFileBtn').style.display='none'; document.getElementById('totalBar').style.display='none'; } }
+
+function renderFileCard(entry,state){
+  const list=document.getElementById('fileList');
+  let card=document.getElementById('fc-'+entry.id);
+  if(!card){ card=document.createElement('div'); card.className='file-card'; card.id='fc-'+entry.id; list.appendChild(card); document.getElementById('addFileBtn').style.display='flex'; }
+  const amtHtml=state==='loading'?'<span class="fc-amt loading">읽는 중...</span>':state==='error'?'<span class="fc-amt error">읽기 실패</span>':entry.total!==null?`<span class="fc-amt">합계: ${fmtAmt(entry.total)}</span>`:'<span class="fc-amt error">합계 인식 불가</span>';
+  const typeBadge=entry.type==='RS'?'<span class="type-badge type-rs">RS</span>':entry.type==='원작료'?'<span class="type-badge type-mg">원작료/MG</span>':'';
+  const sn=entry.name.length>38?entry.name.slice(0,36)+'…':entry.name;
+  card.innerHTML=`<div class="xl-ic">XL</div><div class="fc-info"><div class="fc-name" title="${entry.name}">${sn}</div><div class="fc-meta">${amtHtml}${typeBadge}</div></div><button class="btn-remove" onclick="removeFile(${entry.id})">×</button>`;
+}
+
+function updateTotalBar(){
+  const loaded=excelFiles.filter(f=>f.total!==null);
+  if(loaded.length<2){ document.getElementById('totalBar').style.display='none'; return; }
+  const total=loaded.reduce((s,f)=>s+f.total,0);
+  document.getElementById('totalBar').style.display='flex';
+  document.getElementById('totalBarVal').textContent=fmtAmt(total);
+}
+
+function setupDrop(id,handler){
+  const el=document.getElementById(id);
+  el.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.add('over'); });
+  el.addEventListener('dragleave',()=>el.classList.remove('over'));
+  el.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); el.classList.remove('over'); if(e.dataTransfer.files[0]) handler(e.dataTransfer.files[0]); });
+}
+
+// ── Excel reading ─────────────────────────────────────────────────────────
+function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=parseInt(String(v).replace(/[원,\s]/g,''),10); return isNaN(n)?null:n; }
+
+function normDate(v){
+  if(!v) return null;
+  if(v instanceof Date){
+    const kst = new Date(v.getTime() + 9*60*60*1000);
+    return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
+  }
+  if(typeof v === 'number' && v > 10000) { 
+     const d = new Date((v - 25569) * 86400 * 1000);
+     const kst = new Date(d.getTime() + 9*60*60*1000);
+     return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
+  }
+  const s = String(v).trim();
+  let m = s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+  if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m = s.match(/(\d{4})\s*년\s*(\d{1,2})\s*월(?:\s*(\d{1,2})\s*일)?/);
+  if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||'01').padStart(2,'0')}`;
+  return null;
+}
+
+function toYYYYMM(d){ if(!d) return null; const m=d.match(/(\d{4})-(\d{2})/); return m?m[1]+m[2]:null; }
+function detectType(wb){ if(wb.SheetNames.includes('정산요약')) return 'RS'; if(wb.SheetNames.includes('정산용')||wb.SheetNames.includes('요약')) return '원작료'; return 'unknown'; }
+
 function getExcelTotal(wb){
   if(wb.SheetNames.includes('정산요약')){
     const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',UTC:true});
     const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
     return parseAmt(map['최종 입금액 (세후)']||map['정산총액']);
   }
-  // 매절 리스트 폴백
+  if(wb.SheetNames.includes('요약')){
+    const ws=wb.Sheets['요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
+    let amtCol=-1;
+    for(const row of rows.slice(0,8)){ for(let i=0;i<(row.length||0);i++){ if(row[i]&&String(row[i]).trim()==='매출액'){ amtCol=i; break; } } if(amtCol>=0) break; }
+    for(const row of rows){ if(row[1]&&String(row[1])==='총합계'){ if(amtCol>=0) return parseAmt(row[amtCol]); for(let i=14;i>=8;i--){ const v=parseAmt(row[i]); if(v!==null&&v>0) return v; } } }
+  }
+  if(wb.SheetNames.includes('정산용')){
+    const ws=wb.Sheets['정산용']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
+    for(const row of rows) if(row[1]&&String(row[1])==='총합계') return parseAmt(row[19]);
+    for(let i=rows.length-1;i>=0;i--) if(rows[i][19]!==null&&rows[i][19]!==undefined) return parseAmt(rows[i][19]);
+  }
+  // 추가: 매절/단순 CSV 리스트에서 총 금액 구하기
   const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, UTC:true});
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
   let amtColIndex = -1; let listTotal = 0;
   for(let r=0; r<rows.length; r++) {
     const row = rows[r] || [];
     if(amtColIndex === -1) {
       for(let c=0; c<row.length; c++) {
-        if(String(row[c]).replace(/\s/g, '').includes('금액')) { amtColIndex = c; break; }
+        if(String(row[c]).replace(/\s/g, '').includes('금액')) {
+          amtColIndex = c; break;
+        }
       }
     } else {
       const val = parseAmt(row[amtColIndex]);
@@ -327,156 +702,501 @@ function getExcelTotal(wb){
   return listTotal > 0 ? listTotal : null;
 }
 
-function getExcelMeta(wb) {
-  let meta = { 작성일자: null, 서비스월: null };
+function getExcelMeta(wb){
+  let meta = { 작성일자:null, 입금예정일:null, 서비스월:null, 정산월YYYYMM:null };
   if(!wb || !wb.SheetNames.length) return meta;
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, UTC: true });
-  for (let r = 0; r < Math.min(data.length, 50); r++) {
-    const row = data[r] || [];
-    if (row[30] && !meta.작성일자) meta.작성일자 = normDate(row[30]);
-    if (row[29] && !meta.서비스월) meta.서비스월 = normDate(row[29]);
-    for (let c = 0; c < row.length; c++) {
-      const v = String(row[c]||"");
-      if (v.includes("정산월") && !meta.작성일자) meta.작성일자 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
-      if (v.includes("서비스월") && !meta.서비스월) meta.서비스월 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
+
+  if(wb.SheetNames.includes('정산요약')){
+    const ws=wb.Sheets['정산요약']; 
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
+    const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
+    meta.작성일자 = normDate(map['정산서 발행일']);
+    meta.입금예정일 = normDate(map['입금 예정일']);
+    meta.정산월YYYYMM = toYYYYMM(meta.작성일자);
+    return meta;
+  }
+  
+  const sheetName = wb.SheetNames.includes('정산용') ? '정산용' : wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName]; 
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+  
+  let headerRowIdx = -1;
+  let colSrv = -1, colJung = -1;
+
+  for(let r=0; r<Math.min(rows.length, 20); r++){
+    const row = rows[r] || [];
+    for(let c=0; c<row.length; c++){
+      const val = String(row[c]||"").replace(/\s/g,'');
+      if(val === '서비스월') { colSrv = c; headerRowIdx = r; }
+      if(val === '정산월') { colJung = c; headerRowIdx = r; }
+    }
+    if(colSrv !== -1 || colJung !== -1) break;
+  }
+
+  if(headerRowIdx !== -1 && rows[headerRowIdx + 1]) {
+    if(colJung !== -1) meta.작성일자 = normDate(rows[headerRowIdx + 1][colJung]);
+    if(colSrv !== -1) meta.서비스월 = normDate(rows[headerRowIdx + 1][colSrv]);
+  }
+
+  if (!meta.작성일자 || !meta.서비스월) {
+    for(let r=1; r<Math.min(rows.length, 30); r++){
+      const row = rows[r] || [];
+      if(!meta.작성일자 && row[30]) {
+         const d = normDate(row[30]);
+         if (d && d.match(/^\d{4}-\d{2}/)) meta.작성일자 = d;
+      }
+      if(!meta.서비스월 && row[29]) {
+         const d = normDate(row[29]);
+         if (d && d.match(/^\d{4}-\d{2}/)) meta.서비스월 = d;
+      }
     }
   }
+
+  if(wb.SheetNames.includes('정산서')){
+    const ws2 = wb.Sheets['정산서']; 
+    const rows2 = XLSX.utils.sheet_to_json(ws2, {header:1, defval:null, raw:true});
+    outer: for(const row of rows2){ 
+      for(let i=0; i<(row.length||0); i++){ 
+        if(row[i] && String(row[i]).replace(/\s/g,'').includes('지급예정일')){ 
+          for(let j=i+1; j<Math.min(i+4, row.length); j++){ 
+            if(row[j]){ meta.입금예정일 = normDate(row[j]); break outer; } 
+          } 
+        } 
+      } 
+    }
+  }
+  
+  meta.정산월YYYYMM = toYYYYMM(meta.작성일자);
   return meta;
 }
 
-// --- AI 프롬프트 및 호출 ---
-const PROMPT_기안서=`이 이미지는 기안서입니다. JSON으로만 응답하세요.
+// ── AI calls ──────────────────────────────────────────────────────────────
+async function aiCall(b64, mime, prompt){
+  let contentBlocks = [];
+  try {
+    const pages = JSON.parse(b64);
+    if(Array.isArray(pages)){
+      for(const p of pages){
+        contentBlocks.push({type:'image',source:{type:'base64',media_type:'image/png',data:p}});
+      }
+    } else { throw new Error('not array'); }
+  } catch {
+    contentBlocks = [{type:'image',source:{type:'base64',media_type:mime,data:b64}}];
+  }
+  contentBlocks.push({type:'text',text:prompt});
+  
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:2000,
+      messages:[{role:'user',content:contentBlocks}]
+    })
+  });
+  if(!res.ok){ const e=await res.json(); throw new Error(e.error?.message||`API 오류 (${res.status})`); }
+  const data=await res.json();
+  const txt=data.content[0]?.text||'';
+  const clean=txt.replace(/```json|```/g,'').trim();
+  try{ return JSON.parse(clean); }
+  catch{ throw new Error('AI 응답 파싱 실패\n\n'+txt.slice(0,300)); }
+}
+
+const PROMPT_사업자=`이 이미지는 한국 사업자등록증입니다. 아래 항목을 읽고 JSON만 응답하세요.
 {
+  "사업자등록번호": "XXX-XX-XXXXX 형식 (하이픈 포함)",
+  "상호": "법인명 또는 상호 전체",
+  "대표자": "대표자명"
+}
+값을 읽을 수 없으면 null`;
+
+const PROMPT_계약서=`이 이미지는 계약서 또는 계약서 일부입니다. 아래 항목을 읽고 JSON만 응답하세요.
+{
+  "RS비율": 숫자만 (예: 70은 70%를 의미, 없으면 null),
+  "총계약금액": 숫자 (매절, 총계, 콘텐츠 제공료 총액 등 명시된 총 금액, 없으면 null),
+  "입금조건": "입금/지급 관련 조건 텍스트 전체 (예: 계약체결 후 15영업일, 익월 말일, 매월 25일 등, 없으면 null)",
+  "선급금": 숫자 (계약서에 선급금/선급비용 금액이 명시된 경우, 없으면 null),
+  "플랫폼명": "계약 플랫폼명 (없으면 null)",
+  "작품명": "계약 작품명 (없으면 null)"
+}
+값을 읽을 수 없으면 null`;
+
+const PROMPT_기안서=`이 이미지는 한국 그룹웨어의 기안서입니다. 아래 항목을 읽고 JSON만 응답하세요.
+
+{
+  "제목": "제 목 필드 전체 텍스트",
+  "총요청금액": 숫자 (테이블이 없을 경우, 기안서 본문에 명시된 1개월 이용금액, 매절 금액 등 총 청구/정산 금액 기재),
   "본문_계산서작성일자": "YYYY-MM-DD",
   "본문_마감기한": "YYYY-MM-DD",
+  "본문_마감시간": "HH:MM (없으면 null)",
   "본문_서비스월": "YYYY-MM",
+  "본문_판매분월": "YYYY-MM",
+  "본문_정산금액들": [{"구분":"설명","금액":숫자,"계산서발행금액":숫자또는null,"원단위절사":true/false}],
+  "세금계산서_rows": [{"작성일자":"YYYY-MM-DD","공급가액":숫자,"부가가치세":숫자,"합계":숫자}],
+  "MG차감_rows": [{"작성일자":"YYYY-MM-DD","공급가액":숫자,"합계":숫자}],
   "입금예정일": "YYYY-MM-DD",
-  "세금계산서_rows": [{"공급가액":숫자}]
-}`;
+  "발신이메일": "이메일주소 (없으면 null)",
+  "품목명": "품목 내용 전체",
+  "귀속부서코드": "코드",
+  "귀속부서명": "부서명",
+  "계정과목코드": "코드",
+  "계정과목명": "계정과목명"
+}
 
-const PROMPT_계약서=`이 이미지는 계약서/부속합의서입니다. JSON으로 응답하세요.
-{ "총계약금액": 숫자 }`;
+- 날짜: YYYY-MM-DD / 금액: 숫자만 / 없으면 null
+- 본문에 "에피루스 계산서 발행 요청금액: X원" 처럼 계산서 발행 금액이 별도 명시된 경우 계산서발행금액에 기재, 원단위절사:true
+- 섹션 2 정산요청 테이블에서 세금계산서/MG차감건 행 모두 추출`;
 
-const PROMPT_메일=`이 이미지는 계산서/세금계산서 발행 요청 메일입니다. 아래 명시된 날짜를 추출해 JSON만 응답하세요.
+const PROMPT_메일=`이 이미지는 거래처에서 온 계산서/세금계산서 발행 요청 메일입니다. 아래 항목을 읽고 JSON만 응답하세요.
+
 {
-  "작성일자": "YYYY-MM-DD ('X월 X일자로 발행' 등 메일 본문에 명시된 날짜)",
-  "마감일": "YYYY-MM-DD (명시된 마감 기한. 오타가 있어도 적힌 연도 그대로 추출)",
-  "입금예정일": "YYYY-MM-DD ('입금예정일', 'X월 X일에 입금' 등 명시된 입금일)"
-}`;
-
-async function aiCall(file, prompt) {
-  if(!file) return null;
-  let b64s = [];
-  if (file.type === 'application/pdf') {
-      b64s = await pdfToImages(file);
-  } else {
-      const b64 = await new Promise((res, rej) => {
-          const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(file);
-      });
-      b64s = [b64];
-  }
-  let contentBlocks = [];
-  for(const b64 of b64s) {
-      contentBlocks.push({type:'image', source:{type:'base64', media_type:'image/png', data:b64}});
-  }
-  contentBlocks.push({type:'text', text:prompt + "\nJSON format only."});
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-    body: JSON.stringify({ model: 'claude-3-haiku-20240307', max_tokens: 1500, messages: [{role:'user', content: contentBlocks}] })
-  });
-  const d = await res.json();
-  if(!d.content) return null;
-  const match = d.content[0].text.match(/\{[\s\S]*\}/);
-  return match ? JSON.parse(match[0]) : null;
+  "작성일자": "YYYY-MM-DD (발행 일자, 작성 일자. 명시되지 않았다면 기재하지 마세요.)",
+  "마감일": "YYYY-MM-DD (오타가 있더라도 메일에 적힌 연도/월/일을 그대로 추출하세요. 예: '25년 4월 13일' -> '2025-04-13')",
+  "입금예정일": "YYYY-MM-DD (명시된 입금일/지급예정일. 오타가 있다면 적힌 연도 그대로 추출하세요.)",
+  "마감시간": "HH:MM (없으면 null)",
+  "품목명들": ["품목명1", "품목명2"],
+  "금액들": [{"품목":"설명","금액":숫자}],
+  "발행이메일": "계산서 발행 수신 이메일. 명시된 수신 주소가 없으면 메일 발신자(보낸 사람) 이메일 주소를 기재",
+  "이메일변경": "수신 이메일이 변경된 경우 변경 안내 문구 전체 (없으면 null)",
+  "사업자변경": "사업자 정보(상호/번호/담당자 등)가 변경된 경우 변경 안내 문구 전체 (없으면 null)",
+  "중요공지": "위 항목 외 ★, ※, 【】, 형광펜 강조 등 중요 표시된 내용 전체 (없으면 null)",
+  "입금조건": "익월 말, 매월 25일 등 날짜가 아닌 조건 텍스트 (없으면 null)",
+  "발행건수": 숫자,
+  "기타": "기타 특이사항 (없으면 null)"
 }
 
-// --- 대사 실행 및 렌더링 ---
-function mkCi(status,label,detail,sub){
-  const icons={pass:'✓',fail:'✕',info:'i'};
-  const subHtml=sub?`<div class="cl-sub">${sub}</div>`:'';
-  return `<div class="ci ${status}"><div class="cs">${icons[status]}</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det">${detail}</div>${subHtml}</div></div>`;
-}
-function cmpDate(label, imgD, cmpD, lbl1, lbl2){
-  if(!imgD && !cmpD) return '';
-  if(!cmpD) return mkCi('info',label,`${lbl1}: ${imgD}`, `${lbl2}에서 확인 불가`);
-  if(imgD === cmpD) return mkCi('pass',label,`${cmpD} — 일치 ✓`);
-  return mkCi('fail',label,'날짜 불일치 ⚠', `${lbl1}: ${imgD} / ${lbl2}: ${cmpD}`);
+- 날짜: YYYY-MM-DD / 금액: 숫자만 / 없으면 null`;
+
+const PROMPT_홈페이지=`이 이미지는 정산 홈페이지(플랫폼 정산 내역)입니다. 아래 항목을 읽고 JSON만 응답하세요.
+
+{
+  "정산예정금액": 숫자,
+  "판매기간시작": "YYYY-MM-DD",
+  "판매기간종료": "YYYY-MM-DD",
+  "입금일": "YYYY-MM-DD (없으면 null)",
+  "플랫폼명": "플랫폼 이름 (확인가능한 경우)",
+  "기타금액정보": "기타 금액 관련 내용 (없으면 null)"
 }
 
-async function run() {
-  if(!apiKey || !imgFileObj || excelFiles.length === 0) return alert('기안서 캡처 파일과 엑셀 파일을 등록해주세요.');
-  const btn = document.getElementById('vBtn'); btn.disabled = true; btn.innerHTML = '<div class="spin"></div>';
+- 금액: 숫자만 / 날짜: YYYY-MM-DD / 없으면 null`;
+
+// ── Main run ──────────────────────────────────────────────────────────────
+let _step=0;
+function setStep(n,s){ _step=n; document.getElementById('ps'+n).className='ps '+s; }
+
+async function run(){
+  if(!apiKey){ alert('API 키를 저장하세요.'); return; }
+  if(!imgB64){ alert('기안서 캡처 이미지를 추가하세요.'); return; }
+  if(excelFiles.length===0){ alert('정산 엑셀 파일을 추가하세요.'); return; }
+
+  const btn=document.getElementById('vBtn');
+  btn.disabled=true; btn.innerHTML='<div class="spin"></div>';
   document.getElementById('prog').classList.add('show');
+  document.getElementById('rc').classList.remove('show');
+  for(let i=1;i<=6;i++) setStep(i,'');
+
+  const caseNum=detectCase();
+
+  try{
+    // Step 1: 기안서 분석
+    setStep(1,'active');
+    const 기안서=await aiCall(imgB64,imgMime,PROMPT_기안서);
+    setStep(1,'done');
+
+    // Step 2: 메일 분석
+    let 메일목록=[];
+    if(mailImages.length>0){
+      setStep(2,'active');
+      for(const m of mailImages){ const r=await aiCall(m.b64,m.mime,PROMPT_메일); r._name=m.name; 메일목록.push(r); }
+      setStep(2,'done');
+    } else setStep(2,'skip');
+    const 메일=메일목록.length>0?메일목록[0]:null;
+
+    // Step 3: 홈페이지 분석
+    let 홈페이지목록=[];
+    if(webImages.length>0){
+      setStep(3,'active');
+      for(const w of webImages){
+        const r = await aiCall(w.b64, w.mime, PROMPT_홈페이지);
+        r._name = w.name;
+        홈페이지목록.push(r);
+      }
+      setStep(3,'done');
+    } else setStep(3,'skip');
+    const 홈페이지 = 홈페이지목록.length>0 ? 홈페이지목록[0] : null;
+
+    // Step 4: 엑셀 읽기
+    setStep(4,'active');
+    const loadedFiles=excelFiles.filter(f=>f.total!==null);
+    if(loadedFiles.length===0) throw new Error('엑셀을 아직 읽는 중입니다. 잠시 후 다시 시도하세요.');
+    const excelMeta=getExcelMeta(excelFiles[0].wb);
+    setStep(4,'done');
+
+    // Step 5: 사업자등록증 / 계약서 분석
+    let 사업자목록=[], 계약서목록=[];
+    if(bizImages.length>0||conImages.length>0){
+      setStep(5,'active');
+      for(const b of bizImages){ const r=await aiCall(b.b64,b.mime,PROMPT_사업자); r._name=b.name; 사업자목록.push(r); }
+      for(const c of conImages){ const r=await aiCall(c.b64,c.mime,PROMPT_계약서); r._name=c.name; 계약서목록.push(r); }
+      setStep(5,'done');
+    } else setStep(5,'skip');
+    const 사업자=사업자목록.length>0?사업자목록[0]:null;
+    const 계약서=계약서목록.length>0?계약서목록[0]:null;
+
+    // Step 6: 대사
+    setStep(6,'active');
+    render(caseNum, 기안서, 메일, 홈페이지목록, loadedFiles, excelMeta, 사업자, 계약서);
+    setStep(6,'done');
+
+  }catch(err){ setStep(_step,'error'); alert('오류: '+err.message); }
+  finally{
+    btn.disabled=false; btn.innerHTML='🔍 &nbsp;AI 검증 시작';
+    setTimeout(()=>document.getElementById('prog').classList.remove('show'),2000);
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function fmtAmt(n){ if(n===null||n===undefined) return '—'; return Number(n).toLocaleString('ko-KR')+'원'; }
+
+function mkCi(status,label,detail,sub,sv1,sv2,lbl1,lbl2){
+  const icons={pass:'✓',fail:'✕',warn:'!',info:'i',skip:'-'};
+  let diff='';
+  if(sv1!==undefined||sv2!==undefined){
+    diff=`<div class="diff">
+      <div class="dr"><span class="dtag src1">${lbl1||'기안서'}</span><span class="dval">${sv1||'—'}</span></div>
+      <div class="dr"><span class="dtag src2">${lbl2||'대사 자료'}</span><span class="dval">${sv2||'—'}</span></div>
+    </div>`;
+  }
+  const subHtml=sub?`<div class="cl-sub">${sub}</div>`:'';
+  return `<div class="ci ${status}"><div class="cs">${icons[status]||'?'}</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det">${detail}</div>${subHtml}${diff}</div></div>`;
+}
+
+function mkGroup(title, html){
+  if(!html) return '';
+  return `<div class="chk-group"><div class="gt">${title}</div><div class="cl">${html}</div></div>`;
+}
+
+function cmpDate(label, a, b, lbl1, lbl2){
+  if(!a&&!b) return '';
+  if(!a) return mkCi('warn',label,'기안서에서 인식하지 못했습니다.');
+  if(!b) return mkCi('info',label,`기안서: ${a}`, '대사 자료에서 확인 불가 — 직접 검토 필요');
+  if(a===b) return mkCi('pass',label,`${a} — 일치 ✓`);
+  return mkCi('fail',label,'날짜 불일치 ⚠ 수정 필요',null,a,b,lbl1,lbl2);
+}
+
+function cmpAmt(label, a, b, lbl1, lbl2, warnMsg){
+  if(a===null&&b===null) return '';
+  if(a===null) return mkCi('warn',label,'기안서에서 인식하지 못했습니다.');
+  if(b===null) return mkCi('info',label,`기안서: ${fmtAmt(a)}`, '대사 자료에서 확인 불가');
+  if(a===b) return mkCi('pass',label,`${fmtAmt(a)} — 일치 ✓`);
+  if(warnMsg) return mkCi('warn',label,warnMsg,`기안서: ${fmtAmt(a)} / 대사자료: ${fmtAmt(b)}`);
+  return mkCi('fail',label,'금액 불일치 ⚠ 수정 필요',null,fmtAmt(a),fmtAmt(b),lbl1,lbl2);
+}
+
+function render(caseNum, 기안서, 메일, 홈페이지목록, files, excelMeta, 사업자, 계약서){ const 홈페이지 = 홈페이지목록&&홈페이지목록.length>0?홈페이지목록[0]:null;
+  const taxRows=기안서.세금계산서_rows||[];
+  const mgRows=기안서.MG차감_rows||[];
+  const allImgRows=[...taxRows.map(r=>({...r,_t:'tax'})),...mgRows.map(r=>({...r,_t:'mg'}))];
   
-  try {
-    setStep(1, 'active');
-    const 기안 = await aiCall(imgFileObj, PROMPT_기안서);
-    setStep(1, 'done');
+  // 금액 추출 방어 로직 (테이블이 없을 시 기안서 내 총요청금액 활용)
+  let imgTotal=allImgRows.reduce((s,r)=>s+(parseAmt(r.공급가액)||0),0);
+  if (imgTotal === 0 && 기안서.총요청금액) {
+      imgTotal = parseAmt(기안서.총요청금액);
+  }
+  const xlTotal=files.reduce((s,f)=>s+(f.total||0),0);
 
-    setStep(2, mailFiles.length ? 'active' : 'skip');
-    const 메일 = mailFiles.length ? await aiCall(mailFiles[0], PROMPT_메일) : null;
-    if(메일) setStep(2, 'done');
+  let mailHtml='', webHtml='', excelHtml='', internalHtml='';
+  let totalFails=0;
 
-    setStep(4, 'active');
-    const 엑셀 = getExcelMeta(excelFiles[0].wb);
-    setStep(4, 'done');
-
-    setStep(5, conFiles.length ? 'active' : 'skip');
-    const 계약서 = conFiles.length ? await aiCall(conFiles[0], PROMPT_계약서) : null;
-    if(계약서) setStep(5, 'done');
-
-    // 변수 세팅
-    const taxRows = 기안?.세금계산서_rows || [];
-    const imgTotal = taxRows.reduce((s,r)=>s+(parseAmt(r.공급가액)||0), 0);
-    const xlTotal = excelFiles.reduce((s,f)=>s+(f.total||0), 0);
-    const imgDate = normDate(기안?.본문_계산서작성일자 || 기안?.작성일자);
-    const xlDate = 엑셀.작성일자;
-    const imgSrv = normDate(기안?.본문_서비스월 || 기안?.서비스월);
-    const xlSrv = normDate(엑셀.서비스월);
-    
-    // 엑셀 비교
-    let h = `<div class="chk-group"><div class="gt">엑셀 vs 기안서 비교 결과</div>`;
-    h += Math.abs(imgTotal - xlTotal) === 0 ? mkCi('pass', '금액 합계', `${fmtAmt(imgTotal)} — 일치 ✓`) : mkCi('fail', '금액 합계', '금액 불일치 ⚠', `기안서: ${fmtAmt(imgTotal)} / 엑셀: ${fmtAmt(xlTotal)}`);
-    if(xlDate) h += cmpDate('작성일자 (정산월)', imgDate, xlDate, '기안서', '엑셀');
-    else h += mkCi('info', '작성일자', '엑셀에서 정산월을 찾을 수 없습니다. (매절일 경우 정상)');
-    if(xlSrv) h += cmpDate('서비스월', imgSrv ? imgSrv.substring(0,7) : null, xlSrv ? xlSrv.substring(0,7) : null, '기안서', '엑셀');
-    h += `</div>`;
-    document.getElementById('r_excel').innerHTML = h;
-
-    // 메일 비교
-    if(메일) {
-      let mh = `<div class="chk-group"><div class="gt">메일 vs 기안서 비교 결과</div>`;
-      mh += cmpDate('계산서 작성일자', imgDate, normDate(메일.작성일자), '기안서', '메일');
-      mh += cmpDate('발행 마감일', normDate(기안?.본문_마감기한), normDate(메일.마감일), '기안서', '메일');
-      
-      const mailDue = normDate(메일.입금예정일);
-      const imgDue = normDate(기안?.입금예정일);
-      if(mailDue || imgDue) mh += cmpDate('입금예정일', imgDue, mailDue, '기안서', '메일');
-      
-      mh += `</div>`;
-      document.getElementById('r_mail').innerHTML = mh;
+  // ── 케이스 1&3: 메일 대사 ──
+  if(메일){
+    let h='';
+    // 작성일자
+    h+=cmpDate('계산서 작성일자', normDate(기안서.본문_계산서작성일자), normDate(메일.작성일자), '기안서', '메일');
+    // 마감일
+    h+=cmpDate('발행 마감일', normDate(기안서.본문_마감기한), normDate(메일.마감일), '기안서', '메일');
+    // 마감시간
+    if(메일.마감시간&&기안서.본문_마감시간){
+      if(기안서.본문_마감시간===메일.마감시간) h+=mkCi('pass','발행 마감 시간',`${메일.마감시간} — 일치 ✓`);
+      else h+=mkCi('fail','발행 마감 시간','시간 불일치 ⚠',null,기안서.본문_마감시간,메일.마감시간,'기안서','메일');
+    }
+    // 입금예정일 대사
+    const imgDue=normDate(기안서.입금예정일);
+    const mailDue=normDate(메일.입금예정일);
+    if(imgDue&&mailDue){
+      if(imgDue===mailDue) h+=mkCi('pass','입금예정일',`${imgDue} — 메일과 일치 ✓`);
+      else h+=mkCi('fail','입금예정일','메일 입금일과 불일치 ⚠',null,imgDue,mailDue,'기안서','메일');
     }
 
-    // 서류(계약서) 비교
-    if(계약서) {
-      let ch = `<div class="chk-group"><div class="gt">계약서 대사 결과</div>`;
+    // 발신 이메일
+    if(메일.발행이메일||기안서.발신이메일){
+      const a=(기안서.발신이메일||'').trim().toLowerCase();
+      const b=(메일.발행이메일||'').trim().toLowerCase();
+      if(!a) h+=mkCi('warn','발신 이메일 (발행 주소)','기안서에서 인식 불가');
+      else if(!b) h+=mkCi('info','발신 이메일','기안서: '+기안서.발신이메일,'메일에서 수신 이메일 확인 불가');
+      else if(a===b) h+=mkCi('pass','발신 이메일 (발행 주소)',`${a} — 일치 ✓`);
+      else h+=mkCi('fail','발신 이메일 (발행 주소)','이메일 불일치 ⚠',null,기안서.발신이메일,메일.발행이메일,'기안서','메일');
+    }
+    // 금액 대사 (원단위 절사 감지)
+    const mailTotalAmt=메일.금액들?.reduce((s,a)=>s+(parseAmt(a.금액)||0),0)||null;
+    if(mailTotalAmt!==null){
+      const diff=Math.abs(imgTotal-mailTotalAmt);
+      if(diff===0) h+=mkCi('pass','금액 합계',`${fmtAmt(imgTotal)} — 일치 ✓`);
+      else if(diff<=10) h+=mkCi('warn','금액 합계','원단위 절사에 의한 미세 차이 (10원 이내)',`기안서: ${fmtAmt(imgTotal)} / 메일: ${fmtAmt(mailTotalAmt)}`);
+      else h+=mkCi('fail','금액 합계','금액 불일치 ⚠ 수정 필요',null,fmtAmt(imgTotal),fmtAmt(mailTotalAmt),'기안서','메일');
+    }
+    
+    mailHtml=mkGroup('✉️ STEP 1 — 메일 vs 기안서', h);
+    totalFails+=(h.match(/ci fail/g)||[]).length;
+  }
+
+  // ── 케이스 2&3: 홈페이지 대사 (다중) ──
+  if(홈페이지목록&&홈페이지목록.length>0){
+    // ... 기존 홈페이지 대사 로직 유지
+    let h='';
+    const webAmt=parseAmt(홈페이지.정산예정금액);
+    const bodyAmts=기안서.본문_정산금액들||[];
+    const bodyTotal=bodyAmts.reduce((s,a)=>s+(parseAmt(a.금액)||0),0);
+    const bodyCalcTotal=bodyAmts.reduce((s,a)=>s+(parseAmt(a.계산서발행금액)||parseAmt(a.금액)||0),0);
+
+    if(webAmt!==null){
+      const hasCalcAmt=bodyAmts.some(a=>a.계산서발행금액);
+      if(hasCalcAmt){
+        h+=`<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">금액 3자 비교 (원단위 절사 케이스)</div>
+          <div class="tri-compare">
+            <div class="tri-box"><div class="tb-lbl">홈페이지 정산예정</div><div class="tb-val">${fmtAmt(webAmt)}</div></div>
+            <div class="tri-box"><div class="tb-lbl">기안서 본문 금액</div><div class="tb-val">${fmtAmt(bodyTotal)}</div>${Math.abs(bodyTotal-webAmt)<=10?'<div class="tb-note">원단위 절사 허용</div>':''}</div>
+            <div class="tri-box highlight"><div class="tb-lbl">계산서 발행 요청금액</div><div class="tb-val">${fmtAmt(bodyCalcTotal)}</div></div>
+          </div>
+          <div class="cl-sub" style="margin-top:6px">기안서 섹션2 공급가액 기준: ${fmtAmt(imgTotal)}</div>
+        </div></div>`;
+      } else {
+        const diff=Math.abs(imgTotal-webAmt);
+        if(diff===0) h+=mkCi('pass','홈페이지 정산금액 vs 기안서',`${fmtAmt(webAmt)} — 일치 ✓`);
+        else if(diff<=10) h+=mkCi('warn','홈페이지 정산금액 vs 기안서','원단위 절사에 의한 미세 차이 (10원 이내)',`홈페이지: ${fmtAmt(webAmt)} / 기안서: ${fmtAmt(imgTotal)}`);
+        else h+=mkCi('fail','홈페이지 정산금액 vs 기안서','금액 불일치 ⚠ 확인 필요',null,fmtAmt(imgTotal),fmtAmt(webAmt),'기안서','홈페이지');
+      }
+    }
+    if(홈페이지.판매기간시작&&기안서.본문_판매분월){
+      const webYM=toYYYYMM(홈페이지.판매기간시작);
+      const imgYM=(기안서.본문_판매분월||'').replace('-','');
+      if(webYM===imgYM) h+=mkCi('pass','판매기간 (서비스월)',`${홈페이지.판매기간시작} ~ ${홈페이지.판매기간종료} — 일치 ✓`);
+      else h+=mkCi('warn','판매기간 (서비스월)','판매기간 확인 필요',null,기안서.본문_판매분월,`${홈페이지.판매기간시작}~${홈페이지.판매기간종료}`,'기안서','홈페이지');
+    }
+    const webLabel = 홈페이지목록.length>1 ? '🌐 STEP 2 — 홈페이지 vs 기안서 ('+홈페이지목록.map(w=>w._name||'').join(' / ')+')' : '🌐 STEP 2 — 홈페이지 vs 기안서'; webHtml=mkGroup(webLabel, h);
+    totalFails+=(h.match(/ci fail/g)||[]).length;
+  }
+
+  // ── 엑셀 vs 기안서 (모든 케이스 공통) ──
+  {
+    let tableHtml=`<div class="mt-wrap"><div class="mt-title">📁 파일별 금액 대사</div><table class="mt"><thead><tr><th>첨부 파일</th><th>엑셀 합계</th><th>기안서 금액</th><th>결과</th></tr></thead><tbody>`;
+    let trc = 'fr';
+    let tst = '<span class="stag fail">✕ 불일치</span>';
+    
+    // 단순 총액 비교로 개선
+    if(Math.abs(imgTotal - xlTotal) === 0) {
+      trc = 'pr';
+      tst = '<span class="stag pass">✓ 일치</span>';
+    }
+
+    tableHtml+=`<tr class="${trc}" style="font-weight:700"><td>합계</td><td><strong>${fmtAmt(xlTotal)}</strong></td><td><strong>${fmtAmt(imgTotal)}</strong></td><td>${tst}</td></tr>`;
+    tableHtml+='</tbody></table></div>';
+
+    let h='';
+    
+    // 작성일자 대사 (CSV 매절 파일 방어 포함)
+    if (!excelMeta.작성일자 && files[0] && files[0].name.toLowerCase().includes('.csv')) {
+      h += mkCi('pass', '계산서 작성일자 (엑셀 정산월)', `${normDate(기안서.본문_계산서작성일자)} — 매절 CSV 파일 정상 (정산월 생략됨) ✓`);
+    } else {
+      h += cmpDate('계산서 작성일자 (엑셀 정산월)', normDate(기안서.본문_계산서작성일자), excelMeta.작성일자, '기안서','엑셀');
+    }
+
+    if(기안서.본문_서비스월&&excelMeta.서비스월){
+      const a=toYYYYMM(기안서.본문_서비스월), b=toYYYYMM(excelMeta.서비스월);
+      if(a&&b){ if(a===b) h+=mkCi('pass','서비스월',`${excelMeta.서비스월?.slice(0,7)} — 일치 ✓`); else h+=mkCi('fail','서비스월','서비스월 불일치 ⚠',null,기안서.본문_서비스월,excelMeta.서비스월?.slice(0,7),'기안서','엑셀'); }
+    }
+    const imgDue=normDate(기안서.입금예정일);
+    if(imgDue&&excelMeta.입금예정일){
+      if(imgDue===excelMeta.입금예정일) h+=mkCi('pass','입금예정일',`${excelMeta.입금예정일} — 일치 ✓`);
+      else h+=mkCi('fail','입금예정일','날짜 불일치 ⚠',null,imgDue,excelMeta.입금예정일,'기안서','엑셀');
+    }
+
+    excelHtml=tableHtml+mkGroup(`📊 ${caseNum===4?'':'STEP 3 — '}엑셀 vs 기안서`, h);
+    totalFails+=(h.match(/ci fail/g)||[]).length+(trc==='fr'?1:0);
+  }
+
+  // ── 사업자등록증 / 계약서 대사 ──
+  let docsHtml = '';
+  {
+    let h = '';
+    // 계약서 매절 금액 대사 추가
+    if(계약서){
       if(계약서.총계약금액) {
          const conAmt = parseInt(계약서.총계약금액);
-         ch += (conAmt === imgTotal) ? mkCi('pass','계약 총액 (매절)',`${fmtAmt(conAmt)} — 일치 ✓`) : mkCi('fail','계약 총액 (매절)','금액 불일치 ⚠', `기안서: ${fmtAmt(imgTotal)} / 계약서: ${fmtAmt(conAmt)}`);
+         if(conAmt === imgTotal) h+=mkCi('pass','계약 총액 (매절)',`${fmtAmt(conAmt)} — 기안서와 일치 ✓`);
+         else h+=mkCi('fail','계약 총액 (매절)','계약서 금액과 기안서 불일치 ⚠',null,`기안서: ${fmtAmt(imgTotal)}`,`계약서: ${fmtAmt(conAmt)}`,'기안서','계약서');
       }
-      ch += `</div>`;
-      document.getElementById('r_docs').innerHTML = ch;
+      
+      if(계약서.RS비율!==null && 계약서.RS비율!==undefined){
+        const xlRS = (() => {
+          if(!files[0]?.wb) return null;
+          const wb = files[0].wb;
+          const sheetName = wb.SheetNames.find(n=>n==='요약')||wb.SheetNames.find(n=>n==='정산용');
+          if(!sheetName) return null;
+          const ws = wb.Sheets[sheetName];
+          const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
+          for(const row of rows){
+            for(let i=0;i<(row.length||0);i++){
+              if(row[i]!==null && (String(row[i])==='0.7'||String(row[i])==='0.6'||String(row[i])==='0.5'||String(row[i])==='0.1')){
+                return Math.round(parseFloat(row[i])*100);
+              }
+            }
+          }
+          return null;
+        })();
+
+        const conRS = parseInt(계약서.RS비율);
+        if(xlRS!==null){
+          if(conRS===xlRS) h+=mkCi('pass','RS 비율',`${xlRS}% — 계약서와 엑셀 일치 ✓`);
+          else h+=mkCi('fail','RS 비율','RS 비율 불일치 ⚠ 수정 필요',null,`엑셀: ${xlRS}%`,`계약서: ${conRS}%`,'엑셀','계약서');
+        } else {
+          h+=mkCi('info','RS 비율 (계약서)',`${conRS}%`,'엑셀에서 RS 비율을 자동 확인하지 못했습니다. 직접 비교해 주세요.');
+        }
+      }
+
+      if(계약서.입금조건){
+        const imgDue = normDate(기안서.입금예정일);
+        h+=mkCi('info','계약서 입금 조건',계약서.입금조건,
+          imgDue ? `기안서 입금예정일: ${imgDue} — 계약 조건과 부합하는지 확인해 주세요.` : '기안서 입금예정일과 비교해 주세요.');
+      }
     }
 
-    document.getElementById('rsum').innerHTML = `<h3>✅ 검증 완료</h3>`;
-    setStep(6, 'done');
-    document.getElementById('rc').classList.add('show');
-  } catch(e) { alert('오류: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = '🔍 AI 검증 시작'; }
+    if(h) {
+      docsHtml = mkGroup('🏢 STEP 4 — 계약서 대사', h);
+      totalFails += (h.match(/ci fail/g)||[]).length;
+    }
+  }
+
+  // ── Header ──
+  const caseNames={1:'케이스 1 (메일+엑셀)',2:'케이스 2 (홈페이지+엑셀)',3:'케이스 3 (메일+홈페이지+엑셀)',4:'케이스 4 (엑셀 단독)'};
+  const allOk=totalFails===0;
+  document.getElementById('rsum').innerHTML=allOk
+    ?`<div class="r-sum"><div class="ri ok">✅</div><div class="rt"><h3 class="ok">이상 없음 — 기안 상신 가능합니다</h3><p>${caseNames[caseNum]} 모든 항목 일치</p></div></div>`
+    :`<div class="r-sum"><div class="ri fail">❌</div><div class="rt"><h3 class="fail">오류 발생 — ${totalFails}개 항목 수정 필요</h3><p>${caseNames[caseNum]} 기준 · 아래 항목을 확인 후 기안서를 수정하세요.</p></div></div>`;
+
+  document.getElementById('r_mail').innerHTML=mailHtml;
+  document.getElementById('r_web').innerHTML=webHtml;
+  document.getElementById('r_docs').innerHTML=docsHtml;
+  document.getElementById('r_excel').innerHTML=excelHtml;
+
+  document.getElementById('rc').classList.add('show');
+  document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function setStep(n,s){ document.getElementById('ps'+n).className='ps '+s; }
+
+function extractDeadlineFromTitle(t){
+  const m=t.match(/발행마감일\s*[:：]\s*(\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
+  return m?m[1]:null;
+}
+function toYYYYMM(d){ if(!d) return null; const m=d.match(/(\d{4})-(\d{2})/); return m?m[1]+m[2]:null; }
+function resetAll(){ document.getElementById('rc').classList.remove('show'); window.scrollTo({top:0,behavior:'smooth'}); }
 </script>
 </body>
 </html>
