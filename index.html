@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v8.5 — 테라핀 정산팀</title>
+<title>기안서 검증기 v8.7 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -70,7 +70,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .rt p{font-size:11px;color:var(--sub);margin-top:2px}
 .chk-group{padding:13px 18px;border-bottom:1px solid var(--border)}
 .chk-group:last-child{border-bottom:none}
-.gt{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;}
+.gt{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px}
 .ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent;margin-bottom:7px;background:#fff}
 .ci.pass{border:1.5px solid #b2e0cc}
 .ci.fail{background:var(--err-bg);border:1.5px solid #f5c0bb}
@@ -100,7 +100,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v8.5 (통합 대사판 도입)</span></h1>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v8.7 (AI 파싱 오류 완전해결)</span></h1>
     <p>메일 · 홈페이지 · 엑셀 · 서류 — 필수 항목 강제 크로스체크</p>
   </div>
 </div>
@@ -239,20 +239,20 @@ function normDate(v) {
     return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
   }
   let m = s.match(/(\d{4})[-./년]\s*(\d{1,2})[-./월]\s*(\d{1,2})/);
-  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||'01').padStart(2,'0')}`;
   m = s.match(/(\d{4})[-./년]\s*(\d{1,2})/);
   if (m) return `${m[1]}-${m[2].padStart(2,'0')}`; 
   return s; 
 }
 
-// --- PDF 렌더링 ---
+// --- PDF 렌더링 엔진 (해상도 증가) ---
 async function pdfToImages(file){
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:ab}).promise;
   const imgs = [];
   for(let i=1;i<=Math.min(pdf.numPages, 3);i++){
     const page = await pdf.getPage(i);
-    const vp = page.getViewport({scale:1.5});
+    const vp = page.getViewport({scale:2.0}); // AI 가독성 확보를 위해 스케일 업
     const cv = document.createElement('canvas');
     cv.width=vp.width; cv.height=vp.height;
     await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
@@ -315,7 +315,7 @@ function getExcelTotal(wb){
   }
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
-  let listTotal = 0; let amtColIndex = -1;
+  let listTotal = 0;
   for(let r=0; r<rows.length; r++) {
     const row = rows[r] || [];
     for(let c=0; c<row.length; c++) {
@@ -324,8 +324,14 @@ function getExcelTotal(wb){
          if(val) return val;
       }
     }
+  }
+  let amtColIndex = -1;
+  for(let r=0; r<rows.length; r++) {
+    const row = rows[r] || [];
     if(amtColIndex === -1) {
-      for(let c=0; c<row.length; c++) { if(String(row[c]).replace(/\s/g, '').includes('금액')) { amtColIndex = c; break; } }
+      for(let c=0; c<row.length; c++) {
+        if(String(row[c]).replace(/\s/g, '').includes('금액')) { amtColIndex = c; break; }
+      }
     } else {
       const val = parseAmt(row[amtColIndex]);
       if(val) listTotal += val;
@@ -352,41 +358,45 @@ function getExcelMeta(wb) {
   return meta;
 }
 
-// --- AI 강력 프롬프트 (항목 누락 방지) ---
-const PROMPT_기안서=`이 이미지는 기안서입니다. 아래 JSON으로만 응답하세요.
+// --- 완벽 방어 AI 프롬프트 (설명 포함 템플릿 교체 방식) ---
+const PROMPT_기안서=`이 이미지는 기안서입니다. 아래 JSON 템플릿의 설명문("...")을 이미지에서 추출한 실제 값으로 교체하여 반드시 유효한 JSON 형식으로만 응답하세요. 다른 말은 절대 하지 마세요.
+
 {
-  "총금액": 숫자 (본문이나 표의 총 청구/정산/선투자/매절 금액 전체 합계. 쉼표 없이 기재),
-  "작성일자": "YYYY-MM-DD",
-  "마감일": "YYYY-MM-DD",
-  "서비스월": "YYYY-MM (없으면 null)",
-  "입금예정일": "입금, 지급일 등에 대해 명시된 텍스트 전체 (예: 30영업일 이내, 2026-05-15 등)",
-  "품목명": "본문에 기재된 작품명이나 청구 품목명 전체 (예: 불량 식품에 길들여지면)",
-  "이메일": "기안서 내 발신/담당자 이메일 주소",
-  "사업자등록번호": "XXX-XX-XXXXX (명시된 경우)"
+  "총금액": "본문이나 표에 적힌 총 청구/선투자/매절 금액을 쉼표 없는 숫자로 기재 (예: 5000000). 없으면 null 입력",
+  "작성일자": "계산서 작성일자 (예: 2026-04-01). 없으면 null",
+  "마감일": "계산서 마감기한 (예: 2026-04-10). 없으면 null",
+  "서비스월": "정산/서비스월 (예: 2026-04). 없으면 null",
+  "입금예정일": "입금, 지급일 관련 명시된 텍스트 전체 (예: 30영업일 이내). 없으면 null",
+  "품목명": "본문에 기재된 작품명이나 청구 품목명 전체. 없으면 null",
+  "이메일": "기안서 내 발신/담당자 이메일 주소. 없으면 null",
+  "사업자등록번호": "XXX-XX-XXXXX 형식의 사업자번호. 없으면 null"
 }`;
 
-const PROMPT_메일=`이 이미지는 세금계산서 발행 요청 메일입니다. JSON으로만 응답하세요.
+const PROMPT_메일=`이 이미지는 세금계산서 발행 요청 메일입니다. 아래 JSON 템플릿의 설명문("...")을 이미지에서 추출한 실제 값으로 교체하여 반드시 유효한 JSON 형식으로만 응답하세요.
+
 {
-  "작성일자": "YYYY-MM-DD (본문에 'X월 X일자로 발행' 등 명시된 날짜. 없으면 null)",
-  "마감일": "YYYY-MM-DD (오타가 있어도 메일 본문에 적힌 연도/날짜 그대로 추출. 예: '25년 4월' -> 2025-04-XX)",
-  "입금예정일": "명시된 입금/지급일 텍스트 전체 (예: 2026-05-25)",
-  "총금액": 숫자 (명시된 총 금액, 쉼표 없이),
-  "품목명": "본문에 기재된 작품명/품목명 (예: 불량 식품에 길들여지면)",
-  "이메일": "계산서 수신할 이메일",
-  "사업자등록번호": "XXX-XX-XXXXX (명시된 경우)",
-  "중요공지": "메일 본문의 강조/특이사항"
+  "작성일자": "본문에 'O월 O일자로 발행' 등 명시된 작성일자 (메일 발송일자 아님). 없으면 null",
+  "마감일": "명시된 마감 기한. 오타가 있어도 적힌 연도/날짜 그대로 추출 (YYYY-MM-DD). 없으면 null",
+  "입금예정일": "명시된 입금/지급일 텍스트 전체 (예: 2026-05-25). 없으면 null",
+  "총금액": "명시된 총 금액을 쉼표 없는 숫자로 기재 (예: 5000000). 없으면 null",
+  "품목명": "본문에 기재된 작품명/품목명. 없으면 null",
+  "이메일": "계산서 수신 이메일 주소. 없으면 null",
+  "사업자등록번호": "XXX-XX-XXXXX 형식. 없으면 null",
+  "중요공지": "메일 본문의 강조/특이사항 전체. 없으면 null"
 }`;
 
-const PROMPT_계약서=`이 이미지는 계약서/부속합의서입니다. JSON으로만 응답하세요.
+const PROMPT_계약서=`이 이미지는 계약서/부속합의서입니다. 아래 JSON 템플릿의 설명문("...")을 이미지에서 추출한 실제 값으로 교체하여 반드시 유효한 JSON 형식으로만 응답하세요.
+
 {
-  "총계약금액": 숫자 (매절, 선투자금 등 명시된 총 금액, 쉼표 없이),
-  "입금조건": "입금/지급 관련 조건 전체 텍스트"
+  "총계약금액": "매절, 선투자금 등 명시된 총 금액을 쉼표 없는 숫자로 기재. 없으면 null",
+  "입금조건": "입금/지급 관련 조건 전체 텍스트. 없으면 null"
 }`;
 
-const PROMPT_사업자=`이 이미지는 사업자등록증입니다. JSON으로만 응답하세요.
+const PROMPT_사업자=`이 이미지는 사업자등록증입니다. 아래 JSON 템플릿의 설명문("...")을 이미지에서 추출한 실제 값으로 교체하여 반드시 유효한 JSON 형식으로만 응답하세요.
+
 {
-  "사업자등록번호": "숫자만 추출 (하이픈 제외)",
-  "이메일": "수신 이메일"
+  "사업자등록번호": "숫자만 추출 (하이픈 제외). 없으면 null",
+  "이메일": "수신 이메일 주소. 없으면 null"
 }`;
 
 async function aiCall(file, prompt) {
@@ -409,13 +419,15 @@ async function aiCall(file, prompt) {
       body: JSON.stringify({ model: 'claude-3-haiku-20240307', max_tokens: 1500, messages: [{role:'user', content: contentBlocks}] })
     });
     const d = await res.json();
+    if (d.error) throw new Error(d.error.message);
     const match = d.content[0].text.match(/\{[\s\S]*\}/);
-    return match ? JSON.parse(match[0]) : null;
-  } catch(e) { return null; }
+    if (!match) return null;
+    const cleanStr = match[0].replace(/,\s*([}\]])/g, '$1'); 
+    return JSON.parse(cleanStr);
+  } catch(e) { console.error("AI 파싱 에러:", e); return null; }
 }
 
 // --- 1:N 통합 비교기 ---
-// 기안서(Base) 값을 기준으로, 입력된 모든 자료(Targets)를 순회하며 각각 비교 결과를 그립니다.
 function cmpMulti(label, baseVal, targets, isAmt=false, isText=false) {
   let isFail = false;
   let hasValidTarget = false;
@@ -424,10 +436,10 @@ function cmpMulti(label, baseVal, targets, isAmt=false, isText=false) {
   let diffHtml = `<div class="diff"><div class="dr"><span class="dtag src1">기안서</span><span class="dval" style="color:var(--navy);font-weight:600">${sBase}</span></div>`;
   
   for (let t of targets) {
-    if (!t.provided) continue; // 파일이 안 올라왔으면 패스
+    if (!t.provided) continue; 
     
     if (!t.val) {
-      diffHtml += `<div class="dr"><span class="dtag" style="background:#e8edf8;color:#6b7a99">${t.name}</span><span class="dval" style="color:var(--sub)">확인 불가 (또는 생략)</span></div>`;
+      diffHtml += `<div class="dr"><span class="dtag" style="background:#e8edf8;color:#6b7a99">${t.name}</span><span class="dval" style="color:var(--sub)">확인 불가</span></div>`;
       continue;
     }
     
@@ -440,7 +452,6 @@ function cmpMulti(label, baseVal, targets, isAmt=false, isText=false) {
       const nT = String(t.val).replace(/[\s-]/g,'').toLowerCase();
       match = (nB && nT && (nB.includes(nT) || nT.includes(nB)));
     } else {
-      // 날짜 같은 경우 문자열 매칭
       match = (String(baseVal) === String(t.val));
     }
     
@@ -450,10 +461,10 @@ function cmpMulti(label, baseVal, targets, isAmt=false, isText=false) {
   diffHtml += `</div>`;
   
   if (!hasValidTarget) {
-     return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub);font-weight:400">대사할 대상 없음</div>${diffHtml}</div></div>`;
+     return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub);font-weight:400">대사 대상 자료 없음 (또는 미기재)</div>${diffHtml}</div></div>`;
   }
   
-  if (!baseVal) isFail = true; // 타겟은 있는데 기안서가 비어있으면 fail
+  if (!baseVal) isFail = true; 
   if (isFail) globalErrors++;
   
   const status = isFail ? 'fail' : 'pass';
@@ -479,11 +490,11 @@ async function run() {
     if(계약서 || 사업자) setStep(5, 'done');
 
     // 변수 세팅
-    const imgTotal = parseAmt(기안?.총금액) || 0;
+    const imgTotal = parseAmt(기안?.총금액);
     const xlTotal = excelFiles.length ? excelFiles.reduce((s,f)=>s+(f.total||0), 0) : null;
     const imgDate = normDate(기안?.작성일자);
     const imgDue = normDate(기안?.마감일);
-    const imgDeposit = normDate(기안?.입금예정일) || 기안?.입금예정일; // 텍스트 유지
+    const imgDeposit = normDate(기안?.입금예정일) || 기안?.입금예정일; 
     
     // --- 통합 코어 대사판 렌더링 ---
     let coreHtml = `<div class="chk-group"><div class="gt">🔍 필수 항목 통합 대사 (기안서 기준)</div>`;
@@ -509,7 +520,7 @@ async function run() {
     // 4. 입금예정일
     coreHtml += cmpMulti('4. 입금/지급 예정일', imgDeposit, [
       {name: '메일', val: normDate(메일?.입금예정일) || 메일?.입금예정일, provided: !!메일},
-      {name: '계약서', val: 계약서?.입금조건, provided: !!계약서, isTextMatch: true}
+      {name: '계약서', val: 계약서?.입금조건, provided: !!계약서, isText: true}
     ], false, true);
 
     // 5. 품목명
