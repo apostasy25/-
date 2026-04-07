@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v8.7 — 테라핀 정산팀</title>
+<title>기안서 검증기 v8.8 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -86,6 +86,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .dr{display:flex;align-items:center;gap:6px}
 .dtag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;min-width:65px;text-align:center;border:1px solid var(--border);background:#fff}
 .dtag.src1{border-color:var(--navy);color:var(--navy)}
+.dtag.src2{background:#e3f5ec;color:#1a7f4b}
 .dval{font-size:12px;color:var(--text);font-weight:500}
 .spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
@@ -100,7 +101,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v8.7 (AI 파싱 오류 완전해결)</span></h1>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v8.8 (AI 오류 완벽해결)</span></h1>
     <p>메일 · 홈페이지 · 엑셀 · 서류 — 필수 항목 강제 크로스체크</p>
   </div>
 </div>
@@ -239,20 +240,20 @@ function normDate(v) {
     return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
   }
   let m = s.match(/(\d{4})[-./년]\s*(\d{1,2})[-./월]\s*(\d{1,2})/);
-  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||'01').padStart(2,'0')}`;
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
   m = s.match(/(\d{4})[-./년]\s*(\d{1,2})/);
   if (m) return `${m[1]}-${m[2].padStart(2,'0')}`; 
   return s; 
 }
 
-// --- PDF 렌더링 엔진 (해상도 증가) ---
+// --- PDF 렌더링 엔진 (해상도 1.5로 복구 - API 에러 방지) ---
 async function pdfToImages(file){
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:ab}).promise;
   const imgs = [];
   for(let i=1;i<=Math.min(pdf.numPages, 3);i++){
     const page = await pdf.getPage(i);
-    const vp = page.getViewport({scale:2.0}); // AI 가독성 확보를 위해 스케일 업
+    const vp = page.getViewport({scale:1.5}); 
     const cv = document.createElement('canvas');
     cv.width=vp.width; cv.height=vp.height;
     await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
@@ -358,45 +359,65 @@ function getExcelMeta(wb) {
   return meta;
 }
 
-// --- 완벽 방어 AI 프롬프트 (설명 포함 템플릿 교체 방식) ---
-const PROMPT_기안서=`이 이미지는 기안서입니다. 아래 JSON 템플릿의 설명문("...")을 이미지에서 추출한 실제 값으로 교체하여 반드시 유효한 JSON 형식으로만 응답하세요. 다른 말은 절대 하지 마세요.
+// --- AI 프롬프트 재정비 (명확하고 단순한 구조로 에러 방지) ---
+const PROMPT_기안서=`이미지의 텍스트를 분석하여 아래 요구사항에 맞는 JSON 형식으로만 응답하세요. 설명은 생략하세요.
 
+[추출 항목]
+1. 총금액: 본문/표의 총 청구/선투자/매절 금액 (숫자만 기재, 쉼표제외). 없으면 null
+2. 작성일자: 계산서 작성일자 (YYYY-MM-DD). 없으면 null
+3. 마감일: 계산서 마감기한 (YYYY-MM-DD). 없으면 null
+4. 서비스월: 정산월/서비스월 (YYYY-MM). 없으면 null
+5. 입금예정일: 입금/지급 예정일에 대한 텍스트 전체 (예: 30영업일 이내). 없으면 null
+6. 품목명: 기재된 작품명이나 청구 품목명. 없으면 null
+7. 이메일: 기안서 내 담당자 이메일 주소. 없으면 null
+8. 사업자등록번호: 사업자번호 (하이픈 포함). 없으면 null
+
+[출력 형식]
 {
-  "총금액": "본문이나 표에 적힌 총 청구/선투자/매절 금액을 쉼표 없는 숫자로 기재 (예: 5000000). 없으면 null 입력",
-  "작성일자": "계산서 작성일자 (예: 2026-04-01). 없으면 null",
-  "마감일": "계산서 마감기한 (예: 2026-04-10). 없으면 null",
-  "서비스월": "정산/서비스월 (예: 2026-04). 없으면 null",
-  "입금예정일": "입금, 지급일 관련 명시된 텍스트 전체 (예: 30영업일 이내). 없으면 null",
-  "품목명": "본문에 기재된 작품명이나 청구 품목명 전체. 없으면 null",
-  "이메일": "기안서 내 발신/담당자 이메일 주소. 없으면 null",
-  "사업자등록번호": "XXX-XX-XXXXX 형식의 사업자번호. 없으면 null"
+  "총금액": 5000000,
+  "작성일자": "2026-04-01",
+  "마감일": "2026-04-10",
+  "서비스월": null,
+  "입금예정일": "발행일 기준 30영업일 이내",
+  "품목명": "불량 식품에 길들여지면",
+  "이메일": null,
+  "사업자등록번호": null
 }`;
 
-const PROMPT_메일=`이 이미지는 세금계산서 발행 요청 메일입니다. 아래 JSON 템플릿의 설명문("...")을 이미지에서 추출한 실제 값으로 교체하여 반드시 유효한 JSON 형식으로만 응답하세요.
+const PROMPT_메일=`이미지의 텍스트를 분석하여 아래 요구사항에 맞는 JSON 형식으로만 응답하세요. 설명은 생략하세요.
 
+[추출 항목]
+1. 작성일자: 본문에 명시된 발행 요청일 (메일 발송일 아님) (YYYY-MM-DD). 없으면 null
+2. 마감일: 명시된 마감 기한 (YYYY-MM-DD). 없으면 null
+3. 입금예정일: 명시된 입금/지급일 텍스트 전체. 없으면 null
+4. 총금액: 명시된 총 금액 (숫자만 기재, 쉼표제외). 없으면 null
+5. 품목명: 작품명/품목명. 없으면 null
+6. 이메일: 계산서 수신 이메일 주소. 없으면 null
+7. 사업자등록번호: 사업자번호 (하이픈 포함). 없으면 null
+8. 중요공지: 메일 본문의 강조/특이사항 전체. 없으면 null
+
+[출력 형식]
 {
-  "작성일자": "본문에 'O월 O일자로 발행' 등 명시된 작성일자 (메일 발송일자 아님). 없으면 null",
-  "마감일": "명시된 마감 기한. 오타가 있어도 적힌 연도/날짜 그대로 추출 (YYYY-MM-DD). 없으면 null",
-  "입금예정일": "명시된 입금/지급일 텍스트 전체 (예: 2026-05-25). 없으면 null",
-  "총금액": "명시된 총 금액을 쉼표 없는 숫자로 기재 (예: 5000000). 없으면 null",
-  "품목명": "본문에 기재된 작품명/품목명. 없으면 null",
-  "이메일": "계산서 수신 이메일 주소. 없으면 null",
-  "사업자등록번호": "XXX-XX-XXXXX 형식. 없으면 null",
-  "중요공지": "메일 본문의 강조/특이사항 전체. 없으면 null"
+  "작성일자": "2026-04-01",
+  "마감일": "2026-04-10",
+  "입금예정일": "2026-05-15",
+  "총금액": 5000000,
+  "품목명": "불량 식품에 길들여지면",
+  "이메일": "test@test.com",
+  "사업자등록번호": "123-45-67890",
+  "중요공지": null
 }`;
 
-const PROMPT_계약서=`이 이미지는 계약서/부속합의서입니다. 아래 JSON 템플릿의 설명문("...")을 이미지에서 추출한 실제 값으로 교체하여 반드시 유효한 JSON 형식으로만 응답하세요.
-
+const PROMPT_계약서=`이미지의 텍스트를 분석하여 아래 JSON 형식으로만 응답하세요.
 {
-  "총계약금액": "매절, 선투자금 등 명시된 총 금액을 쉼표 없는 숫자로 기재. 없으면 null",
-  "입금조건": "입금/지급 관련 조건 전체 텍스트. 없으면 null"
+  "총계약금액": 5000000,
+  "입금조건": "발행일 기준 30영업일 이내"
 }`;
 
-const PROMPT_사업자=`이 이미지는 사업자등록증입니다. 아래 JSON 템플릿의 설명문("...")을 이미지에서 추출한 실제 값으로 교체하여 반드시 유효한 JSON 형식으로만 응답하세요.
-
+const PROMPT_사업자=`이미지의 텍스트를 분석하여 아래 JSON 형식으로만 응답하세요.
 {
-  "사업자등록번호": "숫자만 추출 (하이픈 제외). 없으면 null",
-  "이메일": "수신 이메일 주소. 없으면 null"
+  "사업자등록번호": "123-45-67890",
+  "이메일": "test@test.com"
 }`;
 
 async function aiCall(file, prompt) {
@@ -489,8 +510,8 @@ async function run() {
     const 사업자 = bizFiles.length ? await aiCall(bizFiles[0], PROMPT_사업자) : null;
     if(계약서 || 사업자) setStep(5, 'done');
 
-    // 변수 세팅
-    const imgTotal = parseAmt(기안?.총금액);
+    // 변수 세팅 (AI가 못 찾았더라도 에러 없이 null 처리됨)
+    const imgTotal = parseAmt(기안?.총금액) || null;
     const xlTotal = excelFiles.length ? excelFiles.reduce((s,f)=>s+(f.total||0), 0) : null;
     const imgDate = normDate(기안?.작성일자);
     const imgDue = normDate(기안?.마감일);
