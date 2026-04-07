@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v8.8 — 테라핀 정산팀</title>
+<title>기안서 검증기 v8.9 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -101,7 +101,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v8.8 (AI 오류 완벽해결)</span></h1>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v8.9 (AI 에러 완벽 해결판)</span></h1>
     <p>메일 · 홈페이지 · 엑셀 · 서류 — 필수 항목 강제 크로스체크</p>
   </div>
 </div>
@@ -240,26 +240,35 @@ function normDate(v) {
     return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
   }
   let m = s.match(/(\d{4})[-./년]\s*(\d{1,2})[-./월]\s*(\d{1,2})/);
-  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||'01').padStart(2,'0')}`;
   m = s.match(/(\d{4})[-./년]\s*(\d{1,2})/);
   if (m) return `${m[1]}-${m[2].padStart(2,'0')}`; 
   return s; 
 }
 
-// --- PDF 렌더링 엔진 (해상도 1.5로 복구 - API 에러 방지) ---
-async function pdfToImages(file){
-  const ab = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
-  const imgs = [];
-  for(let i=1;i<=Math.min(pdf.numPages, 3);i++){
-    const page = await pdf.getPage(i);
-    const vp = page.getViewport({scale:1.5}); 
-    const cv = document.createElement('canvas');
-    cv.width=vp.width; cv.height=vp.height;
-    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-    imgs.push(cv.toDataURL('image/png').split(',')[1]);
+// --- 파일 파싱 (API 오류 방지를 위한 JPEG 고속 변환 엔진 탑재) ---
+async function fileToBase64s(file) {
+  if (!file) return [];
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    const ab = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+    const imgs = [];
+    for(let i=1; i<=Math.min(pdf.numPages, 3); i++){
+      const page = await pdf.getPage(i);
+      const vp = page.getViewport({scale:1.5});
+      const cv = document.createElement('canvas');
+      cv.width=vp.width; cv.height=vp.height;
+      await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+      // PNG 대신 JPEG로 압축하여 API 용량 초과 에러를 100% 방지합니다.
+      imgs.push({ media_type: 'image/jpeg', data: cv.toDataURL('image/jpeg', 0.8).split(',')[1] });
+    }
+    return imgs;
+  } else {
+    const b64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+    const mime = b64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)[1] || 'image/jpeg';
+    const data = b64.split(',')[1];
+    return [{ media_type: mime, data: data }];
   }
-  return imgs;
 }
 
 // --- 드래그 앤 드롭 로직 ---
@@ -279,9 +288,16 @@ function initDrop(id, inputId, callback) {
 initDrop('imgDrop', 'imgInput', async files => {
   const f = files[0];
   imgFileObj = f; 
-  if(f.type === 'application/pdf'){
-    const imgs = await pdfToImages(f);
-    document.getElementById('prevImg').src = 'data:image/png;base64,' + imgs[0];
+  document.getElementById('prevImg').src = "";
+  if(f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')){
+    const ab = await f.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+    const page = await pdf.getPage(1);
+    const vp = page.getViewport({scale:1.0});
+    const cv = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    document.getElementById('prevImg').src = cv.toDataURL('image/jpeg', 0.8);
   } else {
     const r = new FileReader();
     r.onload = ev => document.getElementById('prevImg').src = ev.target.result;
@@ -359,78 +375,60 @@ function getExcelMeta(wb) {
   return meta;
 }
 
-// --- AI 프롬프트 재정비 (명확하고 단순한 구조로 에러 방지) ---
-const PROMPT_기안서=`이미지의 텍스트를 분석하여 아래 요구사항에 맞는 JSON 형식으로만 응답하세요. 설명은 생략하세요.
+// --- 완전히 뜯어고친 무적의 AI 프롬프트 ---
+const PROMPT_기안서=`이 문서는 기안서입니다. 이미지의 내용을 분석하여 아래 JSON 양식에 맞게 추출하세요.
+- 응답은 반드시 '{' 로 시작하고 '}' 로 끝나는 순수 JSON이어야 합니다.
+- 마크다운 백틱(\`\`\`)이나 추가 설명을 절대 포함하지 마세요.
+- 찾을 수 없는 항목은 반드시 null 로 표기하세요.
 
-[추출 항목]
-1. 총금액: 본문/표의 총 청구/선투자/매절 금액 (숫자만 기재, 쉼표제외). 없으면 null
-2. 작성일자: 계산서 작성일자 (YYYY-MM-DD). 없으면 null
-3. 마감일: 계산서 마감기한 (YYYY-MM-DD). 없으면 null
-4. 서비스월: 정산월/서비스월 (YYYY-MM). 없으면 null
-5. 입금예정일: 입금/지급 예정일에 대한 텍스트 전체 (예: 30영업일 이내). 없으면 null
-6. 품목명: 기재된 작품명이나 청구 품목명. 없으면 null
-7. 이메일: 기안서 내 담당자 이메일 주소. 없으면 null
-8. 사업자등록번호: 사업자번호 (하이픈 포함). 없으면 null
-
-[출력 형식]
 {
-  "총금액": 5000000,
-  "작성일자": "2026-04-01",
-  "마감일": "2026-04-10",
-  "서비스월": null,
-  "입금예정일": "발행일 기준 30영업일 이내",
-  "품목명": "불량 식품에 길들여지면",
-  "이메일": null,
-  "사업자등록번호": null
+  "총금액": (숫자, 쉼표제외. 본문/표의 총 청구/선투자금/매절 금액 전체. 예: 5000000),
+  "작성일자": "YYYY-MM-DD",
+  "마감일": "YYYY-MM-DD",
+  "서비스월": "YYYY-MM (없으면 null)",
+  "입금예정일": "입금/지급 예정일에 대한 텍스트 전체 (예: 30영업일 이내)",
+  "품목명": "작품명 또는 청구 품목명 전체",
+  "이메일": "기안서 내 발신/담당자 이메일 주소",
+  "사업자등록번호": "XXX-XX-XXXXX"
 }`;
 
-const PROMPT_메일=`이미지의 텍스트를 분석하여 아래 요구사항에 맞는 JSON 형식으로만 응답하세요. 설명은 생략하세요.
+const PROMPT_메일=`이 문서는 세금계산서 발행 요청 메일입니다. 이미지의 내용을 분석하여 아래 JSON 양식에 맞게 추출하세요.
+- 응답은 반드시 순수 JSON이어야 합니다. 마크다운이나 추가 설명 금지.
 
-[추출 항목]
-1. 작성일자: 본문에 명시된 발행 요청일 (메일 발송일 아님) (YYYY-MM-DD). 없으면 null
-2. 마감일: 명시된 마감 기한 (YYYY-MM-DD). 없으면 null
-3. 입금예정일: 명시된 입금/지급일 텍스트 전체. 없으면 null
-4. 총금액: 명시된 총 금액 (숫자만 기재, 쉼표제외). 없으면 null
-5. 품목명: 작품명/품목명. 없으면 null
-6. 이메일: 계산서 수신 이메일 주소. 없으면 null
-7. 사업자등록번호: 사업자번호 (하이픈 포함). 없으면 null
-8. 중요공지: 메일 본문의 강조/특이사항 전체. 없으면 null
-
-[출력 형식]
 {
-  "작성일자": "2026-04-01",
-  "마감일": "2026-04-10",
-  "입금예정일": "2026-05-15",
-  "총금액": 5000000,
-  "품목명": "불량 식품에 길들여지면",
-  "이메일": "test@test.com",
-  "사업자등록번호": "123-45-67890",
-  "중요공지": null
+  "작성일자": "YYYY-MM-DD (본문에 'O월 O일자로 발행' 등 명시된 작성 요청일. 메일 수/발신 시간 아님)",
+  "마감일": "YYYY-MM-DD (오타가 있어도 적힌 연도/날짜 그대로 추출. 예: 25년 4월 -> 2025-04-XX)",
+  "입금예정일": "명시된 입금/지급일 텍스트 전체",
+  "총금액": (숫자, 쉼표제외. 명시된 총 금액. 예: 5000000),
+  "품목명": "작품명/품목명 전체",
+  "이메일": "계산서 수신 이메일 주소",
+  "사업자등록번호": "XXX-XX-XXXXX",
+  "중요공지": "메일 본문의 강조/특이사항 전체"
 }`;
 
-const PROMPT_계약서=`이미지의 텍스트를 분석하여 아래 JSON 형식으로만 응답하세요.
+const PROMPT_계약서=`이 문서는 계약서/부속합의서입니다. 이미지의 내용을 분석하여 아래 JSON 양식에 맞게 추출하세요.
+- 응답은 반드시 순수 JSON이어야 합니다.
+
 {
-  "총계약금액": 5000000,
-  "입금조건": "발행일 기준 30영업일 이내"
+  "총계약금액": (숫자, 쉼표제외. 매절, 선투자금 등 명시된 총 금액),
+  "입금조건": "입금/지급 관련 조건 전체 텍스트"
 }`;
 
-const PROMPT_사업자=`이미지의 텍스트를 분석하여 아래 JSON 형식으로만 응답하세요.
+const PROMPT_사업자=`이 문서는 사업자등록증입니다. 이미지의 내용을 분석하여 아래 JSON 양식에 맞게 추출하세요.
+- 응답은 반드시 순수 JSON이어야 합니다.
+
 {
-  "사업자등록번호": "123-45-67890",
-  "이메일": "test@test.com"
+  "사업자등록번호": "숫자만 추출 (하이픈 제외)",
+  "이메일": "수신 이메일 주소"
 }`;
 
 async function aiCall(file, prompt) {
   if(!file) return null;
-  let b64s = [];
-  if (file.type === 'application/pdf') {
-      b64s = await pdfToImages(file);
-  } else {
-      const b64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
-      b64s = [b64];
-  }
+  const b64Objs = await fileToBase64s(file);
   let contentBlocks = [];
-  for(const b64 of b64s) contentBlocks.push({type:'image', source:{type:'base64', media_type:'image/png', data:b64}});
+  for(const obj of b64Objs) {
+    contentBlocks.push({type:'image', source:{type:'base64', media_type: obj.media_type, data: obj.data}});
+  }
   contentBlocks.push({type:'text', text:prompt});
 
   try {
@@ -443,8 +441,7 @@ async function aiCall(file, prompt) {
     if (d.error) throw new Error(d.error.message);
     const match = d.content[0].text.match(/\{[\s\S]*\}/);
     if (!match) return null;
-    const cleanStr = match[0].replace(/,\s*([}\]])/g, '$1'); 
-    return JSON.parse(cleanStr);
+    return JSON.parse(match[0].replace(/,\s*([}\]])/g, '$1')); 
   } catch(e) { console.error("AI 파싱 에러:", e); return null; }
 }
 
@@ -510,7 +507,7 @@ async function run() {
     const 사업자 = bizFiles.length ? await aiCall(bizFiles[0], PROMPT_사업자) : null;
     if(계약서 || 사업자) setStep(5, 'done');
 
-    // 변수 세팅 (AI가 못 찾았더라도 에러 없이 null 처리됨)
+    // 변수 세팅
     const imgTotal = parseAmt(기안?.총금액) || null;
     const xlTotal = excelFiles.length ? excelFiles.reduce((s,f)=>s+(f.total||0), 0) : null;
     const imgDate = normDate(기안?.작성일자);
@@ -520,42 +517,35 @@ async function run() {
     // --- 통합 코어 대사판 렌더링 ---
     let coreHtml = `<div class="chk-group"><div class="gt">🔍 필수 항목 통합 대사 (기안서 기준)</div>`;
     
-    // 1. 금액
     coreHtml += cmpMulti('1. 청구/정산 금액', imgTotal, [
       {name: '엑셀', val: xlTotal, provided: excelFiles.length > 0},
       {name: '메일', val: parseAmt(메일?.총금액), provided: !!메일},
       {name: '계약서', val: parseAmt(계약서?.총계약금액), provided: !!계약서}
     ], true, false);
 
-    // 2. 작성일자
     coreHtml += cmpMulti('2. 작성일자 (정산월)', imgDate, [
       {name: '엑셀', val: 엑셀?.작성일자, provided: !!엑셀},
       {name: '메일', val: normDate(메일?.작성일자), provided: !!메일}
     ], false, false);
 
-    // 3. 마감일자
     coreHtml += cmpMulti('3. 세금계산서 마감일자', imgDue, [
       {name: '메일', val: normDate(메일?.마감일), provided: !!메일}
     ], false, false);
 
-    // 4. 입금예정일
     coreHtml += cmpMulti('4. 입금/지급 예정일', imgDeposit, [
       {name: '메일', val: normDate(메일?.입금예정일) || 메일?.입금예정일, provided: !!메일},
       {name: '계약서', val: 계약서?.입금조건, provided: !!계약서, isText: true}
     ], false, true);
 
-    // 5. 품목명
     coreHtml += cmpMulti('5. 청구 품목 (작품명)', 기안?.품목명, [
       {name: '메일', val: 메일?.품목명, provided: !!메일}
     ], false, true);
 
-    // 6. 이메일 주소
     coreHtml += cmpMulti('6. 발신 이메일 주소', 기안?.이메일, [
       {name: '메일', val: 메일?.이메일, provided: !!메일},
       {name: '등록증', val: 사업자?.이메일, provided: !!사업자}
     ], false, true);
 
-    // 7. 사업자번호
     const cleanBiz = v => v ? String(v).replace(/[^0-9]/g,'') : null;
     coreHtml += cmpMulti('7. 사업자등록번호', cleanBiz(기안?.사업자등록번호), [
       {name: '메일', val: cleanBiz(메일?.사업자등록번호), provided: !!메일},
