@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v9.1 — 테라핀 정산팀</title>
+<title>기안서 검증기 v9.0 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -70,18 +70,21 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .rt p{font-size:11px;color:var(--sub);margin-top:2px}
 .chk-group{padding:13px 18px;border-bottom:1px solid var(--border)}
 .chk-group:last-child{border-bottom:none}
-.gt{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.gt{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;}
 .ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent;margin-bottom:7px;background:#fff}
 .ci.pass{border:1.5px solid #b2e0cc}
 .ci.fail{background:var(--err-bg);border:1.5px solid #f5c0bb}
+.ci.warn{background:var(--warn-bg);border:1.5px solid #fce4b0}
 .ci.info{background:#fdfdfd;border:1.5px solid #d8dde8}
 .cs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700;margin-top:2px}
 .ci.pass .cs{background:var(--ok);color:#fff}
 .ci.fail .cs{background:var(--err);color:#fff}
+.ci.warn .cs{background:var(--warn);color:#fff}
 .ci.info .cs{background:var(--sub);color:#fff}
 .cc{flex:1}
 .cl-lbl{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:3px}
 .cl-det{font-size:12px;font-weight:600;color:#111}
+.cl-sub{font-size:11px;color:var(--sub);margin-top:4px}
 .diff{margin-top:8px;display:flex;flex-direction:column;gap:5px;background:#f4f6fb;padding:8px 10px;border-radius:6px}
 .dr{display:flex;align-items:center;gap:6px}
 .dtag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;min-width:65px;text-align:center;border:1px solid var(--border);background:#fff}
@@ -101,8 +104,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v9.1 (AI 파싱 오류 영구해결)</span></h1>
-    <p>메일 · 홈페이지 · 엑셀 · 서류 — 필수 항목 강제 크로스체크</p>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v9.0 (AI 직관성 극대화)</span></h1>
+    <p>메일 · 홈페이지 · 엑셀 · 서류 — 모든 항목 상호 대사</p>
   </div>
 </div>
 
@@ -223,7 +226,7 @@ function parseAmt(v){
 }
 
 function normDate(v) {
-  if (!v) return null;
+  if (v === null || v === undefined || v === '') return null;
   if (typeof v === 'number') {
     if (v < 10000) return null;
     const d = new Date((v - 25569) * 86400 * 1000);
@@ -246,7 +249,7 @@ function normDate(v) {
   return s; 
 }
 
-// --- PDF 렌더링 엔진 ---
+// --- PDF 렌더링 엔진 (용량 문제 해결을 위해 JPEG 압축 적용) ---
 async function pdfToImages(file){
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:ab}).promise;
@@ -378,69 +381,46 @@ function getExcelMeta(wb) {
   return meta;
 }
 
-// --- 절대 헷갈리지 않는 명확한 AI 프롬프트 교체 ---
-const PROMPT_기안서=`당신은 데이터 추출 AI입니다. 제공된 이미지(기안서)에서 데이터를 추출하여 반드시 아래 형식의 순수 JSON으로만 응답하세요. 부가 설명은 절대 금지합니다.
+// --- AI 프롬프트 (오류 원천 차단형 플랫 구조) ---
+const PROMPT_기안서=`이미지의 텍스트를 분석하여 아래 요구사항에 맞는 JSON 형식으로만 응답하세요.
+- 마크다운 백틱(\`\`\`)을 절대 쓰지 마세요.
+- 값은 모두 문자열("") 또는 숫자(따옴표 없음)로만 입력하고, 찾을 수 없으면 null 로 입력하세요.
 
-[추출 가이드]
-- 총금액: 본문/표의 총 청구/선투자/매절 금액 (숫자만, 쉼표제외). 없으면 null
-- 작성일자: 계산서 작성일자 (YYYY-MM-DD). 없으면 null
-- 마감일: 계산서 마감기한 (YYYY-MM-DD). 없으면 null
-- 서비스월: 정산월/서비스월 (YYYY-MM). 없으면 null
-- 입금예정일: 입금/지급 예정일에 대한 텍스트 전체. 없으면 null
-- 품목명: 기재된 작품명이나 청구 품목명. 없으면 null
-- 이메일: 기안서 내 발신/담당자 이메일 주소. 없으면 null
-- 사업자등록번호: 사업자번호 (하이픈 포함). 없으면 null
-
-[응답 포맷]
 {
-  "총금액": 5000000,
-  "작성일자": "2026-04-01",
-  "마감일": "2026-04-10",
-  "서비스월": "2026-04",
-  "입금예정일": "발행일 기준 30영업일 이내",
-  "품목명": "작품명",
-  "이메일": "test@test.com",
-  "사업자등록번호": "123-45-67890"
+  "총금액": (숫자. 본문/표의 총 청구/선투자/매절 금액. 쉼표 제외),
+  "작성일자": "계산서 작성일자 YYYY-MM-DD",
+  "마감일": "계산서 마감기한 YYYY-MM-DD",
+  "서비스월": "정산월/서비스월 YYYY-MM",
+  "입금예정일": "입금/지급 예정일에 대한 텍스트 전체 (예: 30영업일 이내)",
+  "품목명": "기재된 작품명이나 청구 품목명",
+  "이메일": "기안서 내 담당자 이메일 주소",
+  "사업자등록번호": "XXX-XX-XXXXX 형식"
 }`;
 
-const PROMPT_메일=`당신은 데이터 추출 AI입니다. 메일 이미지에서 데이터를 추출하여 반드시 아래 형식의 순수 JSON으로만 응답하세요.
+const PROMPT_메일=`이미지의 텍스트를 분석하여 아래 요구사항에 맞는 JSON 형식으로만 응답하세요.
+- 마크다운 백틱(\`\`\`)을 절대 쓰지 마세요.
 
-[추출 가이드]
-- 작성일자: 본문에 명시된 발행 요청일 (YYYY-MM-DD). 발송일 아님. 없으면 null
-- 마감일: 명시된 마감 기한 (YYYY-MM-DD). 오타가 있어도 원본 그대로. 없으면 null
-- 입금예정일: 명시된 입금/지급일 텍스트 전체. 없으면 null
-- 총금액: 명시된 총 금액 (숫자만, 쉼표제외). 없으면 null
-- 품목명: 작품명/품목명. 없으면 null
-- 이메일: 계산서 수신 이메일 주소. 없으면 null
-- 사업자등록번호: 사업자등록번호. 없으면 null
-- 중요공지: 메일 본문의 강조/특이사항 전체. 없으면 null
-
-[응답 포맷]
 {
-  "작성일자": "2026-04-01",
-  "마감일": "2026-04-10",
-  "입금예정일": "2026-05-15",
-  "총금액": 5000000,
-  "품목명": "작품명",
-  "이메일": "test@test.com",
-  "사업자등록번호": "123-45-67890",
-  "중요공지": "공지내용"
+  "작성일자": "본문에 명시된 발행 요청일 YYYY-MM-DD (메일 발송일 아님)",
+  "마감일": "명시된 마감 기한 YYYY-MM-DD (오타 있어도 그대로 추출)",
+  "입금예정일": "명시된 입금/지급일 텍스트 전체",
+  "총금액": (숫자. 명시된 총 금액, 쉼표 제외),
+  "품목명": "작품명/품목명 전체",
+  "이메일": "계산서 수신 이메일 주소",
+  "사업자등록번호": "XXX-XX-XXXXX 형식",
+  "중요공지": "메일 본문의 강조/특이사항 전체"
 }`;
 
-const PROMPT_계약서=`당신은 데이터 추출 AI입니다. 계약서에서 데이터를 추출하여 반드시 아래 형식의 순수 JSON으로만 응답하세요.
-
-[응답 포맷]
+const PROMPT_계약서=`이미지를 분석하여 아래 JSON으로만 응답하세요.
 {
-  "총계약금액": 5000000,
-  "입금조건": "발행일 기준 30영업일 이내"
+  "총계약금액": (숫자. 매절/선투자금 등 명시된 총 금액, 쉼표 제외),
+  "입금조건": "입금/지급 관련 조건 전체 텍스트"
 }`;
 
-const PROMPT_사업자=`당신은 데이터 추출 AI입니다. 사업자등록증에서 데이터를 추출하여 반드시 아래 형식의 순수 JSON으로만 응답하세요.
-
-[응답 포맷]
+const PROMPT_사업자=`이미지를 분석하여 아래 JSON으로만 응답하세요.
 {
-  "사업자등록번호": "123-45-67890",
-  "이메일": "test@test.com"
+  "사업자등록번호": "숫자만 추출 (하이픈 제외)",
+  "이메일": "수신 이메일 주소"
 }`;
 
 async function aiCall(file, prompt) {
@@ -528,7 +508,7 @@ async function run() {
     const 사업자 = bizFiles.length ? await aiCall(bizFiles[0], PROMPT_사업자) : null;
     if(계약서 || 사업자) setStep(5, 'done');
 
-    const imgTotal = parseAmt(기안?.총금액) || null;
+    const imgTotal = parseAmt(기안?.총금액);
     const xlTotal = excelFiles.length ? excelFiles.reduce((s,f)=>s+(f.total||0), 0) : null;
     const imgDate = normDate(기안?.작성일자);
     const imgDue = normDate(기안?.마감일);
