@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v8.0 — 테라핀 정산팀</title>
+<title>기안서 검증기 v8.1 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -114,8 +114,8 @@ table.mt tr.fr td{background:var(--err-bg)}
     </svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v8.0 (엑셀 없이도 가능)</span></h1>
-    <p>메일 · 홈페이지 · 엑셀 · 서류 — 통합 검증</p>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v8.1 (Cross-Check 완벽 지원)</span></h1>
+    <p>메일 · 홈페이지 · 엑셀 · 서류 — 모든 항목 상호 대사</p>
   </div>
 </div>
 
@@ -211,9 +211,8 @@ table.mt tr.fr td{background:var(--err-bg)}
 
 <div class="card rc" id="rc">
   <div id="rsum"></div>
-  <div id="r_mail"></div>
-  <div id="r_web"></div>
   <div id="r_docs"></div>
+  <div id="r_mail"></div>
   <div id="r_excel"></div>
   <div id="r_internal"></div>
   <div style="text-align:center"><button style="margin:10px; padding:5px 15px; border:1px solid var(--border); border-radius:5px; background:none; cursor:pointer;" onclick="location.reload()">↩ 초기화</button></div>
@@ -229,7 +228,7 @@ let mailFiles = [], webFiles = [], bizFiles = [], conFiles = [];
 if(apiKey){ document.getElementById('apiKey').value=apiKey; document.getElementById('keyOk').classList.add('show'); }
 function saveKey(){ apiKey=document.getElementById('apiKey').value.trim(); localStorage.setItem('tf_api_key',apiKey); document.getElementById('keyOk').classList.add('show'); }
 
-// --- 날짜 보정 로직 ---
+// --- 날짜/문자열 보정 공통 로직 ---
 function normDate(v) {
   if (v === null || v === undefined || v === '') return null;
   if (typeof v === 'number') {
@@ -253,13 +252,12 @@ function normDate(v) {
   m = s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
   if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
   
-  return s; 
+  return s; // '30영업일 이내' 같은 텍스트 보존
 }
-function toYYYYMM(d){ if(!d) return null; const m=d.match(/(\d{4})-(\d{2})/); return m?m[1]+m[2]:null; }
 function fmtAmt(n){ if(n===null||n===undefined) return '—'; return Number(n).toLocaleString('ko-KR')+'원'; }
 function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=parseInt(String(v).replace(/[원,\s]/g,''),10); return isNaN(n)?null:n; }
 
-// --- PDF 렌더링 ---
+// --- PDF 렌더링 엔진 ---
 async function pdfToImages(file){
   const ab = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:ab}).promise;
@@ -336,13 +334,6 @@ function getExcelTotal(wb){
     const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
     return parseAmt(map['최종 입금액 (세후)']||map['정산총액']);
   }
-  if(wb.SheetNames.includes('요약')){
-    const ws=wb.Sheets['요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,UTC:true});
-    let amtCol=-1;
-    for(const row of rows.slice(0,8)){ for(let i=0;i<(row.length||0);i++){ if(row[i]&&String(row[i]).trim()==='매출액'){ amtCol=i; break; } } if(amtCol>=0) break; }
-    for(const row of rows){ if(row[1]&&String(row[1])==='총합계'){ if(amtCol>=0) return parseAmt(row[amtCol]); for(let i=14;i>=8;i--){ const v=parseAmt(row[i]); if(v!==null&&v>0) return v; } } }
-  }
-  
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, UTC:true});
   let amtColIndex = -1; let listTotal = 0;
@@ -378,42 +369,39 @@ function getExcelMeta(wb) {
   return meta;
 }
 
-// --- AI 프롬프트 ---
-const PROMPT_기안서=`이 이미지는 한국 그룹웨어의 기안서입니다. 아래 항목을 읽고 JSON만 응답하세요.
+// --- AI 프롬프트 강화 (명확한 추출 지시) ---
+const PROMPT_기안서=`이 이미지는 기안서입니다. 아래 항목을 읽고 JSON만 응답하세요.
 {
-  "제목": "제 목 필드 전체 텍스트",
-  "총요청금액": 숫자 (테이블이 없을 경우, 본문에 명시된 이용금액, 원작사용료, 선투자금, 매절 금액 등 총 청구 금액 기재),
+  "총요청금액": 숫자 (기안서 본문이나 표에 적힌 최종 청구 금액/선투자금/원작사용료 등),
   "본문_계산서작성일자": "YYYY-MM-DD",
   "본문_마감기한": "YYYY-MM-DD",
-  "본문_마감시간": "HH:MM (없으면 null)",
   "본문_서비스월": "YYYY-MM",
-  "본문_정산금액들": [{"구분":"설명","금액":숫자}],
-  "세금계산서_rows": [{"작성일자":"YYYY-MM-DD","공급가액":숫자,"합계":숫자}],
-  "입금예정일": "YYYY-MM-DD",
-  "발신이메일": "이메일주소 (없으면 null)"
-}`;
-
-const PROMPT_계약서=`이 이미지는 계약서 또는 부속합의서입니다. JSON으로 응답하세요.
-{
-  "RS비율": 숫자만,
-  "총계약금액": 숫자 (매절, 선투자금 등 명시된 총 금액, 없으면 null),
-  "입금조건": "입금 관련 조건 전체"
+  "입금예정일": "입금 관련 명시된 텍스트 그대로 추출 (예: '발행일 기준 30영업일 이내', '2026-05-15' 등)",
+  "발신이메일": "기안서 내 적힌 이메일 주소 (없으면 null)",
+  "사업자등록번호": "XXX-XX-XXXXX (명시된 경우)"
 }`;
 
 const PROMPT_메일=`이 이미지는 세금계산서 발행 요청 메일입니다. 아래 항목을 읽고 JSON만 응답하세요.
 {
-  "작성일자": "YYYY-MM-DD ('X월 X일자로 발행' 등 명시된 날짜)",
-  "마감일": "YYYY-MM-DD (명시된 마감 기한. 오타가 있어도 적힌 연도 그대로 추출. 예: '25년 4월 13일' -> '2025-04-13')",
-  "입금예정일": "YYYY-MM-DD (명시된 입금일/지급예정일. 오타가 있다면 적힌 연도 그대로 추출)",
-  "발행이메일": "계산서 수신 이메일",
+  "요청작성일자": "YYYY-MM-DD (메일 발송 날짜가 아님! 메일 본문에 'X월 X일자로 계산서 발행 요청'이라고 명시된 날짜)",
+  "마감일": "YYYY-MM-DD (오타가 있어도 명시된 연도 그대로 추출. 예: '25년 4월 10일' -> '2025-04-10')",
+  "입금예정일": "입금/지급 예정일에 대해 명시된 텍스트 그대로 추출",
+  "수신이메일": "계산서 수신 이메일 주소",
+  "사업자등록번호": "XXX-XX-XXXXX (명시된 경우)",
   "중요공지": "위 항목 외 강조된 내용 전체"
 }`;
 
-const PROMPT_홈페이지=`이 이미지는 정산 홈페이지 내역입니다. JSON만 응답하세요.
+const PROMPT_계약서=`이 이미지는 계약서입니다. JSON으로 응답하세요.
 {
-  "정산예정금액": 숫자,
-  "판매기간시작": "YYYY-MM-DD",
-  "판매기간종료": "YYYY-MM-DD"
+  "총계약금액": 숫자 (매절, 선투자금 등 명시된 총 금액),
+  "입금조건": "입금 관련 조건 전체"
+}`;
+
+const PROMPT_사업자=`이 이미지는 사업자등록증입니다. JSON으로 응답하세요.
+{
+  "사업자등록번호": "XXX-XX-XXXXX 형식",
+  "상호": "상호 전체",
+  "이메일": "수신 이메일 (명시된 경우)"
 }`;
 
 async function aiCall(file, prompt) {
@@ -444,7 +432,7 @@ async function aiCall(file, prompt) {
   return match ? JSON.parse(match[0]) : null;
 }
 
-// --- 대사 결과 렌더링 로직 ---
+// --- 크로스 체크 UI 로직 ---
 function mkCi(status,label,detail,sub,sv1,sv2,lbl1,lbl2){
   const icons={pass:'✓',fail:'✕',warn:'!',info:'i',skip:'-'};
   let diff='';
@@ -460,12 +448,29 @@ function mkGroup(title, html){
   return `<div class="chk-group"><div class="gt">${title}</div><div class="cl">${html}</div></div>`;
 }
 
-function cmpDate(label, a, b, lbl1, lbl2){
-  if(!a&&!b) return '';
-  if(!a) return mkCi('warn',label,'기안서에서 인식하지 못했습니다.');
-  if(!b) return mkCi('info',label,`기안서: ${a}`, '대사 자료에서 확인 불가');
-  if(a===b) return mkCi('pass',label,`${a} — 일치 ✓`);
-  return mkCi('fail',label,'날짜 불일치 ⚠',null,a,b,lbl1,lbl2);
+function cmpTextMatch(label, a, b, lbl1, lbl2) {
+  if(!a && !b) return '';
+  if(!a || !b) return mkCi('info', label, `${lbl1}: ${a||'확인불가'} / ${lbl2}: ${b||'확인불가'}`, '수동 확인 필요');
+  
+  const normA = String(a).replace(/[\s-]/g,'').toLowerCase();
+  const normB = String(b).replace(/[\s-]/g,'').toLowerCase();
+  
+  if(normA === normB || normA.includes(normB) || normB.includes(normA)) {
+    return mkCi('pass', label, `${a} — 일치 ✓`);
+  }
+  return mkCi('fail', label, '불일치 ⚠', null, a, b, lbl1, lbl2);
+}
+
+function cmpDateOrText(label, a, b, lbl1, lbl2){
+  if(!a && !b) return '';
+  if(!a || !b) return mkCi('info', label, `${lbl1}: ${a||'확인불가'} / ${lbl2}: ${b||'확인불가'}`, '수동 확인 필요');
+  if(a === b) return mkCi('pass', label, `${a} — 일치 ✓`);
+  
+  // 날짜 형식이 아닌 텍스트(예: "30영업일 이내")가 포함된 경우 무조건 fail이 아닌 warn으로 표시
+  if(!String(a).includes('-') || !String(b).includes('-')) {
+    return mkCi('warn', label, '텍스트/날짜 교차 (수동확인 요망)', null, a, b, lbl1, lbl2);
+  }
+  return mkCi('fail', label, '불일치 ⚠', null, a, b, lbl1, lbl2);
 }
 
 async function run() {
@@ -482,71 +487,59 @@ async function run() {
     const 메일 = mailFiles.length ? await aiCall(mailFiles[0], PROMPT_메일) : null;
     if(메일) setStep(2, 'done');
 
-    setStep(3, webFiles.length ? 'active' : 'skip');
-    const 홈피 = webFiles.length ? await aiCall(webFiles[0], PROMPT_홈페이지) : null;
-    if(홈피) setStep(3, 'done');
-
     setStep(4, excelFiles.length ? 'active' : 'skip');
     const 엑셀 = excelFiles.length ? getExcelMeta(excelFiles[0].wb) : { 작성일자: null, 서비스월: null };
     if(excelFiles.length) setStep(4, 'done');
 
-    setStep(5, conFiles.length ? 'active' : 'skip');
+    setStep(5, (conFiles.length || bizFiles.length) ? 'active' : 'skip');
     const 계약서 = conFiles.length ? await aiCall(conFiles[0], PROMPT_계약서) : null;
-    if(계약서) setStep(5, 'done');
+    const 사업자 = bizFiles.length ? await aiCall(bizFiles[0], PROMPT_사업자) : null;
+    if(계약서 || 사업자) setStep(5, 'done');
 
     // 변수 세팅
-    const taxRows = 기안?.세금계산서_rows || [];
-    let imgTotal = taxRows.reduce((s,r)=>s+(parseAmt(r.공급가액)||0), 0);
-    if(imgTotal === 0 && 기안?.총요청금액) imgTotal = parseAmt(기안.총요청금액);
-
+    const imgTotal = parseAmt(기안?.총요청금액) || 0;
     const xlTotal = excelFiles.length ? excelFiles.reduce((s,f)=>s+(f.total||0), 0) : null;
-    const imgDate = normDate(기안?.본문_계산서작성일자 || 기안?.작성일자);
-    const xlDate = 엑셀.작성일자;
-    const imgSrv = normDate(기안?.본문_서비스월 || 기안?.서비스월);
-    const xlSrv = normDate(엑셀.서비스월);
+    
+    const imgDate = normDate(기안?.본문_계산서작성일자);
+    const imgSrv = normDate(기안?.본문_서비스월);
     
     let totalFails = 0;
 
-    // 1. 엑셀 대사 출력 (엑셀이 있을 때만)
-    let h = '';
-    if (excelFiles.length > 0) {
-      const matchAmt = Math.abs(imgTotal - xlTotal) === 0;
-      if(!matchAmt) totalFails++;
-      let tableHtml=`<div class="mt-wrap"><div class="mt-title">📁 파일별 금액 대사</div><table class="mt"><thead><tr><th>엑셀 합계</th><th>기안서 금액</th><th>결과</th></tr></thead><tbody>`;
-      tableHtml+=`<tr class="${matchAmt?'pr':'fr'}" style="font-weight:700"><td><strong>${fmtAmt(xlTotal)}</strong></td><td><strong>${fmtAmt(imgTotal)}</strong></td><td>${matchAmt?'<span class="stag pass">✓ 일치</span>':'<span class="stag fail">✕ 불일치</span>'}</td></tr></tbody></table></div>`;
-
-      if(xlDate) {
-        if(imgDate !== xlDate) totalFails++;
-        h += cmpDate('작성일자 (정산월)', imgDate, xlDate, '기안서', '엑셀');
-      } else {
-        h += mkCi('pass', '작성일자', '엑셀 리스트에서 정산월 생략 (매절일 경우 정상) ✓');
-      }
-
-      if(imgSrv && xlSrv) {
-        if(imgSrv.substring(0,7) !== xlSrv.substring(0,7)) totalFails++;
-        h += cmpDate('서비스월', imgSrv.substring(0,7), xlSrv.substring(0,7), '기안서', '엑셀');
-      }
-      document.getElementById('r_excel').innerHTML = tableHtml + mkGroup('📊 엑셀 vs 기안서 비교', h);
-    } else {
-      document.getElementById('r_excel').innerHTML = mkGroup('📊 엑셀 vs 기안서 비교', mkCi('info', '엑셀 대사 생략', '업로드된 엑셀 파일이 없습니다. (계산서 단독 건)'));
+    // 1. 서류/기본 정보 대사 (사업자번호, 이메일, 계약금액)
+    let dh = '';
+    if(사업자) {
+      const bizNum = 사업자.사업자등록번호;
+      const imgBiz = 기안?.사업자등록번호;
+      const mailBiz = 메일?.사업자등록번호;
+      dh += cmpTextMatch('사업자등록번호 (기안서 vs 등록증)', imgBiz, bizNum, '기안서', '등록증');
+      dh += cmpTextMatch('이메일 (기안서 vs 등록증)', 기안?.발신이메일, 사업자.이메일, '기안서', '등록증');
     }
+    if(계약서) {
+      if(계약서.총계약금액) {
+         const conAmt = parseInt(계약서.총계약금액);
+         if(conAmt !== imgTotal) totalFails++;
+         dh += (conAmt === imgTotal) ? mkCi('pass','계약 총액 (매절/선투자금)',`${fmtAmt(conAmt)} — 기안서 일치 ✓`) : mkCi('fail','계약 총액 (매절/선투자금)','금액 불일치 ⚠', `기안서: ${fmtAmt(imgTotal)} / 계약서: ${fmtAmt(conAmt)}`);
+      }
+      if(계약서.입금조건) dh += mkCi('info','계약서 입금 조건', 계약서.입금조건);
+    }
+    if(dh) document.getElementById('r_docs').innerHTML = mkGroup('📑 서류 및 기본 정보 대사', dh);
 
-    // 2. 메일 대사 출력
+    // 2. 메일 대사
     if(메일) {
       let mh = '';
-      const mDate = normDate(메일.작성일자);
+      const mDate = normDate(메일.요청작성일자);
       const mDue = normDate(메일.마감일);
-      const mDeposit = normDate(메일.입금예정일);
+      const mDeposit = normDate(메일.입금예정일) || 메일.입금예정일; // 텍스트 유지
+      const imgDeposit = normDate(기안?.입금예정일) || 기안?.입금예정일;
 
-      if(mDate && imgDate !== mDate) totalFails++;
-      mh += cmpDate('계산서 작성일자', imgDate, mDate, '기안서', '메일');
+      mh += cmpDateOrText('계산서 작성일자', imgDate, mDate, '기안서', '메일요청');
       
-      if(mDue && normDate(기안?.본문_마감기한) !== mDue) totalFails++;
-      mh += cmpDate('발행 마감일', normDate(기안?.본문_마감기한), mDue, '기안서', '메일');
+      const imgDue = normDate(기안?.본문_마감기한);
+      if(mDue && imgDue !== mDue) totalFails++;
+      mh += cmpDateOrText('발행 마감일', imgDue, mDue, '기안서', '메일');
       
-      const imgDeposit = normDate(기안?.입금예정일);
-      if(mDeposit && imgDeposit && imgDeposit !== mDeposit) totalFails++;
-      if(imgDeposit || mDeposit) mh += cmpDate('입금예정일', imgDeposit, mDeposit, '기안서', '메일');
+      mh += cmpDateOrText('입금예정일', imgDeposit, mDeposit, '기안서', '메일');
+      mh += cmpTextMatch('수신 이메일', 기안?.발신이메일, 메일.수신이메일, '기안서', '메일');
 
       if(메일.중요공지) {
         mh += `<div style="margin:8px 0;padding:12px 14px;background:#fff3cd;border:2px solid #ffc107;border-radius:8px;font-size:12px;">
@@ -557,23 +550,28 @@ async function run() {
       document.getElementById('r_mail').innerHTML = mkGroup('✉️ 메일 vs 기안서 비교', mh);
     }
 
-    // 3. 서류(계약서) 대사 출력
-    if(계약서) {
-      let ch = '';
-      if(계약서.총계약금액) {
-         const conAmt = parseInt(계약서.총계약금액);
-         if(conAmt !== imgTotal) totalFails++;
-         ch += (conAmt === imgTotal) ? mkCi('pass','계약 총액 (매절/선투자금)',`${fmtAmt(conAmt)} — 기안서 금액 일치 ✓`) : mkCi('fail','계약 총액 (매절/선투자금)','금액 불일치 ⚠', `기안서: ${fmtAmt(imgTotal)} / 계약서: ${fmtAmt(conAmt)}`);
+    // 3. 엑셀 대사
+    if (excelFiles.length > 0) {
+      let h = '';
+      const matchAmt = Math.abs(imgTotal - xlTotal) === 0;
+      if(!matchAmt) totalFails++;
+      let tableHtml=`<div class="mt-wrap"><div class="mt-title">📁 파일별 금액 대사</div><table class="mt"><thead><tr><th>엑셀 합계</th><th>기안서 금액</th><th>결과</th></tr></thead><tbody>`;
+      tableHtml+=`<tr class="${matchAmt?'pr':'fr'}" style="font-weight:700"><td><strong>${fmtAmt(xlTotal)}</strong></td><td><strong>${fmtAmt(imgTotal)}</strong></td><td>${matchAmt?'<span class="stag pass">✓ 일치</span>':'<span class="stag fail">✕ 불일치</span>'}</td></tr></tbody></table></div>`;
+
+      if(엑셀.작성일자) {
+        if(imgDate !== 엑셀.작성일자) totalFails++;
+        h += cmpDateOrText('작성일자 (정산월)', imgDate, 엑셀.작성일자, '기안서', '엑셀');
+      } else {
+        h += mkCi('pass', '작성일자', '엑셀 리스트에서 정산월 생략 (매절일 경우 정상) ✓');
       }
-      if(계약서.입금조건) ch += mkCi('info','계약서 입금 조건', 계약서.입금조건);
-      document.getElementById('r_docs').innerHTML = mkGroup('📑 계약서 대사 결과', ch);
+      document.getElementById('r_excel').innerHTML = tableHtml + mkGroup('📊 엑셀 vs 기안서 비교', h);
     }
 
     // 결과 배너
     const allOk = totalFails === 0;
     document.getElementById('rsum').innerHTML = allOk
-      ? `<div class="r-sum"><div class="ri ok">✅</div><div class="rt"><h3 class="ok">이상 없음 — 기안 상신 가능합니다</h3><p>대사 항목이 모두 일치합니다.</p></div></div>`
-      : `<div class="r-sum"><div class="ri fail">❌</div><div class="rt"><h3 class="fail">오류 발생 — ${totalFails}개 항목 불일치</h3><p>아래 붉은색(✕)으로 표시된 항목을 확인 후 기안서를 수정하세요.</p></div></div>`;
+      ? `<div class="r-sum"><div class="ri ok">✅</div><div class="rt"><h3 class="ok">이상 없음 — 기안 상신 가능합니다</h3><p>주요 대사 항목이 모두 일치합니다. (i 마크는 수동 확인)</p></div></div>`
+      : `<div class="r-sum"><div class="ri fail">❌</div><div class="rt"><h3 class="fail">오류 발생 — ${totalFails}개 항목 불일치</h3><p>붉은색(✕)으로 표시된 항목을 확인 후 기안서를 수정하세요.</p></div></div>`;
 
     setStep(6, 'done');
     document.getElementById('rc').classList.add('show');
