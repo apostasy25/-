@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스마트 기안서 검증기 — 자동 라우팅 적용</title>
+<title>기안서 검증기 v9.1 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 if(typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 </script>
 <style>
-/* UI 디자인 (기존 v9.1 스타일 유지) */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 :root {
-  --navy:#1a2744; --accent:#3b6fd4; --accent-l:#e8edf8;
-  --ok:#1a7f4b; --ok-bg:#eafaf1; --err:#c0392b; --err-bg:#fdf0ee;
-  --border:#d8dde8; --text:#1a2744; --sub:#6b7a99; --bg:#f4f6fb; --white:#fff;
+  --navy:#1a2744;--navy-l:#2a3a60;--accent:#3b6fd4;--accent-l:#e8edf8;
+  --ok:#1a7f4b;--ok-bg:#eafaf1;--err:#c0392b;--err-bg:#fdf0ee;
+  --warn:#b7700a;--warn-bg:#fef9ec;--border:#d8dde8;
+  --text:#1a2744;--sub:#6b7a99;--bg:#f4f6fb;--white:#fff;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding:28px 16px 80px}
@@ -25,7 +25,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .hd-txt h1{font-size:17px;font-weight:700;color:var(--navy)}
 .hd-txt p{font-size:11px;color:var(--sub);margin-top:2px}
 .setup-card{background:var(--white);border:1.5px solid #f0c96a;border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
-.setup-hd{background:#fffbee;padding:11px 17px;border-bottom:1px solid #f0e4bb}
+.setup-hd{background:#fffbee;padding:11px 17px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #f0e4bb}
 .setup-hd h2{font-size:12px;font-weight:600;color:#7a5800}
 .setup-bd{padding:14px 17px}
 .api-row{display:flex;gap:7px}
@@ -35,17 +35,21 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .key-ok.show{display:block}
 .card{background:var(--white);border:1px solid var(--border);border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
 .ch{background:var(--navy);padding:12px 18px;display:flex;align-items:center;gap:9px}
+.sb{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
 .ch h2{color:#fff;font-size:13px;font-weight:600}
 .cb{padding:16px 18px}
-.drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;background:#fafbfd;transition:all .2s}
+.drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;background:#fafbfd;position:relative;transition:all .2s}
 .drop.over{border-color:var(--accent);background:var(--accent-l)}
 .drop-ic{font-size:24px;margin-bottom:5px}
 .drop p{font-size:12px;color:var(--sub)}
 .img-prev{display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
 .img-prev.show{display:block}
+.img-prev img{width:100%;max-height:240px;object-fit:contain;background:#f0f2f7;display:block}
 .file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.file-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:9px;font-size:12px; color:var(--navy)}
+.file-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:9px; font-size:12px; color:var(--navy)}
+.btn-remove{margin-left:auto;cursor:pointer;border:none;background:none;color:var(--err);font-weight:700}
 .opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.opt-grid{grid-template-columns:1fr}}
 .btn-v{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;max-width:760px;margin:7px auto;height:52px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
 .prog{max-width:760px;margin:0 auto 13px;display:none}
 .prog.show{display:block}
@@ -53,6 +57,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .ps{flex:1;padding:7px 6px;border-radius:7px;font-size:10px;font-weight:600;text-align:center;border:1.5px solid var(--border);color:var(--sub);background:#fff}
 .ps.active{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
 .ps.done{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.ps.skip{border-color:var(--border);color:#c0c8d8;background:#f7f9fc}
 .rc{display:none}
 .rc.show{display:block}
 .r-sum{padding:16px 18px;display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--border)}
@@ -64,17 +69,22 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .rt h3.fail{color:var(--err)}
 .rt p{font-size:11px;color:var(--sub);margin-top:2px}
 .chk-group{padding:13px 18px;border-bottom:1px solid var(--border)}
+.chk-group:last-child{border-bottom:none}
+.gt{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;}
 .ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent;margin-bottom:7px;background:#fff}
 .ci.pass{border:1.5px solid #b2e0cc}
 .ci.fail{background:var(--err-bg);border:1.5px solid #f5c0bb}
-.ci.info{background:#fdfdfd;border:1.5px solid var(--border)}
+.ci.warn{background:var(--warn-bg);border:1.5px solid #fce4b0}
+.ci.info{background:#fdfdfd;border:1.5px solid #d8dde8}
 .cs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700;margin-top:2px}
 .ci.pass .cs{background:var(--ok);color:#fff}
 .ci.fail .cs{background:var(--err);color:#fff}
+.ci.warn .cs{background:var(--warn);color:#fff}
 .ci.info .cs{background:var(--sub);color:#fff}
 .cc{flex:1}
 .cl-lbl{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:3px}
 .cl-det{font-size:12px;font-weight:600;color:#111}
+.cl-sub{font-size:11px;color:var(--sub);margin-top:4px}
 .diff{margin-top:8px;display:flex;flex-direction:column;gap:5px;background:#f4f6fb;padding:8px 10px;border-radius:6px}
 .dr{display:flex;align-items:center;gap:6px}
 .dtag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;min-width:65px;text-align:center;border:1px solid var(--border);background:#fff}
@@ -95,8 +105,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     </svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 스마트 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">(자동 라우팅 적용)</span></h1>
-    <p>문서 양식을 자동 분석하여 선인세, RS/MG, 외주비에 맞는 대사를 수행합니다.</p>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v9.3 (VAT 호환 + 거래처/작가 검증)</span></h1>
+    <p>매절·RS·외주비 — 종류별 분기 + 메일/카톡/계약서 종합 대사</p>
   </div>
 </div>
 
@@ -112,60 +122,81 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 </div>
 
 <div class="card">
-  <div class="ch"><h2>📸 기안서 (필수)</h2></div>
+  <div class="ch"><span class="sb">STEP 1</span><h2>기안서 (필수)</h2></div>
   <div class="cb">
     <div class="drop" id="imgDrop">
       <input type="file" id="imgInput" accept="image/*,.pdf" style="display:none">
       <div class="drop-ic">🖼</div>
       <p>기안서 캡처 또는 PDF 드래그 앤 드롭</p>
     </div>
-    <div class="img-prev" id="imgPrev"></div>
+    <div class="img-prev" id="imgPrev">
+      <img id="prevImg" src="">
+    </div>
   </div>
 </div>
 
 <div class="card">
-  <div class="ch"><h2>📊 정산 엑셀 (선택)</h2></div>
+  <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀/CSV (선택)</h2></div>
   <div class="cb">
     <div class="drop" id="xlsDrop">
       <input type="file" id="xlsInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
       <div class="drop-ic">📊</div>
-      <p>RS/MG 취합 엑셀 드래그 앤 드롭</p>
+      <p>엑셀 파일 드래그 앤 드롭 (선투자금/매절 생략 가능)</p>
     </div>
     <div id="fileList" class="file-list"></div>
   </div>
 </div>
 
 <div class="card">
-  <div class="ch"><h2>📑 보조 서류 (선택)</h2></div>
+  <div class="ch"><span class="sb">STEP 3</span><h2>거래처 자료 (선택)</h2></div>
   <div class="cb">
     <div class="opt-grid">
-      <div class="drop" id="conDrop">
-        <input type="file" id="conInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">📑</div><p>계약서</p><div id="conCount" style="font-size:10px;color:var(--accent)"></div>
-      </div>
       <div class="drop" id="mailDrop">
         <input type="file" id="mailInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">📧</div><p>청구 메일</p><div id="mailCount" style="font-size:10px;color:var(--accent)"></div>
+        <div class="drop-ic">📧</div>
+        <p>메일/카톡/메신저 캡처 (다중)</p>
+        <div id="mailCount" style="font-size:10px; color:var(--accent)"></div>
       </div>
-      <div class="drop" id="bizDrop" style="display:none;">
-        <input type="file" id="bizInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">🏢</div><p>사업자</p><div id="bizCount" style="font-size:10px;color:var(--accent)"></div>
-      </div>
-      <div class="drop" id="webDrop" style="display:none;">
+      <div class="drop" id="webDrop">
         <input type="file" id="webInput" accept="image/*,.pdf" multiple style="display:none">
-        <div class="drop-ic">🌐</div><p>홈페이지</p><div id="webCount" style="font-size:10px;color:var(--accent)"></div>
+        <div class="drop-ic">🌐</div>
+        <p>홈페이지 캡처 (다중)</p>
+        <div id="webCount" style="font-size:10px; color:var(--accent)"></div>
       </div>
     </div>
   </div>
 </div>
 
-<button class="btn-v" id="vBtn" onclick="run()">🔍 &nbsp;스마트 대사 시작</button>
+<div class="card">
+  <div class="ch"><span class="sb">STEP 4</span><h2>서류 자료 (선택)</h2></div>
+  <div class="cb">
+    <div class="opt-grid">
+      <div class="drop" id="bizDrop">
+        <input type="file" id="bizInput" accept="image/*,.pdf" multiple style="display:none">
+        <div class="drop-ic">🏢</div>
+        <p>사업자등록증</p>
+        <div id="bizCount" style="font-size:10px; color:var(--accent)"></div>
+      </div>
+      <div class="drop" id="conDrop">
+        <input type="file" id="conInput" accept="image/*,.pdf" multiple style="display:none">
+        <div class="drop-ic">📑</div>
+        <p>계약서</p>
+        <div id="conCount" style="font-size:10px; color:var(--accent)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="btn-v" id="vBtn" onclick="run()">🔍 &nbsp;AI 검증 시작</button>
 
 <div class="prog" id="prog">
   <div class="prog-steps">
-    <div class="ps" id="ps1">서류 인식 중</div>
-    <div class="ps" id="ps2">데이터 파싱</div>
-    <div class="ps" id="ps3">유형별 대사</div>
+    <div class="ps" id="ps1">📸 기안서</div>
+    <div class="ps" id="ps2">✉️ 메일</div>
+    <div class="ps" id="ps3">🌐 홈페이지</div>
+    <div class="ps" id="ps4">📊 엑셀</div>
+    <div class="ps" id="ps5">🏢 서류</div>
+    <div class="ps" id="ps6">⚖️ 대사</div>
   </div>
 </div>
 
@@ -173,249 +204,930 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <div id="rsum"></div>
   <div id="r_err"></div>
   <div id="r_core"></div>
+  <div id="r_extra"></div>
   <div style="text-align:center"><button style="margin:10px; padding:7px 20px; font-weight:bold; border:1px solid var(--border); border-radius:5px; background:#fff; cursor:pointer;" onclick="location.reload()">↩ 초기화</button></div>
 </div>
 
 <script>
+// --- 전역 변수 ---
 let apiKey = localStorage.getItem('tf_api_key') || '';
-let imgFileObj = null; let excelFiles = [];
+let imgFileObj = null; 
+let excelFiles = [];
 let mailFiles = [], webFiles = [], bizFiles = [], conFiles = [];
 let globalErrors = 0;
-let aiErrors = [];
+let aiErrors = []; // [v9.1] AI 호출 실패 사유 누적
 
 if(apiKey){ document.getElementById('apiKey').value=apiKey; document.getElementById('keyOk').classList.add('show'); }
 function saveKey(){ apiKey=document.getElementById('apiKey').value.trim(); localStorage.setItem('tf_api_key',apiKey); document.getElementById('keyOk').classList.add('show'); }
 
-function fmtAmt(n){ if(n===null||n===undefined) return '—'; return Number(n).toLocaleString('ko-KR'); }
-function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=parseFloat(String(v).replace(/[^0-9.-]/g,'')); return isNaN(n)?null:n; }
+// --- 포맷팅 및 날짜 파싱 ---
+function fmtAmt(n){ if(n===null||n===undefined) return '—'; return Number(n).toLocaleString('ko-KR')+'원'; }
+function parseAmt(v){ 
+  if(v===null||v===undefined||v==='') return null; 
+  const n=parseInt(String(v).replace(/[^0-9]/g,''),10); 
+  return isNaN(n)?null:n; 
+}
 
+// [v9.1 fix] timezone-safe: SheetJS가 어떤 시간대로 Date를 만들어도
+// 가장 가까운 자정으로 반올림한 뒤 UTC 기준으로 날짜 추출 (±1일 버그 차단)
+function normDate(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number') {
+    if (v < 10000) return null;
+    const d = new Date(Math.round(v - 25569) * 86400 * 1000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+  if (v instanceof Date) {
+    // Date → Excel 시리얼 → 가장 가까운 정수(자정)로 반올림 → UTC 변환
+    const serial = v.getTime() / 86400000 + 25569;
+    const rounded = Math.round(serial);
+    const d = new Date((rounded - 25569) * 86400000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+  let s = String(v).trim();
+  if (s.includes('T') && s.includes('Z')) {
+    const d = new Date(s);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+  let m = s.match(/(\d{4})[-./년]\s*(\d{1,2})[-./월]\s*(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||'01').padStart(2,'0')}`;
+  m = s.match(/(\d{4})[-./년]\s*(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}`;
+  return s;
+}
+
+// --- [v9.1] PDF 렌더링 엔진: 화질 대폭 향상 (scale 2.0, PNG 무손실) ---
 async function pdfToImages(file){
   const ab = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({data:ab}).promise; const imgs = [];
+  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+  const imgs = [];
   for(let i=1;i<=Math.min(pdf.numPages, 4);i++){
     const page = await pdf.getPage(i);
-    const vp = page.getViewport({scale:2.0}); const cv = document.createElement('canvas');
-    cv.width=vp.width; cv.height=vp.height; await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    const vp = page.getViewport({scale:2.0}); // [v9.1] 1.5 → 2.0
+    const cv = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    // [v9.1] PNG 무손실로 변경 (한국어 OCR 정확도 향상)
     imgs.push({ media_type: 'image/png', data: cv.toDataURL('image/png').split(',')[1] });
-  } return imgs;
-}
-async function fileToBase64s(file) {
-  if (!file) return [];
-  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) return await pdfToImages(file);
-  const b64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(r.result); r.readAsDataURL(file); });
-  return [{ media_type: b64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/)?.[1]||'image/jpeg', data: b64.split(',')[1] }];
+  }
+  return imgs;
 }
 
+async function fileToBase64s(file) {
+  if (!file) return [];
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    return await pdfToImages(file);
+  } else {
+    const b64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(r.result); r.readAsDataURL(file); });
+    const mimeMatch = b64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const data = b64.split(',')[1];
+    return [{ media_type: mime, data: data }];
+  }
+}
+
+// --- 드래그 앤 드롭 로직 ---
 function initDrop(id, inputId, callback) {
   const zone = document.getElementById(id);
   const input = document.getElementById(inputId);
   zone.onclick = () => input.click();
-  zone.ondragover = e => { e.preventDefault(); zone.classList.add('over'); };
-  zone.ondragleave = e => { e.preventDefault(); zone.classList.remove('over'); };
-  zone.ondrop = e => { e.preventDefault(); zone.classList.remove('over'); if(e.dataTransfer.files.length) callback(e.dataTransfer.files); };
-  input.onchange = e => { if(e.target.files.length) callback(e.target.files); };
+  zone.ondragover = e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('over'); };
+  zone.ondragleave = e => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('over'); };
+  zone.ondrop = e => {
+    e.preventDefault(); e.stopPropagation(); zone.classList.remove('over');
+    if(e.dataTransfer.files && e.dataTransfer.files.length > 0) callback(e.dataTransfer.files);
+  };
+  input.onchange = e => { if(e.target.files && e.target.files.length > 0) callback(e.target.files); };
 }
 
-// PDF 뷰어
-initDrop('imgDrop', 'imgInput', files => {
-  imgFileObj = files[0]; 
-  const prevBox = document.getElementById('imgPrev');
-  prevBox.classList.add('show');
-
-  if (imgFileObj.name.toLowerCase().endsWith('.pdf')) {
-    const objUrl = URL.createObjectURL(imgFileObj);
-    prevBox.innerHTML = `<embed src="${objUrl}#view=FitH&toolbar=0&navpanes=0" type="application/pdf" width="100%" height="280px" style="border-radius:8px; border:none; display:block; background:#f0f2f7;">`;
+initDrop('imgDrop', 'imgInput', async files => {
+  const f = files[0];
+  imgFileObj = f; 
+  document.getElementById('prevImg').src = "";
+  if(f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')){
+    const ab = await f.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+    const page = await pdf.getPage(1);
+    const vp = page.getViewport({scale:1.0});
+    const cv = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    document.getElementById('prevImg').src = cv.toDataURL('image/jpeg', 0.8);
   } else {
     const r = new FileReader();
-    r.onload = ev => { 
-      prevBox.innerHTML = `<img src="${ev.target.result}" style="width:100%; max-height:280px; object-fit:contain; background:#f0f2f7; display:block; border-radius:8px;">`;
-    };
-    r.readAsDataURL(imgFileObj); 
+    r.onload = ev => document.getElementById('prevImg').src = ev.target.result;
+    r.readAsDataURL(f);
   }
+  document.getElementById('imgPrev').classList.add('show');
 });
+
 initDrop('xlsDrop', 'xlsInput', files => {
   for (let f of files) {
     const r = new FileReader();
     r.onload = ev => {
+      // [v9.1 fix] cellDates:true 제거 — KST 환경에서 1일 밀림 버그 차단. 날짜는 normDate의 숫자 분기로 처리됨.
       const wb = XLSX.read(ev.target.result, {type:'array'});
-      const parsed = parseExcelData(wb);
-      excelFiles.push({name: f.name, wb: wb, data: parsed});
-      document.getElementById('fileList').innerHTML += `<div class="file-card">📊 ${f.name} <strong style="color:var(--ok); margin-left:auto">${fmtAmt(parsed.totalNet || parsed.totalGross)}</strong></div>`;
-    }; r.readAsArrayBuffer(f);
+      excelFiles.push({name: f.name, wb: wb, total: getExcelTotal(wb)});
+      document.getElementById('fileList').innerHTML = excelFiles.map((x, i) => `<div class="file-card">📊 ${x.name} <strong style="color:var(--ok); margin-left:10px">${fmtAmt(x.total)}</strong> <span class="btn-remove" onclick="event.stopPropagation(); excelFiles.splice(${i},1); this.parentElement.remove()">✕</span></div>`).join('');
+    };
+    r.readAsArrayBuffer(f);
   }
 });
-initDrop('mailDrop','mailInput',fs=>{mailFiles.push(...fs); document.getElementById('mailCount').innerText=mailFiles.length+'개'});
-initDrop('webDrop','webInput',fs=>{webFiles.push(...fs); document.getElementById('webCount').innerText=webFiles.length+'개'});
-initDrop('conDrop','conInput',fs=>{conFiles.push(...fs); document.getElementById('conCount').innerText=conFiles.length+'개'});
-initDrop('bizDrop','bizInput',fs=>{bizFiles.push(...fs); document.getElementById('bizCount').innerText=bizFiles.length+'개'});
 
-function parseExcelData(wb) {
-  let meta = { totalNet: 0, totalGross: 0, totalTax: 0, totalForeign: 0 };
-  if(!wb || !wb.SheetNames.length) return meta;
+initDrop('mailDrop', 'mailInput', fs => { mailFiles.push(...fs); document.getElementById('mailCount').innerText = mailFiles.length+'개 완료'; });
+initDrop('webDrop', 'webInput', fs => { webFiles.push(...fs); document.getElementById('webCount').innerText = webFiles.length+'개 완료'; });
+initDrop('bizDrop', 'bizInput', fs => { bizFiles.push(...fs); document.getElementById('bizCount').innerText = bizFiles.length+'개 완료'; });
+initDrop('conDrop', 'conInput', fs => { conFiles.push(...fs); document.getElementById('conCount').innerText = conFiles.length+'개 완료'; });
+
+// --- [v9.1 fix] 엑셀 파싱: 모든 시트 스캔 + 총합계 행의 최우측 금액 추출 ---
+function getExcelTotal(wb){
+  if(!wb || !wb.SheetNames.length) return null;
+
+  // 1순위: '정산요약' 시트가 있으면 우선 사용
+  if(wb.SheetNames.includes('정산요약')){
+    const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',UTC:true});
+    const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
+    const v = parseAmt(map['최종 입금액 (세후)']||map['정산총액']);
+    if(v) return v;
+  }
+
+  // 2순위: 모든 시트를 스캔하여 '총합계' 또는 '최종 입금액' 행 탐색
+  // 발견 시 → 같은 행의 모든 셀 중 최우측(rightmost) 숫자값 반환 (테라핀 매출액 = 마지막 금액 컬럼)
   for(const sn of wb.SheetNames) {
-    const ws = wb.Sheets[sn]; if(!ws) continue;
-    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
-    for (let r=0; r<data.length; r++) {
-      const row = data[r]||[];
-      const firstCol = String(row[0]||'').replace(/\s/g,'');
-      if (firstCol === '합계' || firstCol.includes('유형별요약')) {
-        meta.totalGross = parseAmt(row[8]) || meta.totalGross;
-        meta.totalTax = (parseAmt(row[11]) || 0) + (parseAmt(row[12]) || 0) || meta.totalTax;
-        meta.totalNet = parseAmt(row[13]) || meta.totalNet;
-        if (meta.totalGross > 0 || meta.totalNet > 0) return meta;
+    const ws = wb.Sheets[sn];
+    if(!ws) continue;
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+    for(let r=0; r<rows.length; r++) {
+      const row = rows[r] || [];
+      let labelCol = -1;
+      for(let c=0; c<row.length; c++) {
+        const txt = String(row[c]||'').replace(/\s/g,'');
+        if(txt.includes('총합계') || txt.includes('합계') || txt.includes('최종입금액') || txt.includes('총계')) {
+          labelCol = c; break;
+        }
+      }
+      if(labelCol === -1) continue;
+      // 라벨 발견 → 같은 행에서 라벨 오른쪽의 모든 숫자 후보 수집, 최우측 값 채택
+      let lastNum = null;
+      for(let c=labelCol+1; c<row.length; c++) {
+        const v = parseAmt(row[c]);
+        if(v && v > 0) lastNum = v;
+      }
+      if(lastNum) return lastNum;
+      // 같은 행에 없으면 다음 행도 한 번 시도
+      const nextRow = rows[r+1] || [];
+      for(let c=labelCol+1; c<nextRow.length; c++) {
+        const v = parseAmt(nextRow[c]);
+        if(v && v > 0) lastNum = v;
+      }
+      if(lastNum) return lastNum;
+    }
+  }
+
+  // 3순위: 첫 시트의 '금액' 컬럼 합산 (기존 fallback 유지)
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  let listTotal = 0;
+  let amtColIndex = -1;
+  for(let r=0; r<rows.length; r++) {
+    const row = rows[r] || [];
+    if(amtColIndex === -1) {
+      for(let c=0; c<row.length; c++) {
+        if(String(row[c]).replace(/\s/g, '').includes('금액')) { amtColIndex = c; break; }
+      }
+    } else {
+      const val = parseAmt(row[amtColIndex]);
+      if(val) listTotal += val;
+    }
+  }
+  return listTotal > 0 ? listTotal : null;
+}
+
+// --- [v9.1 fix] 엑셀 메타: 모든 시트 스캔 + 정산월/서비스월/지급일/이메일/사업자번호 추출 ---
+function getExcelMeta(wb) {
+  let meta = { 작성일자: null, 서비스월: null, 입금예정일: null, 이메일: null, 사업자등록번호: null };
+  if(!wb || !wb.SheetNames.length) return meta;
+
+  // 패턴 기반 추출 헬퍼
+  const emailPat = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  const bizPat = /\d{3}-\d{2}-\d{5}/;
+
+  for(const sn of wb.SheetNames) {
+    const ws = wb.Sheets[sn];
+    if(!ws) continue;
+    const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+    // === A. 정산월/서비스월: 헤더 기반 (테이블형) ===
+    let colSettle = -1, colService = -1, headerRow = -1;
+    for (let r = 0; r < Math.min(data.length, 15); r++) {
+      const row = data[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const v = String(row[c]||"").replace(/\s/g,'');
+        if (v === '정산월' && colSettle === -1) { colSettle = c; headerRow = r; }
+        if (v === '서비스월' && colService === -1) { colService = c; headerRow = r; }
+      }
+      if(colSettle !== -1 || colService !== -1) break;
+    }
+    if(headerRow !== -1) {
+      for(let r = headerRow + 1; r < Math.min(data.length, headerRow + 10); r++) {
+        const row = data[r] || [];
+        if(colSettle !== -1 && !meta.작성일자 && row[colSettle]) meta.작성일자 = normDate(row[colSettle]);
+        if(colService !== -1 && !meta.서비스월 && row[colService]) meta.서비스월 = normDate(row[colService]);
+        if(meta.작성일자 || meta.서비스월) break;
       }
     }
-    let cNet=-1, cGross=-1, cTax1=-1, cTax2=-1, cTaxSum=-1;
-    for (let r=0; r<Math.min(data.length, 15); r++) {
-      const row = data[r]||[];
-      for (let c=0; c<row.length; c++) {
-        const v = String(row[c]||'').replace(/\s/g,'');
-        if(v.includes('실지급') || v.includes('차인지급') || v.includes('최종입금') || v.includes('순지급액')) cNet=c;
-        if(v.includes('공급가') || v.includes('정산금액') || v.includes('지급총액')) cGross=c;
-        if(v.includes('소득세')) cTax1=c; if(v.includes('지방세')) cTax2=c;
-        if(v.includes('공제액') || v.includes('세액합계')) cTaxSum=c;
+
+    // === B. 라벨-값 인접 스캔 (라벨형 표지/요약 시트 대응) ===
+    for (let r = 0; r < Math.min(data.length, 100); r++) {
+      const row = data[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const cell = row[c];
+        if(cell === null || cell === undefined) continue;
+        const label = String(cell).replace(/\s/g,'');
+        // 라벨 발견 시 같은 행의 오른쪽 셀들 중 첫 번째 값을 가져옴
+        const grabRight = () => {
+          for(let cc = c+1; cc < row.length; cc++) {
+            if(row[cc] !== null && row[cc] !== undefined && row[cc] !== '') return row[cc];
+          }
+          return null;
+        };
+        if(!meta.작성일자 && (label.includes('정산월') || label.includes('계산서작성일') || label.includes('계산서발행일') || label.includes('작성일자'))) {
+          const v = grabRight();
+          if(v) meta.작성일자 = normDate(v);
+        }
+        if(!meta.서비스월 && (label.includes('서비스월') || label.includes('대상기간'))) {
+          const v = grabRight();
+          if(v) meta.서비스월 = normDate(v);
+        }
+        if(!meta.입금예정일 && (label.includes('지급일') || label.includes('이체일') || label.includes('입금예정') || label.includes('정산금이체') || label.includes('송금일'))) {
+          const v = grabRight();
+          if(v) meta.입금예정일 = normDate(v);
+        }
+        if(!meta.이메일 && (label.includes('이메일') || label.includes('메일') || label.includes('담당자'))) {
+          const v = grabRight();
+          if(v) {
+            const m = String(v).match(emailPat);
+            if(m) meta.이메일 = m[0];
+          }
+        }
+        if(!meta.사업자등록번호 && (label.includes('사업자등록번호') || label.includes('사업자번호'))) {
+          const v = grabRight();
+          if(v) {
+            const m = String(v).match(bizPat);
+            if(m) meta.사업자등록번호 = m[0].replace(/-/g,'');
+          }
+        }
       }
-      if(cNet!==-1 || cGross!==-1 || cTaxSum!==-1) {
-        for(let ir=r+1; ir<data.length; ir++) {
-          if(cNet!==-1) meta.totalNet += (parseAmt(data[ir][cNet])||0);
-          if(cGross!==-1) meta.totalGross += (parseAmt(data[ir][cGross])||0);
-          if(cTaxSum!==-1) meta.totalTax += (parseAmt(data[ir][cTaxSum])||0);
-          else if(cTax1!==-1 && cTax2!==-1) meta.totalTax += ((parseAmt(data[ir][cTax1])||0) + (parseAmt(data[ir][cTax2])||0));
+    }
+
+    // === C. 패턴 전역 스캔 (이메일/사업자번호가 라벨 없이 셀에 박혀있는 경우) ===
+    if(!meta.이메일 || !meta.사업자등록번호) {
+      for (let r = 0; r < Math.min(data.length, 100); r++) {
+        const row = data[r] || [];
+        for (let c = 0; c < row.length; c++) {
+          const txt = String(row[c]||'');
+          if(!meta.이메일) {
+            const m = txt.match(emailPat);
+            if(m) meta.이메일 = m[0];
+          }
+          if(!meta.사업자등록번호) {
+            const m = txt.match(bizPat);
+            if(m) meta.사업자등록번호 = m[0].replace(/-/g,'');
+          }
+        }
+      }
+    }
+  }
+  return meta;
+}
+
+// --- [v9.2] 매입(외주비) 엑셀 파싱: 입력시트의 "유형별 요약" 표를 우선 사용 ---
+function getExcelMaeIp(wb) {
+  if(!wb || !wb.SheetNames.length) return null;
+
+  const targetSheet = wb.SheetNames.includes('입력시트') ? '입력시트' : wb.SheetNames[0];
+  const ws = wb.Sheets[targetSheet];
+  if(!ws) return null;
+  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+  let result = {
+    지급일: null,
+    귀속년월: null,
+    유형별: {},
+    총인원: null,
+    총지급액세전: null,
+    총소득세: null,
+    총지방세: null,
+    총지급액세후: null
+  };
+
+  // === [1] 상단 헤더 영역에서 귀속년월/지급일 추출 (8행 이내, 값이 실제 날짜인지 검증) ===
+  for(let r=0; r<Math.min(data.length, 8); r++) {
+    const row = data[r] || [];
+    for(let c=0; c<row.length; c++) {
+      const lab = String(row[c]||'').replace(/\s/g,'');
+      if(!['귀속년월','지급일'].includes(lab)) continue;
+      const v = row[c+1];
+      if(v === null || v === undefined || v === '') continue;
+      // 값이 숫자(엑셀 시리얼) 또는 Date 객체이거나 날짜 문자열인 경우만 채택
+      const isValidDate = (typeof v === 'number' && v > 10000) 
+                       || v instanceof Date 
+                       || (typeof v === 'string' && /\d{4}/.test(v));
+      if(!isValidDate) continue;
+      if(lab === '귀속년월' && !result.귀속년월) result.귀속년월 = normDate(v);
+      if(lab === '지급일' && !result.지급일) result.지급일 = normDate(v);
+    }
+  }
+
+  // === [2] "유형별 요약" 표 찾기 (가장 신뢰할 수 있는 단일 출처) ===
+  // 카테고리 매핑: 엑셀 유형 → 기안서 표준 카테고리
+  const catMap = {
+    'MG': '선인세', '판권(웹소설)': '선인세', '판권': '선인세', '선인세': '선인세',
+    '매절비': '매절비', '저술가': '매절비',
+    '일러스트': '외주비_화가관련', '화가관련': '외주비_화가관련',
+    '교정': '외주비_교정비', '교정비': '외주비_교정비', '기타자영업': '외주비_교정비',
+    '제작': '외주비_제작비', '제작비': '외주비_제작비',
+    '기타': '외주비_기타', '원작료': '외주비_기타', '고료': '외주비_기타', 'RS': '외주비_기타'
+  };
+  const normCat = (txt) => {
+    const t = String(txt||'').replace(/\s/g,'');
+    for(const [k,v] of Object.entries(catMap)) if(t === k || t.includes(k)) return v;
+    return null;
+  };
+
+  let summaryRow = -1;
+  for(let r=0; r<data.length; r++) {
+    const row = data[r] || [];
+    for(let c=0; c<row.length; c++) {
+      if(String(row[c]||'').replace(/\s/g,'') === '유형별요약') { summaryRow = r; break; }
+    }
+    if(summaryRow !== -1) break;
+  }
+
+  if(summaryRow !== -1) {
+    // 유형별 요약 헤더 행 (지급유형/지급인원/지급총액/순지급액 컬럼 위치)
+    let hdrR = -1, cType=-1, cType2=-1, cCnt=-1, cTotal=-1, cTax=-1, cLocal=-1, cNet=-1;
+    for(let r=summaryRow+1; r<Math.min(summaryRow+5, data.length); r++) {
+      const row = data[r] || [];
+      for(let c=0; c<row.length; c++) {
+        const v = String(row[c]||'').replace(/\s/g,'');
+        if(v === '지급유형') { hdrR = r; cType = c; }
+        if(v === '지급인원') { cCnt = c; }
+        if(v.includes('지급총액')) { cTotal = c; }
+        if(v === '소득세') { cTax = c; }
+        if(v === '지방소득세') { cLocal = c; }
+        if(v === '순지급액') { cNet = c; }
+      }
+      if(hdrR !== -1 && cTotal !== -1) break;
+    }
+    // 유형명이 두 번째 컬럼에 분리된 케이스(예: "지급수수료" | "매절비") 대응
+    if(hdrR !== -1) cType2 = cType + 1;
+
+    if(hdrR !== -1 && cTotal !== -1) {
+      for(let r=hdrR+1; r<data.length; r++) {
+        const row = data[r] || [];
+        const total = parseAmt(row[cTotal]);
+        const cnt = parseAmt(row[cCnt]);
+        // 라벨 텍스트: 1차 컬럼 또는 2차 컬럼
+        const lbl1 = String(row[cType]||'').replace(/\s/g,'');
+        const lbl2 = cType2 >= 0 ? String(row[cType2]||'').replace(/\s/g,'') : '';
+        // 총합계 행 처리
+        if(lbl1 === '총합계' || lbl1 === '합계') {
+          if(total) result.총지급액세전 = total;
+          if(cnt) result.총인원 = cnt;
+          if(cTax !== -1) result.총소득세 = parseAmt(row[cTax]) || 0;
+          if(cLocal !== -1) result.총지방세 = parseAmt(row[cLocal]) || 0;
+          if(cNet !== -1) result.총지급액세후 = parseAmt(row[cNet]) || 0;
+          break; // 총합계 만나면 종료
+        }
+        // 카테고리 행
+        const cat = normCat(lbl2) || normCat(lbl1);
+        if(!cat || !total) continue;
+        if(!result.유형별[cat]) result.유형별[cat] = { 금액: 0, 인원: 0 };
+        result.유형별[cat].금액 += total;
+        result.유형별[cat].인원 += (cnt || 0);
+      }
+    }
+  }
+
+  // === [3] 유형별 요약 표가 없거나 총합계를 못 찾았으면 raw 데이터 행에서 합계만 추출 (fallback) ===
+  if(result.총지급액세전 === null) {
+    // "합계" 행 탐색
+    for(let r=0; r<data.length; r++) {
+      const row = data[r] || [];
+      const lab = String(row[0]||'').replace(/\s/g,'');
+      if(lab === '합계' || lab === '총합계') {
+        // 같은 행에서 가장 큰 숫자값을 찾아 세전, 그다음 큰 값을 세후로 추정 (위험하지만 fallback)
+        const nums = row.map(v => parseAmt(v)).filter(n => n && n > 1000);
+        if(nums.length >= 2) {
+          result.총지급액세전 = Math.max(...nums);
+          result.총지급액세후 = nums.filter(n => n !== result.총지급액세전).reduce((a,b) => Math.max(a,b), 0);
         }
         break;
       }
     }
   }
-  if(meta.totalNet === 0 && meta.totalGross > 0) meta.totalNet = meta.totalGross;
-  return meta;
+
+  return result;
 }
 
-const PROMPT_기안서=`이미지 속 정산 기안서를 분석하여 순수 JSON만 응답하세요. 코드펜스 금지. 금액 쉼표 제외.
-- 문서양식: 기안서 최상단의 문서 양식명 (예: "매입 정산요청서")
-- 문서제목: 기안서 본문의 제목 (예: "[웹소설] 선인세/외주비 지급 요청")
-- 기안유형: AI 판별 ("선급금_매절", "RS_MG정산", "외주비_원천세" 중 택1)
-- 공급가액: 본문에 명시된 '세전' 총액 (필수 추출)
-- 공제액: 차감 세금 총합계 (명시 없으면 0)
-- 실지급액: '세후/실지급' 금액. 없으면 공급가액-공제액 계산.
-{"문서양식": "", "문서제목": "", "기안유형": "", "공급가액": 0, "공제액": 0, "실지급액": 0}`;
+// --- [v9.2] 작품코드 리스트 엑셀 파싱 (블라이스 매절 케이스) ---
+// 작품코드/작품명/금액 컬럼이 있는 단순 표를 읽어 합계와 작품 목록 반환
+function getExcelWorks(wb) {
+  if(!wb || !wb.SheetNames.length) return null;
+  for(const sn of wb.SheetNames) {
+    const ws = wb.Sheets[sn];
+    if(!ws) continue;
+    const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
 
-const PROMPT_계약서=`계약서에서 추출. JSON만 응답. {"총계약금액": null}`;
-const PROMPT_메일=`메일에서 추출. JSON만 응답. {"총금액": null}`;
+    // 헤더에서 "작품코드" "작품명" "금액" 컬럼 찾기
+    let hdrR = -1, cCode = -1, cName = -1, cAmt = -1;
+    for(let r=0; r<Math.min(data.length, 10); r++) {
+      const row = data[r] || [];
+      for(let c=0; c<row.length; c++) {
+        const v = String(row[c]||'').replace(/\s/g,'');
+        if(v === '작품코드') { cCode = c; hdrR = r; }
+        if(v === '작품명') { cName = c; }
+        if(v === '금액' || v === '제공료' || v === '콘텐츠제공료') { cAmt = c; }
+      }
+      if(cCode !== -1 && cAmt !== -1) break;
+    }
+    if(hdrR === -1 || cAmt === -1) continue;
 
+    let works = [], total = 0;
+    for(let r=hdrR+1; r<data.length; r++) {
+      const row = data[r] || [];
+      const code = row[cCode];
+      const name = cName !== -1 ? row[cName] : null;
+      const amt = parseAmt(row[cAmt]);
+      if(!amt) continue;
+      // "총계"/"합계" 행 스킵
+      const lab = String(code||name||'').replace(/\s/g,'');
+      if(lab === '총계' || lab === '합계' || lab === '총합계') continue;
+      works.push({ 작품코드: code, 작품명: name, 금액: amt });
+      total += amt;
+    }
+    if(works.length > 0) return { 작품수: works.length, 총금액: total, 작품목록: works };
+  }
+  return null;
+}
+const PROMPT_기안서=`당신은 한국 회사의 정산 기안서를 분석하는 OCR 전문가입니다.
+이미지 속 한국어 텍스트를 모두 읽고, 기안 종류를 먼저 분류한 뒤 해당하는 필드를 추출하여 순수 JSON 객체 하나로만 응답하세요.
+
+[엄수 규칙]
+- 코드펜스(\`\`\`), 설명, 머리말, 꼬리말 절대 금지. 오직 { 로 시작하고 } 로 끝나는 JSON만.
+- 금액은 쉼표/원/단위 없이 정수(number)로만. 예: 5500000
+- 날짜는 "YYYY-MM-DD" 형식 문자열. 월만 있으면 "YYYY-MM".
+- 인원수/개수는 정수(number).
+- 찾을 수 없으면 해당 키의 값은 null.
+
+[기안 종류 분류 규칙]
+문서 상단의 제목을 보고 다음 세 종류 중 하나로 분류하세요:
+- "매출_매절": 제목에 "매출 정산요청서(컨텐츠공급)" 포함 + 본문에 "매절" / "선인세" / "선투자금" / "원작사용료" 키워드
+- "매출_RS": 제목에 "매출 정산요청서(컨텐츠공급)" 포함 + 본문에 "RS" / "매출 정산서" / "정산금액" / "MG" 키워드 (월별 RS 정산건)
+- "매입_외주비": 제목에 "매입 정산요청서(원고료)" 포함 (외주비/선인세/매절비/원고료 지급건)
+
+[공통 추출 항목]
+- 기안종류: "매출_매절" / "매출_RS" / "매입_외주비" 중 하나
+- 작성일자: 매출 기안은 "계산서 작성일자" 라벨, 매입 기안은 "지급요청일" 또는 "증빙일자" 라벨 옆 날짜
+- 품목명: 작품명/품목/제목 텍스트
+
+[매출 기안 (매출_매절, 매출_RS) 전용 항목]
+- 총금액: "공급가액+부가가치세=합계" 표의 합계(VAT포함) 값. 즉 5,500,000 같은 최종 합계.
+- 공급가액: 표의 "공급가액" 컬럼 값 (VAT 별도 금액). 즉 5,000,000 같은 본가.
+- 마감일: "계산서 마감기한" 또는 "발행마감일" 옆 날짜
+- 서비스월: "정산월" 또는 "서비스월" (없으면 작성일자의 연-월)
+- 입금예정일: "입금예정일" 셀의 값 (YYYY-MM-DD)
+- 입금조건문구: 본문의 입금/지급 관련 서술 문장 그대로 (예: "발행일 기준 30영업일 이내 입금될 예정", "계약일 기준 30일 이내 지급")
+- 이메일: "발신 이메일" 셀의 이메일 주소
+- 사업자등록번호: 표의 "사업자등록번호" 셀 "XXX-XX-XXXXX" 형식 그대로
+- 거래처명: 표의 "고객명" 셀 (예: "(주)서울미디어코믹스", "주식회사 케이티밀리의서재")
+- 작가명: 본문에 명시된 원작자/작가명 (예: "김살구")
+- 작품코드: 본문에 "N1226937" 같은 N으로 시작하는 작품코드. 없으면 null
+
+[매입 기안 (매입_외주비) 전용 항목]
+- 지급일: "2026-XX-XX 지급분" 또는 "지급요청일" 옆 날짜
+- 귀속년월: 지급일의 연-월 또는 본문의 귀속년월 표기 (YYYY-MM)
+- 총지급액세전: 본문의 "총 ₩XX,XXX,XXX (세전)" 금액 또는 유형별 요약 표의 "총합계" 행의 "지급총액(세전)" 값
+- 총지급액세후: 유형별 요약 표의 "총합계" 행의 "순지급액" 값 (실지급액)
+- 총인원: 본문의 "(작가 총 NN명)" 숫자
+- 유형별: 본문 또는 요약 표의 유형별 분류. 다음 키로 정리:
+  {
+    "선인세": {"금액": 18500000, "인원": 3},
+    "매절비": {"금액": 3397500, "인원": 4},
+    "외주비_화가관련": {"금액": 3700000, "인원": 5},
+    "외주비_교정비": {"금액": 9100469, "인원": 12},
+    "외주비_제작비": {"금액": 501000, "인원": 1},
+    "외주비_기타": {"금액": 700000, "인원": 1}
+  }
+  (해당 유형이 없으면 그 키 자체를 생략)
+
+[출력 JSON 키 — 모든 키를 항상 포함하되, 해당없는 항목은 null]
+{"기안종류": null, "작성일자": null, "품목명": null, "총금액": null, "공급가액": null, "마감일": null, "서비스월": null, "입금예정일": null, "입금조건문구": null, "이메일": null, "사업자등록번호": null, "거래처명": null, "작가명": null, "작품코드": null, "지급일": null, "귀속년월": null, "총지급액세전": null, "총지급액세후": null, "총인원": null, "유형별": null}`;
+
+const PROMPT_메일=`당신은 거래처 메일 또는 카톡/메신저 캡처를 분석하는 OCR 전문가입니다.
+이미지 속 한국어 텍스트를 모두 읽고, 아래 항목을 순수 JSON 객체 하나로만 응답하세요.
+
+[엄수 규칙]
+- 코드펜스, 설명 금지. 오직 { 로 시작하고 } 로 끝나는 JSON만.
+- 금액은 정수(number), 쉼표/단위 없이.
+- 날짜는 "YYYY-MM-DD". 월만 있으면 "YYYY-MM".
+- 없으면 null.
+
+[추출 항목]
+- 작성일자: 본문에 명시된 계산서 작성일자/발행일/요청일 (메일 발송일 아님)
+- 마감일: 명시된 계산서 마감 기한
+- 발행월: "계산서 발행월: 26년 04월" 같은 문구의 연-월 (YYYY-MM)
+- 입금예정일: 입금/지급 관련 문장에서 추출한 구체적 날짜 (YYYY-MM-DD). 예: "4월 30일 안으로 지급" → "2026-04-30". "발행일(4/1) 기준 30일 이내" → "2026-04-30" 같이 계산. 추출 불가능하면 null
+- 입금조건문구: 입금/지급 관련 원문 문장 전체 그대로 (예: "발행일 기준 30영업일 이내", "계약일 대신 계산서 발행일(4/1) 기준 30일 이내")
+- 총금액: 명시된 총 청구/지급 금액 (정수)
+- VAT포함여부: 본문에 "VAT 별도", "부가세 별도" 표현 → "별도", "VAT 포함", "부가세 포함", "과세 세금계산서" 표현 → "포함", 명시 없음 → null
+- 품목명: 작품명/품목명/제목
+- 작가명: 원저작권자/원작자/작가 이름
+- 거래처명: 발신 회사명 (예: "서울미디어코믹스", "주식회사 케이티밀리의서재")
+- 이메일: 계산서 수신 이메일 주소 ("계산서 발행 메일 주소: ..." 또는 발신자 메일)
+- 사업자등록번호: "XXX-XX-XXXXX" 형식
+- 중요공지: 본문의 강조/특이사항/주의문구/협의내용 전체
+
+[출력 JSON 키]
+{"작성일자": null, "마감일": null, "발행월": null, "입금예정일": null, "입금조건문구": null, "총금액": null, "VAT포함여부": null, "품목명": null, "작가명": null, "거래처명": null, "이메일": null, "사업자등록번호": null, "중요공지": null}`;
+
+const PROMPT_계약서=`당신은 한국 회사 간 계약서를 분석하는 OCR 전문가입니다.
+이미지 속 계약서 텍스트를 모두 읽고, 순수 JSON으로만 응답하세요. 코드펜스 절대 금지.
+
+[추출 항목 — 매절/선인세 계약서, 만화화/번역출판/2차저작물/MG지급합의서 모두 대응]
+- 계약일: 계약서 마지막 페이지의 "YYYY년 M월 D일" 날짜 (YYYY-MM-DD)
+- 총계약금액: MG/미니멈개런티/매절/선투자금/계약금 등 명시된 총 금액 (정수, 쉼표 없이). 여러 금액이 있으면 가장 큰 단일 값.
+- 지급조건: 입금/지급 조건 문장 전체. 예: "을은 갑에게 계약일로부터 30일 이내에 5,000,000원을 지급한다"
+- 갑사업자번호: 갑(테라핀, 컨텐츠공급자 측) 사업자등록번호 "XXX-XX-XXXXX"
+- 을사업자번호: 을(거래처, 플랫폼 측) 사업자등록번호 "XXX-XX-XXXXX"
+- 갑회사명: 갑 회사명 (예: "주식회사 테라핀")
+- 을회사명: 을 회사명 (예: "주식회사 서울미디어코믹스")
+- 작품명: 원저작물 표시 (예: "불량 식품에 길들여지면")
+- 작가명: 원저작권자 성명 (예: "김살구")
+- VAT조항: "VAT 별도", "부가세 별도" 등 세금계산서 발행 관련 조항 (있으면 "별도"/"포함", 없으면 null)
+
+[출력 JSON 키 — 모든 키 항상 포함]
+{"계약일": null, "총계약금액": null, "지급조건": null, "갑사업자번호": null, "을사업자번호": null, "갑회사명": null, "을회사명": null, "작품명": null, "작가명": null, "VAT조항": null}`;
+
+const PROMPT_사업자=`이미지 속 사업자등록증을 읽고 순수 JSON으로만 응답하세요. 코드펜스 금지.
+- 사업자등록번호: 숫자만 추출 (하이픈 제외, 10자리 문자열).
+- 이메일: 표시된 이메일 주소. 없으면 null.
+
+{"사업자등록번호": null, "이메일": null}`;
+
+// --- [v9.1] AI 호출: Haiku 4.5, 에러 가시화, JSON 정리 강화 ---
 async function aiCall(file, prompt, label) {
   if(!file) return null;
   let b64Objs;
-  try { b64Objs = await fileToBase64s(file); } catch(e) { aiErrors.push(`[${label}] 파일 오류`); return null; }
-  let contentBlocks = b64Objs.map(obj => ({type:'image', source:{type:'base64', media_type: obj.media_type, data: obj.data}}));
+  try {
+    b64Objs = await fileToBase64s(file);
+  } catch(e) {
+    aiErrors.push(`[${label}] 파일 읽기 실패: ${e.message}`);
+    return null;
+  }
+  
+  let contentBlocks = [];
+  for(const obj of b64Objs) {
+    contentBlocks.push({type:'image', source:{type:'base64', media_type: obj.media_type, data: obj.data}});
+  }
   contentBlocks.push({type:'text', text:prompt});
+
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-3-5-haiku-20241022', max_tokens: 2500, messages: [{role:'user', content: contentBlocks}] })
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'x-api-key': apiKey, 
+        'anthropic-version': '2023-06-01', 
+        'anthropic-dangerous-direct-browser-access': 'true' 
+      },
+      body: JSON.stringify({ 
+        model: 'claude-haiku-4-5', // [v9.1] 핵심: 모델 업그레이드
+        max_tokens: 2500,           // [v9.1] 1500 → 2500
+        messages: [{role:'user', content: contentBlocks}] 
+      })
     });
-    const d = await res.json(); if (d.error) { aiErrors.push(`[${label}] API: ${d.error.message}`); return null; }
-    let raw = d.content[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();
-    return JSON.parse(raw.match(/\{[\s\S]*\}/)[0].replace(/,\s*([}\]])/g, '$1'));
-  } catch(e) { aiErrors.push(`[${label}] 통신 실패`); return null; }
+    const d = await res.json();
+    if (d.error) {
+      aiErrors.push(`[${label}] API 오류: ${d.error.message}`);
+      return null;
+    }
+    if (!d.content || !d.content[0] || !d.content[0].text) {
+      aiErrors.push(`[${label}] 응답 비어있음`);
+      return null;
+    }
+    
+    let raw = d.content[0].text;
+    // [v9.1] 코드펜스/주석 제거 후 JSON만 추출
+    raw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) {
+      aiErrors.push(`[${label}] JSON 형식 아님: ${raw.substring(0,80)}`);
+      return null;
+    }
+    let cleaned = match[0]
+      .replace(/,\s*([}\]])/g, '$1')   // 후행 콤마
+      .replace(/\/\/[^\n]*/g, '');     // 라인 주석
+    try {
+      return JSON.parse(cleaned);
+    } catch(parseErr) {
+      aiErrors.push(`[${label}] JSON 파싱 실패: ${parseErr.message}`);
+      return null;
+    }
+  } catch(e) { 
+    aiErrors.push(`[${label}] 통신 실패: ${e.message}`);
+    return null; 
+  }
 }
 
-function cmp(label, draftVal, targetObj, isAmt=false, tolerance=0) {
-  if (!targetObj || !targetObj.provided) return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub)">대사 대상 없음 (증빙 미등록)</div></div></div>`;
-  let match = isAmt && draftVal!==null && targetObj.val!==null ? Math.abs(Number(draftVal) - Number(targetObj.val)) <= tolerance : String(draftVal) === String(targetObj.val);
-  if (!match) globalErrors++;
-  return `<div class="ci ${match?'pass':'fail'}"><div class="cs">${match?'✓':'✕'}</div><div class="cc">
-    <div class="cl-lbl">${label} <span style="font-size:10px; color:var(--accent); font-weight:normal;">(${targetObj.name} 기준)</span></div>
-    <div class="cl-det">${match?'일치 ✓':'불일치 ⚠'}</div>
-    <div class="diff">
-      <div class="dr"><span class="dtag src1">기안서</span><span class="dval">${isAmt?fmtAmt(draftVal):draftVal}</span></div>
-      <div class="dr"><span class="dtag src2">${targetObj.name}</span><span class="dval" style="color:${match?'var(--ok)':'var(--err)'}">${isAmt?fmtAmt(targetObj.val):targetObj.val}</span></div>
-    </div>
-  </div></div>`;
+// --- 1:N 통합 비교기 (v9.3: 금액 비교 시 VAT 별도/포함 호환) ---
+function cmpMulti(label, baseVal, targets, isAmt=false, isText=false) {
+  let isFail = false;
+  let hasValidTarget = false;
+  
+  let sBase = isAmt && baseVal ? fmtAmt(baseVal) : (baseVal || '미기재');
+  let diffHtml = `<div class="diff"><div class="dr"><span class="dtag src1">기안서</span><span class="dval" style="color:var(--navy);font-weight:600">${sBase}</span></div>`;
+  
+  for (let t of targets) {
+    if (!t.provided) continue; 
+    
+    if (!t.val) {
+      diffHtml += `<div class="dr"><span class="dtag" style="background:#e8edf8;color:#6b7a99">${t.name}</span><span class="dval" style="color:var(--sub)">확인 불가</span></div>`;
+      continue;
+    }
+    
+    hasValidTarget = true;
+    let sTarget = isAmt ? fmtAmt(t.val) : t.val;
+    let match = false;
+    let vatNote = '';  // [v9.3] VAT 일치 표시용
+
+    if (isText) {
+      const nB = String(baseVal||'').replace(/[\s-]/g,'').toLowerCase();
+      const nT = String(t.val).replace(/[\s-]/g,'').toLowerCase();
+      match = (nB && nT && (nB.includes(nT) || nT.includes(nB)));
+    } else if (isAmt && baseVal && t.val) {
+      // [v9.3] 금액 모드: 정확 일치 OR VAT 호환 매칭
+      const b = Number(baseVal), v = Number(t.val);
+      if (b === v) {
+        match = true;
+      } else if (Math.round(b * 1.1) === v) {
+        match = true; vatNote = ' (VAT포함=✓)';
+      } else if (Math.round(v * 1.1) === b) {
+        match = true; vatNote = ' (VAT별도=✓)';
+      } else {
+        match = false;
+      }
+    } else {
+      match = (String(baseVal) === String(t.val));
+    }
+    
+    if (!match) isFail = true;
+    diffHtml += `<div class="dr"><span class="dtag" style="background:#e8edf8;color:#6b7a99">${t.name}</span><span class="dval" style="color:${match?'var(--ok)':'var(--err)'}; font-weight:${match?'normal':'bold'}">${sTarget}${vatNote} ${match?'✓':'✕'}</span></div>`;
+  }
+  diffHtml += `</div>`;
+  
+  if (!hasValidTarget) {
+     return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub);font-weight:400">대사 대상 자료 없음 (또는 미기재)</div>${diffHtml}</div></div>`;
+  }
+  
+  if (!baseVal) isFail = true; 
+  if (isFail) globalErrors++;
+  
+  const status = isFail ? 'fail' : 'pass';
+  const statusTxt = isFail ? '불일치 ⚠' : '일치 ✓';
+  
+  return `<div class="ci ${status}"><div class="cs">${status==='pass'?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det">${statusTxt}</div>${diffHtml}</div></div>`;
 }
 
+// --- [v9.2] 메인 검증 실행: 기안 종류별 분기 ---
 async function run() {
-  if(!apiKey || !imgFileObj) return alert('API 키와 기안서를 확인하세요.');
-  const btn = document.getElementById('vBtn'); btn.disabled = true;
-  btn.innerHTML = '<div class="spin"></div>';
-  document.getElementById('prog').classList.add('show'); globalErrors = 0; aiErrors = [];
+  if(!apiKey || !imgFileObj) return alert('기안서 캡처 파일을 먼저 등록해주세요.');
+  const btn = document.getElementById('vBtn'); btn.disabled = true; btn.innerHTML = '<div class="spin"></div>';
+  document.getElementById('prog').classList.add('show');
+  globalErrors = 0; 
+  aiErrors = [];
   
   try {
-    document.getElementById('ps1').classList.add('active');
-    const 기안 = await aiCall(imgFileObj, PROMPT_기안서, '기안서') || {};
-    const 계약서 = conFiles.length ? await aiCall(conFiles[0], PROMPT_계약서, '계약서') : null;
-    const 메일 = mailFiles.length ? await aiCall(mailFiles[0], PROMPT_메일, '메일') : null;
-    const 엑셀 = excelFiles.length ? excelFiles[0].data : null;
-    document.getElementById('ps1').classList.remove('active');
-    document.getElementById('ps3').classList.add('active');
+    setStep(1, 'active'); 
+    const 기안 = await aiCall(imgFileObj, PROMPT_기안서, '기안서'); 
+    setStep(1, 'done');
 
-    const txtContext = ((기안.문서제목 || '') + ' ' + (기안.문서양식 || '')).toLowerCase();
-    let draftType = '기타';
-    let trackName = '';
+    // [v9.2] 기안 종류 판별 (매입_외주비 / 매출_매절 / 매출_RS)
+    const 기안종류 = 기안?.기안종류 || '매출_RS'; // 기본값
+    const isMaeIp = 기안종류 === '매입_외주비';
 
-    if (txtContext.includes('rs') || txtContext.includes('mg') || txtContext.includes('매출')) {
-      draftType = 'Case2';
-      trackName = 'RS / MG 매출 정산';
-    } else if (txtContext.includes('선인세') || txtContext.includes('계약금') || txtContext.includes('매절')) {
-      draftType = 'Case1';
-      trackName = '선급금 / 매절 / 계약금';
-    } else if (txtContext.includes('외주비') || txtContext.includes('원고료') || txtContext.includes('지급')) {
-      draftType = 'Case3';
-      trackName = '외주비 / 원고료 (원천세)';
-    } else {
-      draftType = 기안.기안유형;
-      trackName = '일반 대사 (AI 자율 판별)';
-    }
+    setStep(2, mailFiles.length ? 'active' : 'skip'); 
+    const 메일 = mailFiles.length ? await aiCall(mailFiles[0], PROMPT_메일, '메일') : null; 
+    if(메일) setStep(2, 'done');
 
-    let coreHtml = `<div class="chk-group" style="background:var(--accent-l); border-radius:8px; padding:12px; margin-bottom:10px">
-      <strong style="color:var(--navy)">🎯 스마트 라우팅 가동: [ ${trackName} ] 트랙</strong><br>
-      <span style="font-size:11px; color:var(--sub)">문서 키워드 분석 결과에 따라 맞춤형 검증 기준을 적용합니다.</span>
-    </div>`;
-
-    if (draftType === 'Case1' || draftType === '선급금_매절') {
-      const targetAmt = { name: '계약서', val: 계약서?.총계약금액, provided: !!계약서 };
-      coreHtml += cmp('1. 기안서 ↔ 계약서 금액 대사', 기안.공급가액 || 기안.실지급액, targetAmt, true, 0);
-      if (메일) coreHtml += cmp('2. 청구 메일 금액 대사 (선택)', 기안.공급가액, {name:'청구 메일', val:메일.총금액, provided:true}, true, 0);
-    } 
-    else if (draftType === 'Case2' || draftType === 'RS_MG정산') {
-      const targetAmt = { name: '정산 엑셀', val: 엑셀?.totalNet || 엑셀?.totalGross, provided: !!엑셀 };
-      coreHtml += cmp('1. 기안서 ↔ 엑셀 취합 금액 대사', 기안.실지급액 || 기안.공급가액, targetAmt, true, 10);
-    }
-    else if (draftType === 'Case3' || draftType === '외주비_원천세') {
-      const isGrossOnly = (!기안.공제액 || 기안.공제액 === 0) && (기안.공급가액 > 0);
-      if (isGrossOnly) {
-        coreHtml += cmp('1. 기안서(세전) ↔ 엑셀(세전 총합) 대사', 기안.공급가액, {name:'엑셀', val:엑셀?.totalGross, provided:!!엑셀}, true, 10);
-        coreHtml += `<div class="ci info"><div class="cs">i</div><div class="cc">
-          <div class="cl-lbl">2. 원천세율 자동 적용 안내</div>
-          <div class="cl-det" style="color:var(--sub)">기안서에 세액 명시가 없어 엑셀의 세후 실지급액(${fmtAmt(엑셀?.totalNet)}원)으로 정산됩니다.</div>
-        </div></div>`;
+    setStep(4, excelFiles.length ? 'active' : 'skip');
+    let 엑셀매출 = null, 엑셀매입 = null, 엑셀작품 = null;
+    if(excelFiles.length) {
+      // 매입 모드면 매입 파싱 + 매출 모드면 매출 메타 + 작품 모드면 작품 파싱 (모두 시도)
+      if(isMaeIp) {
+        엑셀매입 = getExcelMaeIp(excelFiles[0].wb);
       } else {
-        const mathOk = Math.abs(기안.공급가액 - 기안.공제액 - 기안.실지급액) < 10;
-        if(!mathOk) globalErrors++;
-        coreHtml += `<div class="ci ${mathOk?'pass':'fail'}"><div class="cs">${mathOk?'✓':'✕'}</div><div class="cc">
-          <div class="cl-lbl">1. 산술 검증 (원금 - 세금 = 실지급액)</div>
-          <div class="cl-det">${mathOk?'수식 정상':'오류'}</div>
-          <div class="diff"><div class="dr"><span class="dval">${fmtAmt(기안.공급가액)} - ${fmtAmt(기안.공제액)} = ${fmtAmt(기안.실지급액)}</span></div></div>
-        </div></div>`;
-        coreHtml += cmp('2. 엑셀 실지급액 대사', 기안.실지급액, {name:'엑셀', val:엑셀?.totalNet, provided:!!엑셀}, true, 10);
+        엑셀매출 = getExcelMeta(excelFiles[0].wb);
+        엑셀작품 = getExcelWorks(excelFiles[0].wb);
+      }
+      setStep(4, 'done');
+    }
+
+    setStep(5, (conFiles.length || bizFiles.length) ? 'active' : 'skip');
+    const 계약서 = conFiles.length ? await aiCall(conFiles[0], PROMPT_계약서, '계약서') : null;
+    const 사업자 = bizFiles.length ? await aiCall(bizFiles[0], PROMPT_사업자, '사업자등록증') : null;
+    if(계약서 || 사업자) setStep(5, 'done');
+
+    // [v9.2] AI 호출 실패 시 에러 배너 표시
+    if (aiErrors.length > 0) {
+      document.getElementById('r_err').innerHTML = 
+        `<div class="err-banner">⚠️ AI 인식 실패 항목이 있습니다:<br>` +
+        aiErrors.map(e=>`• ${e}`).join('<br>') + 
+        `</div>`;
+    } else {
+      document.getElementById('r_err').innerHTML = '';
+    }
+
+    // [v9.2] 기안 종류 표시 배너
+    const 종류라벨 = { '매출_매절': '📘 매출 - 매절/선인세', '매출_RS': '📗 매출 - RS/MG 정산', '매입_외주비': '📕 매입 - 외주비/원고료' }[기안종류] || '⚪ 종류 미상';
+    let coreHtml = `<div class="chk-group"><div class="gt">🔍 필수 항목 통합 대사 (기안서 기준) &nbsp; <span style="font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-l);padding:3px 9px;border-radius:10px">${종류라벨}</span></div>`;
+
+    // ============================================================
+    // [A] 매입(외주비) 모드 대사판
+    // ============================================================
+    if(isMaeIp) {
+      const imgDate = normDate(기안?.지급일) || normDate(기안?.작성일자);
+      const imgMonth = 기안?.귀속년월;
+      const imgTotal = parseAmt(기안?.총지급액세전);
+      const imgNet = parseAmt(기안?.총지급액세후);
+      const imgCnt = parseAmt(기안?.총인원);
+
+      coreHtml += cmpMulti('1. 지급일', imgDate, [
+        {name: '엑셀', val: 엑셀매입?.지급일, provided: !!엑셀매입}
+      ], false, false);
+
+      coreHtml += cmpMulti('2. 귀속년월', imgMonth, [
+        {name: '엑셀', val: 엑셀매입?.귀속년월, provided: !!엑셀매입}
+      ], false, false);
+
+      coreHtml += cmpMulti('3. 총 지급액 (세전)', imgTotal, [
+        {name: '엑셀', val: 엑셀매입?.총지급액세전, provided: !!엑셀매입}
+      ], true, false);
+
+      coreHtml += cmpMulti('4. 총 실지급액 (세후)', imgNet, [
+        {name: '엑셀', val: 엑셀매입?.총지급액세후, provided: !!엑셀매입}
+      ], true, false);
+
+      coreHtml += cmpMulti('5. 총 인원수', imgCnt, [
+        {name: '엑셀', val: 엑셀매입?.총인원, provided: !!엑셀매입}
+      ], false, false);
+
+      // 유형별 세부 비교 (인원/금액)
+      if(엑셀매입?.유형별 && 기안?.유형별) {
+        coreHtml += `<div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--border)"><div class="cl-lbl" style="margin-bottom:8px">📊 유형별 세부 대사</div>`;
+        const cats = ['선인세','매절비','외주비_화가관련','외주비_교정비','외주비_제작비','외주비_기타'];
+        for(const cat of cats) {
+          const xl = 엑셀매입.유형별[cat];
+          const im = 기안.유형별[cat];
+          if(!xl && !im) continue;
+          const xlAmt = xl?.금액 || 0;
+          const xlCnt = xl?.인원 || 0;
+          const imAmt = parseAmt(im?.금액) || 0;
+          const imCnt = parseAmt(im?.인원) || 0;
+          const amtMatch = xlAmt === imAmt;
+          const cntMatch = xlCnt === imCnt;
+          const isFail = !amtMatch || !cntMatch;
+          if(isFail) globalErrors++;
+          coreHtml += `<div class="ci ${isFail?'fail':'pass'}"><div class="cs">${isFail?'✕':'✓'}</div><div class="cc">
+            <div class="cl-lbl">${cat.replace('외주비_','외주비-')}</div>
+            <div class="cl-det">${isFail?'불일치 ⚠':'일치 ✓'}</div>
+            <div class="diff">
+              <div class="dr"><span class="dtag src1">기안서</span><span class="dval">${fmtAmt(imAmt)} / ${imCnt}명</span></div>
+              <div class="dr"><span class="dtag" style="background:#e8edf8;color:#6b7a99">엑셀</span><span class="dval" style="color:${isFail?'var(--err)':'var(--ok)'};font-weight:${isFail?'bold':'normal'}">${fmtAmt(xlAmt)} / ${xlCnt}명 ${isFail?'✕':'✓'}</span></div>
+            </div>
+          </div></div>`;
+        }
+        coreHtml += `</div>`;
       }
     }
+    // ============================================================
+    // [B] 매출(매절/RS) 모드 대사판 (v9.3 보강: VAT 호환 금액 + 거래처/작가/작품코드)
+    // ============================================================
     else {
-      coreHtml += cmp('1. 총금액 (엑셀 우선 대사)', 기안.실지급액 || 기안.공급가액, { name: '엑셀/메일', val: 엑셀?.totalNet || 메일?.총금액, provided: !!(엑셀 || 메일) }, true, 0);
+      const imgTotal = parseAmt(기안?.총금액);        // 합계 (VAT 포함)
+      const imgSupply = parseAmt(기안?.공급가액);      // 공급가액 (VAT 별도)
+      const xlTotal = excelFiles.length ? excelFiles.reduce((s,f)=>s+(f.total||0), 0) : null;
+      const imgDate = normDate(기안?.작성일자);
+      const imgDue = normDate(기안?.마감일);
+      const imgDeposit = normDate(기안?.입금예정일) || 기안?.입금예정일;
+      const cleanBiz = v => v ? String(v).replace(/[^0-9]/g,'') : null;
+
+      // 작품코드 리스트 합계가 있으면 비교 대상에 추가 (블라이스 매절 케이스)
+      const worksTotal = 엑셀작품?.총금액 || null;
+
+      // 1. 청구/정산 금액 — VAT 호환 매칭으로 5,000,000과 5,500,000 모두 일치 처리
+      // 기안서 합계(VAT포함) 우선, 없으면 공급가액 사용
+      const baseAmt = imgTotal || imgSupply;
+      coreHtml += cmpMulti('1. 청구/정산 금액', baseAmt, [
+        {name: '엑셀', val: xlTotal, provided: excelFiles.length > 0 && !!xlTotal},
+        {name: '작품리스트', val: worksTotal, provided: !!worksTotal},
+        {name: '메일', val: parseAmt(메일?.총금액), provided: !!메일},
+        {name: '계약서', val: parseAmt(계약서?.총계약금액), provided: !!계약서}
+      ], true, false);
+
+      // 1-1. 공급가액 ↔ 합계 (기안서 내부 일관성 — VAT 별도/포함 구분 표시)
+      if(imgSupply && imgTotal && imgSupply !== imgTotal) {
+        const expectedTotal = Math.round(imgSupply * 1.1);
+        const vatOk = expectedTotal === imgTotal;
+        if(!vatOk) globalErrors++;
+        coreHtml += `<div class="ci ${vatOk?'pass':'fail'}"><div class="cs">${vatOk?'✓':'✕'}</div><div class="cc">
+          <div class="cl-lbl">1-1. VAT 계산 정합성</div>
+          <div class="cl-det">${vatOk?'일치 ✓':'불일치 ⚠'}</div>
+          <div class="diff">
+            <div class="dr"><span class="dtag src1">공급가액</span><span class="dval">${fmtAmt(imgSupply)}</span></div>
+            <div class="dr"><span class="dtag" style="background:#e8edf8;color:#6b7a99">합계(예상)</span><span class="dval">${fmtAmt(expectedTotal)} (×1.1)</span></div>
+            <div class="dr"><span class="dtag" style="background:#e8edf8;color:#6b7a99">합계(실제)</span><span class="dval" style="color:${vatOk?'var(--ok)':'var(--err)'};font-weight:${vatOk?'normal':'bold'}">${fmtAmt(imgTotal)} ${vatOk?'✓':'✕'}</span></div>
+          </div>
+        </div></div>`;
+      }
+
+      coreHtml += cmpMulti('2. 작성일자 (정산월)', imgDate, [
+        {name: '엑셀', val: 엑셀매출?.작성일자, provided: !!엑셀매출},
+        {name: '메일', val: normDate(메일?.작성일자), provided: !!메일}
+      ], false, false);
+
+      coreHtml += cmpMulti('3. 세금계산서 마감일자', imgDue, [
+        {name: '메일', val: normDate(메일?.마감일), provided: !!메일}
+      ], false, false);
+
+      coreHtml += cmpMulti('4. 입금/지급 예정일', imgDeposit, [
+        {name: '엑셀', val: 엑셀매출?.입금예정일, provided: !!엑셀매출, isText: true},
+        {name: '메일', val: normDate(메일?.입금예정일) || 메일?.입금예정일, provided: !!메일},
+        {name: '계약서', val: 계약서?.지급조건 || 계약서?.입금조건, provided: !!계약서, isText: true}
+      ], false, true);
+
+      coreHtml += cmpMulti('5. 청구 품목 (작품명)', 기안?.품목명, [
+        {name: '메일', val: 메일?.품목명, provided: !!메일},
+        {name: '계약서', val: 계약서?.작품명, provided: !!계약서}
+      ], false, true);
+
+      // [v9.3 신규] 6. 거래처명
+      coreHtml += cmpMulti('6. 거래처명', 기안?.거래처명, [
+        {name: '메일', val: 메일?.거래처명, provided: !!메일},
+        {name: '계약서', val: 계약서?.을회사명, provided: !!계약서}
+      ], false, true);
+
+      // [v9.3 신규] 7. 원작자(작가)
+      coreHtml += cmpMulti('7. 원작자/작가명', 기안?.작가명, [
+        {name: '계약서', val: 계약서?.작가명, provided: !!계약서},
+        {name: '메일', val: 메일?.작가명, provided: !!메일}
+      ], false, true);
+
+      coreHtml += cmpMulti('8. 발신 이메일 주소', 기안?.이메일, [
+        {name: '엑셀', val: 엑셀매출?.이메일, provided: !!엑셀매출},
+        {name: '메일', val: 메일?.이메일, provided: !!메일},
+        {name: '등록증', val: 사업자?.이메일, provided: !!사업자}
+      ], false, true);
+
+      coreHtml += cmpMulti('9. 사업자등록번호', cleanBiz(기안?.사업자등록번호), [
+        {name: '엑셀', val: cleanBiz(엑셀매출?.사업자등록번호), provided: !!엑셀매출},
+        {name: '메일', val: cleanBiz(메일?.사업자등록번호), provided: !!메일},
+        {name: '계약서', val: cleanBiz(계약서?.을사업자번호), provided: !!계약서},
+        {name: '등록증', val: cleanBiz(사업자?.사업자등록번호), provided: !!사업자}
+      ], false, true);
+
+      // 작품 리스트가 있으면 작품 개수도 표시 (블라이스 매절 등)
+      if(엑셀작품) {
+        coreHtml += `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">참고. 작품 개수</div><div class="cl-det">작품리스트 ${엑셀작품.작품수}개 / 총 ${fmtAmt(엑셀작품.총금액)}</div></div></div>`;
+      }
+      // 작품코드가 있으면 정보 표시
+      if(기안?.작품코드) {
+        coreHtml += `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">참고. 작품코드</div><div class="cl-det">${기안.작품코드}</div></div></div>`;
+      }
     }
 
+    coreHtml += `</div>`;
     document.getElementById('r_core').innerHTML = coreHtml;
-    if(aiErrors.length) document.getElementById('r_err').innerHTML = `<div class="err-banner">⚠️ 일부 인식 오류:<br>${aiErrors.join('<br>')}</div>`;
-    else document.getElementById('r_err').innerHTML = '';
 
+    // --- 부가 정보 (메일 공지 등) ---
+    if(메일?.중요공지) {
+      document.getElementById('r_extra').innerHTML = `<div class="chk-group"><div style="padding:12px 14px;background:#fff3cd;border:2px solid #ffc107;border-radius:8px;font-size:12px;"><div style="font-weight:700;color:#856404;margin-bottom:4px">⚠️ 메일 특이사항/공지</div><div style="color:#5a3e00;line-height:1.6">${메일.중요공지}</div></div></div>`;
+    } else {
+      document.getElementById('r_extra').innerHTML = '';
+    }
+
+    // 결과 배너
     document.getElementById('rsum').innerHTML = globalErrors === 0
-      ? `<div class="r-sum"><div class="ri ok">✅</div><div class="rt"><h3 class="ok">이상 없음 — 기안 상신 가능</h3><p>트랙별 필수 항목 및 수식 대사 통과</p></div></div>`
-      : `<div class="r-sum"><div class="ri fail">❌</div><div class="rt"><h3 class="fail">${globalErrors}개 항목 불일치 또는 오류</h3><p>기안 내역과 증빙 자료를 다시 확인해 주세요.</p></div></div>`;
-    
-    document.getElementById('ps3').classList.remove('active'); document.getElementById('ps3').classList.add('done');
+      ? `<div class="r-sum"><div class="ri ok">✅</div><div class="rt"><h3 class="ok">이상 없음 — 기안 상신 가능합니다</h3><p>주요 필수 항목이 모두 일치합니다. (i 마크는 서류 누락)</p></div></div>`
+      : `<div class="r-sum"><div class="ri fail">❌</div><div class="rt"><h3 class="fail">오류 발생 — ${globalErrors}개 항목 불일치</h3><p>붉은색(✕)으로 표시된 항목을 확인 후 기안서를 수정하세요.</p></div></div>`;
+
+    setStep(6, 'done');
     document.getElementById('rc').classList.add('show');
-  } catch(e) { alert('오류: ' + e.message); } finally { btn.disabled = false;
-  btn.innerHTML = '🔍 스마트 대사 시작'; }
+  } catch(e) { alert('오류: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = '🔍 AI 검증 시작'; }
 }
+
+function setStep(n,s){ document.getElementById('ps'+n).className='ps '+s; }
 </script>
 </body>
 </html>
