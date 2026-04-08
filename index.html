@@ -1,162 +1,3 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v10.2 — 테라핀 정산팀</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-if(typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-</script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-:root {
-  --navy:#1a2744;--navy-l:#2a3a60;--accent:#3b6fd4;--accent-l:#e8edf8;
-  --ok:#1a7f4b;--ok-bg:#eafaf1;--err:#c0392b;--err-bg:#fdf0ee;
-  --warn:#b7700a;--warn-bg:#fef9ec;--border:#d8dde8;
-  --text:#1a2744;--sub:#6b7a99;--bg:#f4f6fb;--white:#fff;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding:28px 16px 80px}
-.hd{max-width:760px;margin:0 auto 20px;display:flex;align-items:center;gap:13px}
-.logo{width:42px;height:42px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.logo svg{width:21px;height:21px}
-.hd-txt h1{font-size:17px;font-weight:700;color:var(--navy)}
-.hd-txt p{font-size:11px;color:var(--sub);margin-top:2px}
-.setup-card{background:var(--white);border:1.5px solid #f0c96a;border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
-.setup-hd{background:#fffbee;padding:11px 17px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #f0e4bb}
-.setup-hd h2{font-size:12px;font-weight:600;color:#7a5800}
-.setup-bd{padding:14px 17px}
-.api-row{display:flex;gap:7px}
-.api-row input{flex:1;height:36px;border:1.5px solid var(--border);border-radius:7px;padding:0 11px;font-size:12px;font-family:monospace;outline:none;background:#fafbfd}
-.btn-save{height:36px;padding:0 14px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer}
-.key-ok{font-size:11px;color:var(--ok);margin-top:5px;display:none}
-.key-ok.show{display:block}
-.card{background:var(--white);border:1px solid var(--border);border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
-.ch{background:var(--navy);padding:12px 18px;display:flex;align-items:center;gap:9px}
-.sb{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
-.ch h2{color:#fff;font-size:13px;font-weight:600}
-.cb{padding:16px 18px}
-.drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;background:#fafbfd;position:relative;transition:all .2s}
-.drop.over{border-color:var(--accent);background:var(--accent-l)}
-.drop-ic{font-size:24px;margin-bottom:5px}
-.drop p{font-size:12px;color:var(--sub)}
-.img-prev{display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
-.img-prev.show{display:block}
-.img-prev img{width:100%;max-height:240px;object-fit:contain;background:#f0f2f7;display:block}
-.file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.file-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:9px;font-size:12px; color:var(--navy)}
-.btn-remove{margin-left:auto;cursor:pointer;border:none;background:none;color:var(--err);font-weight:700}
-.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:600px){.opt-grid{grid-template-columns:1fr}}
-.btn-v{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;max-width:760px;margin:7px auto;height:52px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
-.prog{max-width:760px;margin:0 auto 13px;display:none}
-.prog.show{display:block}
-.prog-steps{display:flex;gap:5px}
-.ps{flex:1;padding:7px 6px;border-radius:7px;font-size:10px;font-weight:600;text-align:center;border:1.5px solid var(--border);color:var(--sub);background:#fff}
-.ps.active{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
-.ps.done{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
-.ps.skip{border-color:var(--border);color:#c0c8d8;background:#f7f9fc}
-.rc{display:none}
-.rc.show{display:block}
-.r-sum{padding:16px 18px;display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--border)}
-.ri{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.ri.ok{background:var(--ok-bg)}
-.ri.fail{background:var(--err-bg)}
-.rt h3{font-size:15px;font-weight:700}
-.rt h3.ok{color:var(--ok)}
-.rt h3.fail{color:var(--err)}
-.rt p{font-size:11px;color:var(--sub);margin-top:2px}
-.chk-group{padding:13px 18px;border-bottom:1px solid var(--border)}
-.chk-group:last-child{border-bottom:none}
-.gt{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;}
-.ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent;margin-bottom:7px;background:#fff}
-.ci.pass{border:1.5px solid #b2e0cc}
-.ci.fail{background:var(--err-bg);border:1.5px solid #f5c0bb}
-.ci.warn{background:var(--warn-bg);border:1.5px solid #fce4b0}
-.ci.info{background:#fdfdfd;border:1.5px solid #d8dde8}
-.cs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700;margin-top:2px}
-.ci.pass .cs{background:var(--ok);color:#fff}
-.ci.fail .cs{background:var(--err);color:#fff}
-.ci.warn .cs{background:var(--warn);color:#fff}
-.ci.info .cs{background:var(--sub);color:#fff}
-.cc{flex:1}
-.cl-lbl{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:3px}
-.cl-det{font-size:12px;font-weight:600;color:#111}
-.diff{margin-top:8px;display:flex;flex-direction:column;gap:5px;background:#f4f6fb;padding:8px 10px;border-radius:6px}
-.dr{display:flex;align-items:center;gap:6px}
-.dtag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;min-width:65px;text-align:center;border:1px solid var(--border);background:#fff}
-.dtag.src1{border-color:var(--navy);color:var(--navy)}
-.dtag.src2{background:#e3f5ec;color:#1a7f4b}
-.dval{font-size:12px;color:var(--text);font-weight:500}
-.err-banner{background:#fdf0ee;border:1.5px solid #f5c0bb;border-radius:8px;padding:10px 14px;margin:10px 18px;font-size:12px;color:var(--err)}
-.warn-box{margin-top:5px; padding:6px 10px; background:#fff3cd; border:1px solid #ffeeba; border-radius:4px; font-size:11px; color:#856404; line-height:1.4}
-.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
-@keyframes sp{to{transform:rotate(360deg)}}
-</style>
-</head>
-<body>
-
-<div class="hd">
-  <div class="logo">
-    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-  </div>
-  <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v10.2 (Smart Routing)</span></h1>
-    <p>매절 · RS · 외주비 · 해외매출 — 다중 트랙 자동 분류 대사</p>
-  </div>
-</div>
-
-<div class="setup-card">
-  <div class="setup-hd"><h2>🔑 API 설정</h2></div>
-  <div class="setup-bd">
-    <div class="api-row"><input type="password" id="apiKey" placeholder="sk-ant-api03-..."><button class="btn-save" onclick="saveKey()">저장</button></div>
-    <div class="key-ok" id="keyOk">✅ 저장됨</div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="ch"><span class="sb">STEP 1</span><h2>기안서 (필수)</h2></div>
-  <div class="cb">
-    <div class="drop" id="imgDrop"><input type="file" id="imgInput" accept="image/*,.pdf" style="display:none"><div class="drop-ic">📸</div><p>기안서 본문 캡처 또는 PDF 업로드</p></div>
-    <div class="img-prev" id="imgPrev"><img id="prevImg" src=""></div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀/CSV (RS, 외주비, 해외 필수)</h2></div>
-  <div class="cb">
-    <div class="drop" id="xlsDrop"><input type="file" id="xlsInput" accept=".xlsx,.xls,.csv" multiple style="display:none"><div class="drop-ic">📊</div><p>취합 엑셀 또는 정산서 드래그 (매절 기안은 생략 가능)</p></div>
-    <div id="fileList" class="file-list"></div>
-  </div>
-</div>
-
-<div class="card">
-  <div class="ch"><span class="sb">STEP 3</span><h2>증빙 자료 (선택)</h2></div>
-  <div class="cb">
-    <div class="opt-grid">
-      <div class="drop" id="mailDrop"><input type="file" id="mailInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">📧</div><p>메일 캡처</p><div id="mailCount" style="font-size:10px; color:var(--accent)"></div></div>
-      <div class="drop" id="conDrop"><input type="file" id="conInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">📑</div><p>계약서 (선인세 필수)</p><div id="conCount" style="font-size:10px; color:var(--accent)"></div></div>
-      <div class="drop" id="webDrop"><input type="file" id="webInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">🌐</div><p>홈페이지/플랫폼 캡처</p><div id="webCount" style="font-size:10px; color:var(--accent)"></div></div>
-      <div class="drop" id="bizDrop"><input type="file" id="bizInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">🏢</div><p>사업자등록증</p><div id="bizCount" style="font-size:10px; color:var(--accent)"></div></div>
-    </div>
-  </div>
-</div>
-
-<button class="btn-v" id="vBtn" onclick="run()">🔍 &nbsp;AI 검증 시작</button>
-
-<div class="prog" id="prog">
-  <div class="prog-steps">
-    <div class="ps" id="ps1">분석 중...</div><div class="ps" id="ps2">데이터 추출</div><div class="ps" id="ps3">교차 대사</div>
-  </div>
-</div>
-
-<div class="card rc" id="rc">
-  <div id="rsum"></div><div id="r_err"></div><div id="r_core"></div><div id="r_extra"></div>
-  <div style="text-align:center"><button style="margin:10px; padding:7px 20px; font-weight:bold; border:1px solid var(--border); border-radius:5px; background:#fff; cursor:pointer;" onclick="location.reload()">↩ 초기화</button></div>
-</div>
-
 <script>
 let apiKey = localStorage.getItem('tf_api_key') || '';
 let imgFileObj = null; let excelFiles = []; let mailFiles = [], webFiles = [], bizFiles = [], conFiles = [];
@@ -167,11 +8,6 @@ function saveKey(){ apiKey=document.getElementById('apiKey').value.trim(); local
 
 function fmtAmt(n){ if(n===null||n===undefined) return '—'; return Number(n).toLocaleString('ko-KR'); }
 function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=parseFloat(String(v).replace(/[^0-9.-]/g,'')); return isNaN(n)?null:n; }
-function normDate(v){
-  if(!v) return null; let s = String(v).trim();
-  let m = s.match(/(\d{4})[-./년]\s*(\d{1,2})[-./월]\s*(\d{1,2})/); if(m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-  m = s.match(/(\d{4})[-./년]\s*(\d{1,2})/); if(m) return `${m[1]}-${m[2].padStart(2,'0')}`; return s;
-}
 
 async function pdfToImages(file){
   const ab = await file.arrayBuffer(); const pdf = await pdfjsLib.getDocument({data:ab}).promise; const imgs = [];
@@ -197,29 +33,20 @@ function initDrop(id, inputId, callback) {
   input.onchange = e => { if(e.target.files.length) callback(e.target.files); };
 }
 
-// [수정됨] PDF 파일인 경우 첫 페이지를 렌더링하여 미리보기에 표시하는 로직
-initDrop('imgDrop', 'imgInput', async files => {
+// PDF 뷰어
+initDrop('imgDrop', 'imgInput', files => {
   imgFileObj = files[0]; 
-  document.getElementById('imgPrev').classList.add('show');
+  const prevBox = document.getElementById('imgPrev');
+  prevBox.classList.add('show');
 
   if (imgFileObj.name.toLowerCase().endsWith('.pdf')) {
-    // 1. PDF 렌더링 전 임시 로딩 아이콘 표시
-    document.getElementById('prevImg').src = 'https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg'; 
-    
-    // 2. pdfToImages 함수를 활용해 첫 페이지를 이미지로 변환
-    try {
-      const imgs = await pdfToImages(imgFileObj);
-      if (imgs && imgs.length > 0) {
-        // Base64 데이터를 <img> 태그에 맞게 조합하여 화면에 표시
-        document.getElementById('prevImg').src = `data:${imgs[0].media_type};base64,${imgs[0].data}`;
-      }
-    } catch(e) {
-      console.error("PDF 미리보기 생성 실패:", e);
-    }
+    const objUrl = URL.createObjectURL(imgFileObj);
+    prevBox.innerHTML = `<embed src="${objUrl}#view=FitH&toolbar=0&navpanes=0" type="application/pdf" width="100%" height="280px" style="border-radius:8px; border:none; display:block; background:#f0f2f7;">`;
   } else {
-    // 일반 이미지(JPG, PNG 등)인 경우
     const r = new FileReader();
-    r.onload = ev => { document.getElementById('prevImg').src = ev.target.result; };
+    r.onload = ev => { 
+      prevBox.innerHTML = `<img src="${ev.target.result}" style="width:100%; max-height:280px; object-fit:contain; background:#f0f2f7; display:block; border-radius:8px;">`;
+    };
     r.readAsDataURL(imgFileObj); 
   }
 });
@@ -240,16 +67,12 @@ initDrop('webDrop','webInput',fs=>{webFiles.push(...fs); document.getElementById
 initDrop('conDrop','conInput',fs=>{conFiles.push(...fs); document.getElementById('conCount').innerText=conFiles.length+'개'});
 initDrop('bizDrop','bizInput',fs=>{bizFiles.push(...fs); document.getElementById('bizCount').innerText=bizFiles.length+'개'});
 
-// [v10.1] Excel 다목적 파서: 입력시트 요약행 절대 우위 및 리스트 스캔
 function parseExcelData(wb) {
-  let meta = { totalNet: 0, totalGross: 0, totalTax: 0, totalForeign: 0, 작성일자: null, 입금예정일: null };
+  let meta = { totalNet: 0, totalGross: 0, totalTax: 0, totalForeign: 0 };
   if(!wb || !wb.SheetNames.length) return meta;
-  
   for(const sn of wb.SheetNames) {
     const ws = wb.Sheets[sn]; if(!ws) continue;
     const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
-    
-    // 1. 요약/합계 행 절대 탐색 (입력시트 기준)
     for (let r=0; r<data.length; r++) {
       const row = data[r]||[];
       const firstCol = String(row[0]||'').replace(/\s/g,'');
@@ -257,13 +80,10 @@ function parseExcelData(wb) {
         meta.totalGross = parseAmt(row[8]) || meta.totalGross;
         meta.totalTax = (parseAmt(row[11]) || 0) + (parseAmt(row[12]) || 0) || meta.totalTax;
         meta.totalNet = parseAmt(row[13]) || meta.totalNet;
-        // 합계 데이터를 찾으면 해당 시트 스캔 즉시 완료 처리
         if (meta.totalGross > 0 || meta.totalNet > 0) return meta; 
       }
     }
-    
-    // 2. 합계 행이 없을 경우 리스트형 합산 스캔 (외주비 리스트 등)
-    let cNet=-1, cGross=-1, cTax1=-1, cTax2=-1, cTaxSum=-1, cUsd=-1;
+    let cNet=-1, cGross=-1, cTax1=-1, cTax2=-1, cTaxSum=-1;
     for (let r=0; r<Math.min(data.length, 15); r++) {
       const row = data[r]||[];
       for (let c=0; c<row.length; c++) {
@@ -272,44 +92,34 @@ function parseExcelData(wb) {
         if(v.includes('공급가') || v.includes('정산금액') || v.includes('지급총액')) cGross=c;
         if(v.includes('소득세')) cTax1=c; if(v.includes('지방세')) cTax2=c;
         if(v.includes('공제액') || v.includes('세액합계')) cTaxSum=c;
-        if(v.includes('USD') || v.includes('외화')) cUsd=c;
       }
-      if(cNet!==-1 || cGross!==-1 || cTaxSum!==-1 || cUsd!==-1) {
+      if(cNet!==-1 || cGross!==-1 || cTaxSum!==-1) {
         for(let ir=r+1; ir<data.length; ir++) {
           if(cNet!==-1) meta.totalNet += (parseAmt(data[ir][cNet])||0);
           if(cGross!==-1) meta.totalGross += (parseAmt(data[ir][cGross])||0);
           if(cTaxSum!==-1) meta.totalTax += (parseAmt(data[ir][cTaxSum])||0);
           else if(cTax1!==-1 && cTax2!==-1) meta.totalTax += ((parseAmt(data[ir][cTax1])||0) + (parseAmt(data[ir][cTax2])||0));
-          if(cUsd!==-1) meta.totalForeign += (parseAmt(data[ir][cUsd])||0);
         }
-        break; // 해당 시트 스캔 완료
+        break;
       }
     }
   }
-  if(meta.totalNet === 0 && meta.totalGross > 0) meta.totalNet = meta.totalGross; // 세금이 없는 구조 폴백
+  if(meta.totalNet === 0 && meta.totalGross > 0) meta.totalNet = meta.totalGross; 
   return meta;
 }
 
-// [v10.1] 프롬프트 고도화 (세전 명시)
-const PROMPT_기안서=`이미지 속 웹툰/웹소설 정산 기안서를 분석하여 순수 JSON만 응답하세요. 코드펜스 금지. 금액은 쉼표 제외.
-- 기안유형: 문맥 판별 ("선급금_매절", "RS_MG정산", "외주비_원천세", "해외_외화정산", "기타" 중 택1)
-- 세금종류: "부가세 10%", "면세" 등 텍스트
-- 통화종류: "KRW", "USD", "JPY" 등 (없으면 "KRW")
-- 외화금액: 통화가 원화가 아닐 경우 명시된 외화 총액
-- 적용환율: 명시된 적용 환율
+// 💡 [핵심 수정] AI가 문서의 제목과 양식명도 정확히 뽑아오도록 프롬프트 강화
+const PROMPT_기안서=`이미지 속 정산 기안서를 분석하여 순수 JSON만 응답하세요. 코드펜스 금지. 금액 쉼표 제외.
+- 문서양식: 기안서 최상단의 문서 양식명 (예: "매입 정산요청서")
+- 문서제목: 기안서 본문의 제목 (예: "[웹소설] 선인세/외주비 지급 요청")
+- 기안유형: AI 판별 ("선급금_매절", "RS_MG정산", "외주비_원천세" 중 택1)
 - 공급가액: 본문에 명시된 '세전' 총액 (필수 추출)
-- 공제액: 차감되는 세금의 총합계 (없으면 0)
-- 실지급액: '실지급액' 또는 '세후' 금액이 명시된 경우만 추출. 없다면 공급가액에서 공제액을 뺀 값을 계산해서 넣을 것.
-- 마감일: 마감일/입금예정일
-{"기안유형": null, "세금종류": null, "통화종류": "KRW", "적용환율": null, "외화금액": null, "공급가액": null, "공제액": null, "실지급액": null, "마감일": null}`;
+- 공제액: 차감 세금 총합계 (명시 없으면 0)
+- 실지급액: '세후/실지급' 금액. 없으면 공급가액-공제액 계산.
+{"문서양식": "", "문서제목": "", "기안유형": "", "공급가액": 0, "공제액": 0, "실지급액": 0}`;
 
-const PROMPT_계약서=`계약서에서 추출. JSON만 응답.
-- 총계약금액: 명시된 전체 계약금 또는 이번 회차 청구금 (숫자)
-{"총계약금액": null}`;
-
-const PROMPT_메일=`메일에서 추출. JSON만 응답.
-- 총금액: 청구/요청 금액 (숫자)
-{"총금액": null}`;
+const PROMPT_계약서=`계약서에서 추출. JSON만 응답. {"총계약금액": null}`;
+const PROMPT_메일=`메일에서 추출. JSON만 응답. {"총금액": null}`;
 
 async function aiCall(file, prompt, label) {
   if(!file) return null; let b64Objs;
@@ -323,32 +133,22 @@ async function aiCall(file, prompt, label) {
     });
     const d = await res.json(); if (d.error) { aiErrors.push(`[${label}] API: ${d.error.message}`); return null; }
     let raw = d.content[0].text.replace(/```json/gi, '').replace(/```/g, '').trim();
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) { aiErrors.push(`[${label}] JSON 파싱 실패`); return null; }
-    return JSON.parse(match[0].replace(/,\s*([}\]])/g, '$1'));
+    return JSON.parse(raw.match(/\{[\s\S]*\}/)[0].replace(/,\s*([}\]])/g, '$1'));
   } catch(e) { aiErrors.push(`[${label}] 통신 실패`); return null; }
 }
 
 function cmp(label, draftVal, targetObj, isAmt=false, tolerance=0) {
-  if (!targetObj || !targetObj.provided) return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub)">대사 대상 없음</div></div></div>`;
-  
-  let match = false;
-  if(isAmt && draftVal!==null && targetObj.val!==null) match = Math.abs(Number(draftVal) - Number(targetObj.val)) <= tolerance;
-  else match = (String(draftVal) === String(targetObj.val));
-
+  if (!targetObj || !targetObj.provided) return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub)">대사 대상 없음 (증빙 미등록)</div></div></div>`;
+  let match = isAmt && draftVal!==null && targetObj.val!==null ? Math.abs(Number(draftVal) - Number(targetObj.val)) <= tolerance : String(draftVal) === String(targetObj.val);
   if (!match) globalErrors++;
-  
-  let html = `
-  <div class="ci ${match?'pass':'fail'}"><div class="cs">${match?'✓':'✕'}</div><div class="cc">
+  return `<div class="ci ${match?'pass':'fail'}"><div class="cs">${match?'✓':'✕'}</div><div class="cc">
     <div class="cl-lbl">${label} <span style="font-size:10px; color:var(--accent); font-weight:normal;">(${targetObj.name} 기준)</span></div>
     <div class="cl-det">${match?'일치 ✓':'불일치 ⚠'}</div>
     <div class="diff">
       <div class="dr"><span class="dtag src1">기안서</span><span class="dval">${isAmt?fmtAmt(draftVal):draftVal}</span></div>
       <div class="dr"><span class="dtag src2">${targetObj.name}</span><span class="dval" style="color:${match?'var(--ok)':'var(--err)'}">${isAmt?fmtAmt(targetObj.val):targetObj.val}</span></div>
-      ${targetObj.warn ? `<div class="warn-box">${targetObj.warn}</div>` : ''}
     </div>
   </div></div>`;
-  return html;
 }
 
 async function run() {
@@ -362,85 +162,82 @@ async function run() {
     const 계약서 = conFiles.length ? await aiCall(conFiles[0], PROMPT_계약서, '계약서') : null;
     const 메일 = mailFiles.length ? await aiCall(mailFiles[0], PROMPT_메일, '메일') : null;
     const 엑셀 = excelFiles.length ? excelFiles[0].data : null;
-    
     document.getElementById('ps1').classList.remove('active'); document.getElementById('ps3').classList.add('active');
 
-    const draftType = 기안.기안유형 || '기타';
+    // 💡 [핵심 라우팅 로직] 문서 제목과 양식을 기반으로 강제 라우팅
+    const txtContext = ((기안.문서제목 || '') + ' ' + (기안.문서양식 || '')).toLowerCase();
+    let draftType = '기타';
+    let trackName = '';
+
+    if (txtContext.includes('rs') || txtContext.includes('mg') || txtContext.includes('매출')) {
+      draftType = 'Case2'; trackName = 'RS / MG 매출 정산';
+    } else if (txtContext.includes('선인세') || txtContext.includes('계약금') || txtContext.includes('매절')) {
+      draftType = 'Case1'; trackName = '선급금 / 매절 / 계약금';
+    } else if (txtContext.includes('외주비') || txtContext.includes('원고료') || txtContext.includes('지급')) {
+      draftType = 'Case3'; trackName = '외주비 / 원고료 (원천세)';
+    } else {
+      // 키워드가 명확하지 않으면 AI가 판별한 결과로 폴백
+      draftType = 기안.기안유형; trackName = '일반 대사 (AI 자율 판별)';
+    }
+
     let coreHtml = `<div class="chk-group" style="background:var(--accent-l); border-radius:8px; padding:12px; margin-bottom:10px">
-      <strong style="color:var(--navy)">📝 스마트 라우팅 판별: [ ${draftType} ]</strong><br>
-      <span style="font-size:11px; color:var(--sub)">AI가 기안 유형을 분석하여 최적화된 맞춤 대사 트랙을 실행합니다.</span>
+      <strong style="color:var(--navy)">🎯 스마트 라우팅 가동: [ ${trackName} ] 트랙</strong><br>
+      <span style="font-size:11px; color:var(--sub)">문서 키워드 분석 결과에 따라 맞춤형 검증 기준을 적용합니다.</span>
     </div>`;
 
-    let targetAmt = null;
-
-    if (draftType === '선급금_매절') {
-      let warnMsg = (메일 && 메일.총금액 && 계약서 && 계약서.총계약금액 !== 메일.총금액) ? `⚠️ 메일에 기재된 금액(${fmtAmt(메일.총금액)})이 계약서와 다릅니다.` : '';
-      targetAmt = { name: '계약서', val: 계약서?.총계약금액, provided: !!계약서, warn: warnMsg };
-      coreHtml += cmp('1. 총 실지급액', 기안.실지급액, targetAmt, true, 0);
+    // ----------------------------------------------------
+    // [Case 1 트랙]: 계약서 절대 우위 대사
+    // ----------------------------------------------------
+    if (draftType === 'Case1' || draftType === '선급금_매절') {
+      const targetAmt = { name: '계약서', val: 계약서?.총계약금액, provided: !!계약서 };
+      coreHtml += cmp('1. 기안서 ↔ 계약서 금액 대사', 기안.공급가액 || 기안.실지급액, targetAmt, true, 0);
+      
+      // 메일이 첨부되었다면 참고용으로 대조
+      if (메일) coreHtml += cmp('2. 청구 메일 금액 대사 (선택)', 기안.공급가액, {name:'청구 메일', val:메일.총금액, provided:true}, true, 0);
     } 
-    else if (draftType === 'RS_MG정산') {
-      let warnMsg = (메일 && 메일.총금액 && 엑셀 && 엑셀.totalNet !== 메일.총금액) ? `⚠️ 메일 청구액(${fmtAmt(메일.총금액)})이 엑셀 데이터와 다릅니다.` : '';
-      targetAmt = { name: '엑셀', val: 엑셀?.totalNet, provided: !!엑셀, warn: warnMsg };
-      coreHtml += cmp('1. 최종 실지급액', 기안.실지급액, targetAmt, true, 0);
+    
+    // ----------------------------------------------------
+    // [Case 2 트랙]: RS/MG 취합 엑셀 절대 우위 대사
+    // ----------------------------------------------------
+    else if (draftType === 'Case2' || draftType === 'RS_MG정산') {
+      const targetAmt = { name: '정산 엑셀', val: 엑셀?.totalNet || 엑셀?.totalGross, provided: !!엑셀 };
+      coreHtml += cmp('1. 기안서 ↔ 엑셀 취합 금액 대사', 기안.실지급액 || 기안.공급가액, targetAmt, true, 10);
     }
-    // [v10.2] 트랙 3: 외주비_원천세 -> 세전 기안 자동 감지 적용
-    else if (draftType === '외주비_원천세') {
+    
+    // ----------------------------------------------------
+    // [Case 3 트랙]: 외주비 세전/세후 스마트 감지 대사
+    // ----------------------------------------------------
+    else if (draftType === 'Case3' || draftType === '외주비_원천세') {
       const isGrossOnly = (!기안.공제액 || 기안.공제액 === 0) && (기안.공급가액 > 0);
 
       if (isGrossOnly) {
-        // [A] 세전 기안서 모드
-        const grossOk = Math.abs(기안.공급가액 - (엑셀?.totalGross || 0)) < 10;
-        if(!grossOk) globalErrors++;
-        
-        coreHtml += `<div class="ci ${grossOk?'pass':'fail'}"><div class="cs">${grossOk?'✓':'✕'}</div><div class="cc">
-          <div class="cl-lbl">1. [세전 기안 감지] 총액(공급가액) 대사</div>
-          <div class="cl-det">${grossOk?'기안서와 엑셀 세전 총액 일치 ✓':'세전 총액 불일치 ⚠'}</div>
-          <div class="diff">
-            <div class="dr"><span class="dtag src1">기안서(세전)</span><span class="dval">${fmtAmt(기안.공급가액)}</span></div>
-            <div class="dr"><span class="dtag src2">엑셀(세전)</span><span class="dval" style="color:${grossOk?'var(--ok)':'var(--err)'}">${fmtAmt(엑셀?.totalGross)}</span></div>
-          </div>
-        </div></div>`;
-        
+        // [세전 기안 모드] PDF에 910만원(세전) 만 있을 때
+        coreHtml += cmp('1. 기안서(세전) ↔ 엑셀(세전 총합) 대사', 기안.공급가액, {name:'엑셀', val:엑셀?.totalGross, provided:!!엑셀}, true, 10);
         coreHtml += `<div class="ci info"><div class="cs">i</div><div class="cc">
-          <div class="cl-lbl">2. 엑셀 세액 및 실지급액 (참고)</div>
-          <div class="cl-det" style="color:var(--sub)">기안서에 세액 명시가 없어 엑셀 데이터로 갈음합니다.</div>
-          <div class="diff">
-            <div class="dr"><span class="dtag src2">엑셀 세액 총합</span><span class="dval">${fmtAmt(엑셀?.totalTax)}</span></div>
-            <div class="dr"><span class="dtag src2">엑셀 최종 실지급액</span><span class="dval">${fmtAmt(엑셀?.totalNet)}</span></div>
-          </div>
+          <div class="cl-lbl">2. 원천세율 자동 적용 안내</div>
+          <div class="cl-det" style="color:var(--sub)">기안서에 세액 명시가 없어 엑셀의 세후 실지급액(${fmtAmt(엑셀?.totalNet)}원)으로 정산됩니다.</div>
         </div></div>`;
       } else {
-        // [B] 기존 세후/세액 포함 기안서 모드
+        // [세후 기안 모드] 원금, 세금, 실지급액이 모두 있을 때
         const mathOk = Math.abs(기안.공급가액 - 기안.공제액 - 기안.실지급액) < 10;
         if(!mathOk) globalErrors++;
-        
         coreHtml += `<div class="ci ${mathOk?'pass':'fail'}"><div class="cs">${mathOk?'✓':'✕'}</div><div class="cc">
-          <div class="cl-lbl">1. 기안서 내부 산술 검증 (원금 - 세금 = 실지급액)</div>
-          <div class="cl-det">${mathOk?'수식 정상 (원단위 절사 허용)':'수식 오류 발생'}</div>
+          <div class="cl-lbl">1. 산술 검증 (원금 - 세금 = 실지급액)</div>
+          <div class="cl-det">${mathOk?'수식 정상':'오류'}</div>
           <div class="diff"><div class="dr"><span class="dval">${fmtAmt(기안.공급가액)} - ${fmtAmt(기안.공제액)} = ${fmtAmt(기안.실지급액)}</span></div></div>
         </div></div>`;
-        coreHtml += cmp('2. 엑셀 공제액 총합 대사', 기안.공제액, {name:'엑셀', val:엑셀?.totalTax, provided:!!엑셀}, true, 10);
-        coreHtml += cmp('3. 엑셀 실지급액 총합 대사', 기안.실지급액, {name:'엑셀', val:엑셀?.totalNet, provided:!!엑셀}, true, 10);
+        coreHtml += cmp('2. 엑셀 실지급액 대사', 기안.실지급액, {name:'엑셀', val:엑셀?.totalNet, provided:!!엑셀}, true, 10);
       }
     }
-    else if (draftType === '해외_외화정산' || 기안.통화종류 !== 'KRW') {
-      const calcKrw = Math.floor((기안.외화금액 || 0) * (기안.적용환율 || 1));
-      const rateOk = Math.abs(calcKrw - 기안.실지급액) < 10;
-      if(!rateOk) globalErrors++;
-      coreHtml += `<div class="ci ${rateOk?'pass':'fail'}"><div class="cs">${rateOk?'✓':'✕'}</div><div class="cc">
-        <div class="cl-lbl">1. 외화 환율 적용 검증</div>
-        <div class="cl-det">${rateOk?'환율 적용 정상':'환율 적용 오류'}</div>
-        <div class="diff"><div class="dr"><span class="dval">${기안.통화종류} ${fmtAmt(기안.외화금액)} × 환율 ${기안.적용환율} = ${fmtAmt(기안.실지급액)} KRW</span></div></div>
-      </div></div>`;
-      coreHtml += cmp('2. 엑셀 외화 총매출 대사', 기안.외화금액, {name:'엑셀', val:엑셀?.totalForeign, provided:!!엑셀}, true, 0);
-    }
+    
+    // ----------------------------------------------------
+    // [예외 트랙]: Fallback
+    // ----------------------------------------------------
     else {
-      targetAmt = { name: '엑셀/메일', val: 엑셀?.totalNet || 메일?.총금액, provided: !!(엑셀 || 메일) };
-      coreHtml += cmp('1. 총금액', 기안.실지급액 || 기안.공급가액, targetAmt, true, 0);
+      coreHtml += cmp('1. 총금액 (엑셀 우선 대사)', 기안.실지급액 || 기안.공급가액, { name: '엑셀/메일', val: 엑셀?.totalNet || 메일?.총금액, provided: !!(엑셀 || 메일) }, true, 0);
     }
 
     document.getElementById('r_core').innerHTML = coreHtml;
-    
     if(aiErrors.length) document.getElementById('r_err').innerHTML = `<div class="err-banner">⚠️ 일부 인식 오류:<br>${aiErrors.join('<br>')}</div>`;
     else document.getElementById('r_err').innerHTML = '';
 
@@ -453,5 +250,3 @@ async function run() {
   } catch(e) { alert('오류: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = '🔍 AI 검증 시작'; }
 }
 </script>
-</body>
-</html>
