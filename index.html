@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v10.0 — 테라핀 정산팀</title>
+<title>기안서 검증기 v10.2 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -103,7 +103,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v10.0 (Smart Routing)</span></h1>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v10.2 (Smart Routing)</span></h1>
     <p>매절 · RS · 외주비 · 해외매출 — 다중 트랙 자동 분류 대사</p>
   </div>
 </div>
@@ -197,11 +197,33 @@ function initDrop(id, inputId, callback) {
   input.onchange = e => { if(e.target.files.length) callback(e.target.files); };
 }
 
+// [수정됨] PDF 파일인 경우 첫 페이지를 렌더링하여 미리보기에 표시하는 로직
 initDrop('imgDrop', 'imgInput', async files => {
-  imgFileObj = files[0]; const r = new FileReader();
-  r.onload = ev => { document.getElementById('prevImg').src = imgFileObj.name.endsWith('.pdf') ? 'https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg' : ev.target.result; };
-  r.readAsDataURL(imgFileObj); document.getElementById('imgPrev').classList.add('show');
+  imgFileObj = files[0]; 
+  document.getElementById('imgPrev').classList.add('show');
+
+  if (imgFileObj.name.toLowerCase().endsWith('.pdf')) {
+    // 1. PDF 렌더링 전 임시 로딩 아이콘 표시
+    document.getElementById('prevImg').src = 'https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg'; 
+    
+    // 2. pdfToImages 함수를 활용해 첫 페이지를 이미지로 변환
+    try {
+      const imgs = await pdfToImages(imgFileObj);
+      if (imgs && imgs.length > 0) {
+        // Base64 데이터를 <img> 태그에 맞게 조합하여 화면에 표시
+        document.getElementById('prevImg').src = `data:${imgs[0].media_type};base64,${imgs[0].data}`;
+      }
+    } catch(e) {
+      console.error("PDF 미리보기 생성 실패:", e);
+    }
+  } else {
+    // 일반 이미지(JPG, PNG 등)인 경우
+    const r = new FileReader();
+    r.onload = ev => { document.getElementById('prevImg').src = ev.target.result; };
+    r.readAsDataURL(imgFileObj); 
+  }
 });
+
 initDrop('xlsDrop', 'xlsInput', files => {
   for (let f of files) {
     const r = new FileReader();
@@ -209,7 +231,7 @@ initDrop('xlsDrop', 'xlsInput', files => {
       const wb = XLSX.read(ev.target.result, {type:'array'});
       const parsed = parseExcelData(wb);
       excelFiles.push({name: f.name, wb: wb, data: parsed});
-      document.getElementById('fileList').innerHTML += `<div class="file-card">📊 ${f.name} <strong style="color:var(--ok); margin-left:auto">${fmtAmt(parsed.totalNet)}</strong></div>`;
+      document.getElementById('fileList').innerHTML += `<div class="file-card">📊 ${f.name} <strong style="color:var(--ok); margin-left:auto">${fmtAmt(parsed.totalNet || parsed.totalGross)}</strong></div>`;
     }; r.readAsArrayBuffer(f);
   }
 });
@@ -218,7 +240,7 @@ initDrop('webDrop','webInput',fs=>{webFiles.push(...fs); document.getElementById
 initDrop('conDrop','conInput',fs=>{conFiles.push(...fs); document.getElementById('conCount').innerText=conFiles.length+'개'});
 initDrop('bizDrop','bizInput',fs=>{bizFiles.push(...fs); document.getElementById('bizCount').innerText=bizFiles.length+'개'});
 
-// [v10.0] Excel 다목적 파서: 리스트 합계 및 요약 시트 동시 대응
+// [v10.1] Excel 다목적 파서: 입력시트 요약행 절대 우위 및 리스트 스캔
 function parseExcelData(wb) {
   let meta = { totalNet: 0, totalGross: 0, totalTax: 0, totalForeign: 0, 작성일자: null, 입금예정일: null };
   if(!wb || !wb.SheetNames.length) return meta;
@@ -227,14 +249,27 @@ function parseExcelData(wb) {
     const ws = wb.Sheets[sn]; if(!ws) continue;
     const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
     
-    // 리스트형 합산 스캔 (외주비 리스트 등)
+    // 1. 요약/합계 행 절대 탐색 (입력시트 기준)
+    for (let r=0; r<data.length; r++) {
+      const row = data[r]||[];
+      const firstCol = String(row[0]||'').replace(/\s/g,'');
+      if (firstCol === '합계' || firstCol.includes('유형별요약')) {
+        meta.totalGross = parseAmt(row[8]) || meta.totalGross;
+        meta.totalTax = (parseAmt(row[11]) || 0) + (parseAmt(row[12]) || 0) || meta.totalTax;
+        meta.totalNet = parseAmt(row[13]) || meta.totalNet;
+        // 합계 데이터를 찾으면 해당 시트 스캔 즉시 완료 처리
+        if (meta.totalGross > 0 || meta.totalNet > 0) return meta; 
+      }
+    }
+    
+    // 2. 합계 행이 없을 경우 리스트형 합산 스캔 (외주비 리스트 등)
     let cNet=-1, cGross=-1, cTax1=-1, cTax2=-1, cTaxSum=-1, cUsd=-1;
     for (let r=0; r<Math.min(data.length, 15); r++) {
       const row = data[r]||[];
       for (let c=0; c<row.length; c++) {
         const v = String(row[c]||'').replace(/\s/g,'');
-        if(v.includes('실지급') || v.includes('차인지급') || v.includes('최종입금')) cNet=c;
-        if(v.includes('공급가') || v.includes('정산금액')) cGross=c;
+        if(v.includes('실지급') || v.includes('차인지급') || v.includes('최종입금') || v.includes('순지급액')) cNet=c;
+        if(v.includes('공급가') || v.includes('정산금액') || v.includes('지급총액')) cGross=c;
         if(v.includes('소득세')) cTax1=c; if(v.includes('지방세')) cTax2=c;
         if(v.includes('공제액') || v.includes('세액합계')) cTaxSum=c;
         if(v.includes('USD') || v.includes('외화')) cUsd=c;
@@ -255,16 +290,16 @@ function parseExcelData(wb) {
   return meta;
 }
 
-// [v10.0] 고도화된 프롬프트
+// [v10.1] 프롬프트 고도화 (세전 명시)
 const PROMPT_기안서=`이미지 속 웹툰/웹소설 정산 기안서를 분석하여 순수 JSON만 응답하세요. 코드펜스 금지. 금액은 쉼표 제외.
 - 기안유형: 문맥 판별 ("선급금_매절", "RS_MG정산", "외주비_원천세", "해외_외화정산", "기타" 중 택1)
 - 세금종류: "부가세 10%", "면세" 등 텍스트
 - 통화종류: "KRW", "USD", "JPY" 등 (없으면 "KRW")
 - 외화금액: 통화가 원화가 아닐 경우 명시된 외화 총액
 - 적용환율: 명시된 적용 환율
-- 공급가액: 세금을 제외한 순수 원금(원화)
-- 공제액: 차감되는 세금의 총합계
-- 실지급액: 세금/환율 반영 후 최종 지급/청구되는 총액
+- 공급가액: 본문에 명시된 '세전' 총액 (필수 추출)
+- 공제액: 차감되는 세금의 총합계 (없으면 0)
+- 실지급액: '실지급액' 또는 '세후' 금액이 명시된 경우만 추출. 없다면 공급가액에서 공제액을 뺀 값을 계산해서 넣을 것.
 - 마감일: 마감일/입금예정일
 {"기안유형": null, "세금종류": null, "통화종류": "KRW", "적용환율": null, "외화금액": null, "공급가액": null, "공제액": null, "실지급액": null, "마감일": null}`;
 
@@ -294,7 +329,6 @@ async function aiCall(file, prompt, label) {
   } catch(e) { aiErrors.push(`[${label}] 통신 실패`); return null; }
 }
 
-// UI 렌더링 헬퍼 (Warning 지원)
 function cmp(label, draftVal, targetObj, isAmt=false, tolerance=0) {
   if (!targetObj || !targetObj.provided) return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub)">대사 대상 없음</div></div></div>`;
   
@@ -339,31 +373,56 @@ async function run() {
 
     let targetAmt = null;
 
-    // [트랙 1: 선인세/매절] -> 계약서 절대 우위
     if (draftType === '선급금_매절') {
       let warnMsg = (메일 && 메일.총금액 && 계약서 && 계약서.총계약금액 !== 메일.총금액) ? `⚠️ 메일에 기재된 금액(${fmtAmt(메일.총금액)})이 계약서와 다릅니다.` : '';
       targetAmt = { name: '계약서', val: 계약서?.총계약금액, provided: !!계약서, warn: warnMsg };
       coreHtml += cmp('1. 총 실지급액', 기안.실지급액, targetAmt, true, 0);
     } 
-    // [트랙 2: RS_MG 정산] -> 엑셀 절대 우위
     else if (draftType === 'RS_MG정산') {
       let warnMsg = (메일 && 메일.총금액 && 엑셀 && 엑셀.totalNet !== 메일.총금액) ? `⚠️ 메일 청구액(${fmtAmt(메일.총금액)})이 엑셀 데이터와 다릅니다.` : '';
       targetAmt = { name: '엑셀', val: 엑셀?.totalNet, provided: !!엑셀, warn: warnMsg };
       coreHtml += cmp('1. 최종 실지급액', 기안.실지급액, targetAmt, true, 0);
     }
-    // [트랙 3: 외주비_원천세] -> 산술 검증 및 엑셀 취합 대사 (조세조약/세율 무관)
+    // [v10.2] 트랙 3: 외주비_원천세 -> 세전 기안 자동 감지 적용
     else if (draftType === '외주비_원천세') {
-      const mathOk = Math.abs(기안.공급가액 - 기안.공제액 - 기안.실지급액) < 10;
-      if(!mathOk) globalErrors++;
-      coreHtml += `<div class="ci ${mathOk?'pass':'fail'}"><div class="cs">${mathOk?'✓':'✕'}</div><div class="cc">
-        <div class="cl-lbl">1. 기안서 내부 산술 검증 (원금 - 세금 = 실지급액)</div>
-        <div class="cl-det">${mathOk?'수식 정상 (원단위 절사 허용)':'수식 오류 발생'}</div>
-        <div class="diff"><div class="dr"><span class="dval">${fmtAmt(기안.공급가액)} - ${fmtAmt(기안.공제액)} = ${fmtAmt(기안.실지급액)}</span></div></div>
-      </div></div>`;
-      coreHtml += cmp('2. 엑셀 공제액 총합 대사', 기안.공제액, {name:'엑셀', val:엑셀?.totalTax, provided:!!엑셀}, true, 10);
-      coreHtml += cmp('3. 엑셀 실지급액 총합 대사', 기안.실지급액, {name:'엑셀', val:엑셀?.totalNet, provided:!!엑셀}, true, 10);
+      const isGrossOnly = (!기안.공제액 || 기안.공제액 === 0) && (기안.공급가액 > 0);
+
+      if (isGrossOnly) {
+        // [A] 세전 기안서 모드
+        const grossOk = Math.abs(기안.공급가액 - (엑셀?.totalGross || 0)) < 10;
+        if(!grossOk) globalErrors++;
+        
+        coreHtml += `<div class="ci ${grossOk?'pass':'fail'}"><div class="cs">${grossOk?'✓':'✕'}</div><div class="cc">
+          <div class="cl-lbl">1. [세전 기안 감지] 총액(공급가액) 대사</div>
+          <div class="cl-det">${grossOk?'기안서와 엑셀 세전 총액 일치 ✓':'세전 총액 불일치 ⚠'}</div>
+          <div class="diff">
+            <div class="dr"><span class="dtag src1">기안서(세전)</span><span class="dval">${fmtAmt(기안.공급가액)}</span></div>
+            <div class="dr"><span class="dtag src2">엑셀(세전)</span><span class="dval" style="color:${grossOk?'var(--ok)':'var(--err)'}">${fmtAmt(엑셀?.totalGross)}</span></div>
+          </div>
+        </div></div>`;
+        
+        coreHtml += `<div class="ci info"><div class="cs">i</div><div class="cc">
+          <div class="cl-lbl">2. 엑셀 세액 및 실지급액 (참고)</div>
+          <div class="cl-det" style="color:var(--sub)">기안서에 세액 명시가 없어 엑셀 데이터로 갈음합니다.</div>
+          <div class="diff">
+            <div class="dr"><span class="dtag src2">엑셀 세액 총합</span><span class="dval">${fmtAmt(엑셀?.totalTax)}</span></div>
+            <div class="dr"><span class="dtag src2">엑셀 최종 실지급액</span><span class="dval">${fmtAmt(엑셀?.totalNet)}</span></div>
+          </div>
+        </div></div>`;
+      } else {
+        // [B] 기존 세후/세액 포함 기안서 모드
+        const mathOk = Math.abs(기안.공급가액 - 기안.공제액 - 기안.실지급액) < 10;
+        if(!mathOk) globalErrors++;
+        
+        coreHtml += `<div class="ci ${mathOk?'pass':'fail'}"><div class="cs">${mathOk?'✓':'✕'}</div><div class="cc">
+          <div class="cl-lbl">1. 기안서 내부 산술 검증 (원금 - 세금 = 실지급액)</div>
+          <div class="cl-det">${mathOk?'수식 정상 (원단위 절사 허용)':'수식 오류 발생'}</div>
+          <div class="diff"><div class="dr"><span class="dval">${fmtAmt(기안.공급가액)} - ${fmtAmt(기안.공제액)} = ${fmtAmt(기안.실지급액)}</span></div></div>
+        </div></div>`;
+        coreHtml += cmp('2. 엑셀 공제액 총합 대사', 기안.공제액, {name:'엑셀', val:엑셀?.totalTax, provided:!!엑셀}, true, 10);
+        coreHtml += cmp('3. 엑셀 실지급액 총합 대사', 기안.실지급액, {name:'엑셀', val:엑셀?.totalNet, provided:!!엑셀}, true, 10);
+      }
     }
-    // [트랙 4: 해외_외화정산] -> 환율 곱 연산 대사
     else if (draftType === '해외_외화정산' || 기안.통화종류 !== 'KRW') {
       const calcKrw = Math.floor((기안.외화금액 || 0) * (기안.적용환율 || 1));
       const rateOk = Math.abs(calcKrw - 기안.실지급액) < 10;
@@ -375,7 +434,6 @@ async function run() {
       </div></div>`;
       coreHtml += cmp('2. 엑셀 외화 총매출 대사', 기안.외화금액, {name:'엑셀', val:엑셀?.totalForeign, provided:!!엑셀}, true, 0);
     }
-    // [기타] 폴백
     else {
       targetAmt = { name: '엑셀/메일', val: 엑셀?.totalNet || 메일?.총금액, provided: !!(엑셀 || 메일) };
       coreHtml += cmp('1. 총금액', 기안.실지급액 || 기안.공급가액, targetAmt, true, 0);
