@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기안서 검증기 v9.1 — 테라핀 정산팀</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if(typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+:root {
+  --navy:#1a2744;--navy-l:#2a3a60;--accent:#3b6fd4;--accent-l:#e8edf8;
+  --ok:#1a7f4b;--ok-bg:#eafaf1;--err:#c0392b;--err-bg:#fdf0ee;
+  --warn:#b7700a;--warn-bg:#fef9ec;--border:#d8dde8;
+  --text:#1a2744;--sub:#6b7a99;--bg:#f4f6fb;--white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding:28px 16px 80px}
+.hd{max-width:760px;margin:0 auto 20px;display:flex;align-items:center;gap:13px}
+.logo{width:42px;height:42px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:21px;height:21px}
+.hd-txt h1{font-size:17px;font-weight:700;color:var(--navy)}
+.hd-txt p{font-size:11px;color:var(--sub);margin-top:2px}
+.setup-card{background:var(--white);border:1.5px solid #f0c96a;border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
+.setup-hd{background:#fffbee;padding:11px 17px;display:flex;align-items:center;gap:7px;border-bottom:1px solid #f0e4bb}
+.setup-hd h2{font-size:12px;font-weight:600;color:#7a5800}
+.setup-bd{padding:14px 17px}
+.api-row{display:flex;gap:7px}
+.api-row input{flex:1;height:36px;border:1.5px solid var(--border);border-radius:7px;padding:0 11px;font-size:12px;font-family:monospace;outline:none;background:#fafbfd}
+.btn-save{height:36px;padding:0 14px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer}
+.key-ok{font-size:11px;color:var(--ok);margin-top:5px;display:none}
+.key-ok.show{display:block}
+.card{background:var(--white);border:1px solid var(--border);border-radius:13px;max-width:760px;margin:0 auto 13px;overflow:hidden}
+.ch{background:var(--navy);padding:12px 18px;display:flex;align-items:center;gap:9px}
+.sb{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.ch h2{color:#fff;font-size:13px;font-weight:600}
+.cb{padding:16px 18px}
+.drop{border:2px dashed var(--border);border-radius:9px;padding:20px 18px;text-align:center;cursor:pointer;background:#fafbfd;position:relative;transition:all .2s}
+.drop.over{border-color:var(--accent);background:var(--accent-l)}
+.drop-ic{font-size:24px;margin-bottom:5px}
+.drop p{font-size:12px;color:var(--sub)}
+.img-prev{display:none;margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.img-prev.show{display:block}
+.img-prev img{width:100%;max-height:240px;object-fit:contain;background:#f0f2f7;display:block}
+.file-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.file-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:#f7f9fc;border:1px solid var(--border);border-radius:9px; font-size:12px; color:var(--navy)}
+.btn-remove{margin-left:auto;cursor:pointer;border:none;background:none;color:var(--err);font-weight:700}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.opt-grid{grid-template-columns:1fr}}
+.btn-v{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;max-width:760px;margin:7px auto;height:52px;background:var(--navy);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer}
+.prog{max-width:760px;margin:0 auto 13px;display:none}
+.prog.show{display:block}
+.prog-steps{display:flex;gap:5px}
+.ps{flex:1;padding:7px 6px;border-radius:7px;font-size:10px;font-weight:600;text-align:center;border:1.5px solid var(--border);color:var(--sub);background:#fff}
+.ps.active{border-color:var(--accent);color:var(--accent);background:var(--accent-l)}
+.ps.done{border-color:var(--ok);color:var(--ok);background:var(--ok-bg)}
+.ps.skip{border-color:var(--border);color:#c0c8d8;background:#f7f9fc}
+.rc{display:none}
+.rc.show{display:block}
+.r-sum{padding:16px 18px;display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--border)}
+.ri{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ri.ok{background:var(--ok-bg)}
+.ri.fail{background:var(--err-bg)}
+.rt h3{font-size:15px;font-weight:700}
+.rt h3.ok{color:var(--ok)}
+.rt h3.fail{color:var(--err)}
+.rt p{font-size:11px;color:var(--sub);margin-top:2px}
+.chk-group{padding:13px 18px;border-bottom:1px solid var(--border)}
+.chk-group:last-child{border-bottom:none}
+.gt{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;}
+.ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid transparent;margin-bottom:7px;background:#fff}
+.ci.pass{border:1.5px solid #b2e0cc}
+.ci.fail{background:var(--err-bg);border:1.5px solid #f5c0bb}
+.ci.warn{background:var(--warn-bg);border:1.5px solid #fce4b0}
+.ci.info{background:#fdfdfd;border:1.5px solid #d8dde8}
+.cs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700;margin-top:2px}
+.ci.pass .cs{background:var(--ok);color:#fff}
+.ci.fail .cs{background:var(--err);color:#fff}
+.ci.warn .cs{background:var(--warn);color:#fff}
+.ci.info .cs{background:var(--sub);color:#fff}
+.cc{flex:1}
+.cl-lbl{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.cl-det{font-size:12px;font-weight:600;color:#111}
+.cl-sub{font-size:11px;color:var(--sub);margin-top:4px}
+.diff{margin-top:8px;display:flex;flex-direction:column;gap:5px;background:#f4f6fb;padding:8px 10px;border-radius:6px}
+.dr{display:flex;align-items:center;gap:6px}
+.dtag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;min-width:65px;text-align:center;border:1px solid var(--border);background:#fff}
+.dtag.src1{border-color:var(--navy);color:var(--navy)}
+.dtag.src2{background:#e3f5ec;color:#1a7f4b}
+.dval{font-size:12px;color:var(--text);font-weight:500}
+.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.err-banner{background:#fdf0ee;border:1.5px solid #f5c0bb;border-radius:8px;padding:10px 14px;margin:10px 18px;font-size:12px;color:var(--err)}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+    </svg>
+  </div>
+  <div class="hd-txt">
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v9.1 (Haiku 4.5 적용)</span></h1>
+    <p>메일 · 홈페이지 · 엑셀 · 서류 — 모든 항목 상호 대사</p>
+  </div>
+</div>
+
+<div class="setup-card">
+  <div class="setup-hd"><h2>🔑 API 설정</h2></div>
+  <div class="setup-bd">
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
+      <button class="btn-save" onclick="saveKey()">저장</button>
+    </div>
+    <div class="key-ok" id="keyOk">✅ 저장됨</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ch"><span class="sb">STEP 1</span><h2>기안서 (필수)</h2></div>
+  <div class="cb">
+    <div class="drop" id="imgDrop">
+      <input type="file" id="imgInput" accept="image/*,.pdf" style="display:none">
+      <div class="drop-ic">🖼</div>
+      <p>기안서 캡처 또는 PDF 드래그 앤 드롭</p>
+    </div>
+    <div class="img-prev" id="imgPrev">
+      <img id="prevImg" src="">
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ch"><span class="sb">STEP 2</span><h2>정산 엑셀/CSV (선택)</h2></div>
+  <div class="cb">
+    <div class="drop" id="xlsDrop">
+      <input type="file" id="xlsInput" accept=".xlsx,.xls,.csv" multiple style="display:none">
+      <div class="drop-ic">📊</div>
+      <p>엑셀 파일 드래그 앤 드롭 (선투자금/매절 생략 가능)</p>
+    </div>
+    <div id="fileList" class="file-list"></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ch"><span class="sb">STEP 3</span><h2>거래처 자료 (선택)</h2></div>
+  <div class="cb">
+    <div class="opt-grid">
+      <div class="drop" id="mailDrop">
+        <input type="file" id="mailInput" accept="image/*,.pdf" multiple style="display:none">
+        <div class="drop-ic">📧</div>
+        <p>메일 캡처 (다중)</p>
+        <div id="mailCount" style="font-size:10px; color:var(--accent)"></div>
+      </div>
+      <div class="drop" id="webDrop">
+        <input type="file" id="webInput" accept="image/*,.pdf" multiple style="display:none">
+        <div class="drop-ic">🌐</div>
+        <p>홈페이지 캡처 (다중)</p>
+        <div id="webCount" style="font-size:10px; color:var(--accent)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="ch"><span class="sb">STEP 4</span><h2>서류 자료 (선택)</h2></div>
+  <div class="cb">
+    <div class="opt-grid">
+      <div class="drop" id="bizDrop">
+        <input type="file" id="bizInput" accept="image/*,.pdf" multiple style="display:none">
+        <div class="drop-ic">🏢</div>
+        <p>사업자등록증</p>
+        <div id="bizCount" style="font-size:10px; color:var(--accent)"></div>
+      </div>
+      <div class="drop" id="conDrop">
+        <input type="file" id="conInput" accept="image/*,.pdf" multiple style="display:none">
+        <div class="drop-ic">📑</div>
+        <p>계약서</p>
+        <div id="conCount" style="font-size:10px; color:var(--accent)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="btn-v" id="vBtn" onclick="run()">🔍 &nbsp;AI 검증 시작</button>
+
+<div class="prog" id="prog">
+  <div class="prog-steps">
+    <div class="ps" id="ps1">📸 기안서</div>
+    <div class="ps" id="ps2">✉️ 메일</div>
+    <div class="ps" id="ps3">🌐 홈페이지</div>
+    <div class="ps" id="ps4">📊 엑셀</div>
+    <div class="ps" id="ps5">🏢 서류</div>
+    <div class="ps" id="ps6">⚖️ 대사</div>
+  </div>
+</div>
+
+<div class="card rc" id="rc">
+  <div id="rsum"></div>
+  <div id="r_err"></div>
+  <div id="r_core"></div>
+  <div id="r_extra"></div>
+  <div style="text-align:center"><button style="margin:10px; padding:7px 20px; font-weight:bold; border:1px solid var(--border); border-radius:5px; background:#fff; cursor:pointer;" onclick="location.reload()">↩ 초기화</button></div>
+</div>
+
+<script>
+// --- 전역 변수 ---
+let apiKey = localStorage.getItem('tf_api_key') || '';
+let imgFileObj = null; 
+let excelFiles = [];
+let mailFiles = [], webFiles = [], bizFiles = [], conFiles = [];
+let globalErrors = 0;
+let aiErrors = []; // [v9.1] AI 호출 실패 사유 누적
+
+if(apiKey){ document.getElementById('apiKey').value=apiKey; document.getElementById('keyOk').classList.add('show'); }
+function saveKey(){ apiKey=document.getElementById('apiKey').value.trim(); localStorage.setItem('tf_api_key',apiKey); document.getElementById('keyOk').classList.add('show'); }
+
+// --- 포맷팅 및 날짜 파싱 ---
+function fmtAmt(n){ if(n===null||n===undefined) return '—'; return Number(n).toLocaleString('ko-KR')+'원'; }
+function parseAmt(v){ 
+  if(v===null||v===undefined||v==='') return null; 
+  const n=parseInt(String(v).replace(/[^0-9]/g,''),10); 
+  return isNaN(n)?null:n; 
+}
+
+// [v9.1 fix] timezone-safe: SheetJS가 어떤 시간대로 Date를 만들어도
+// 가장 가까운 자정으로 반올림한 뒤 UTC 기준으로 날짜 추출 (±1일 버그 차단)
+function normDate(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number') {
+    if (v < 10000) return null;
+    const d = new Date(Math.round(v - 25569) * 86400 * 1000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+  if (v instanceof Date) {
+    // Date → Excel 시리얼 → 가장 가까운 정수(자정)로 반올림 → UTC 변환
+    const serial = v.getTime() / 86400000 + 25569;
+    const rounded = Math.round(serial);
+    const d = new Date((rounded - 25569) * 86400000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+  let s = String(v).trim();
+  if (s.includes('T') && s.includes('Z')) {
+    const d = new Date(s);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+  let m = s.match(/(\d{4})[-./년]\s*(\d{1,2})[-./월]\s*(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||'01').padStart(2,'0')}`;
+  m = s.match(/(\d{4})[-./년]\s*(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}`;
+  return s;
+}
+
+// --- [v9.1] PDF 렌더링 엔진: 화질 대폭 향상 (scale 2.0, PNG 무손실) ---
+async function pdfToImages(file){
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+  const imgs = [];
+  for(let i=1;i<=Math.min(pdf.numPages, 4);i++){
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({scale:2.0}); // [v9.1] 1.5 → 2.0
+    const cv = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    // [v9.1] PNG 무손실로 변경 (한국어 OCR 정확도 향상)
+    imgs.push({ media_type: 'image/png', data: cv.toDataURL('image/png').split(',')[1] });
+  }
+  return imgs;
+}
+
+async function fileToBase64s(file) {
+  if (!file) return [];
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    return await pdfToImages(file);
+  } else {
+    const b64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(r.result); r.readAsDataURL(file); });
+    const mimeMatch = b64.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const data = b64.split(',')[1];
+    return [{ media_type: mime, data: data }];
+  }
+}
+
+// --- 드래그 앤 드롭 로직 ---
+function initDrop(id, inputId, callback) {
+  const zone = document.getElementById(id);
+  const input = document.getElementById(inputId);
+  zone.onclick = () => input.click();
+  zone.ondragover = e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('over'); };
+  zone.ondragleave = e => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('over'); };
+  zone.ondrop = e => {
+    e.preventDefault(); e.stopPropagation(); zone.classList.remove('over');
+    if(e.dataTransfer.files && e.dataTransfer.files.length > 0) callback(e.dataTransfer.files);
+  };
+  input.onchange = e => { if(e.target.files && e.target.files.length > 0) callback(e.target.files); };
+}
+
+initDrop('imgDrop', 'imgInput', async files => {
+  const f = files[0];
+  imgFileObj = f; 
+  document.getElementById('prevImg').src = "";
+  if(f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')){
+    const ab = await f.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+    const page = await pdf.getPage(1);
+    const vp = page.getViewport({scale:1.0});
+    const cv = document.createElement('canvas');
+    cv.width=vp.width; cv.height=vp.height;
+    await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    document.getElementById('prevImg').src = cv.toDataURL('image/jpeg', 0.8);
+  } else {
+    const r = new FileReader();
+    r.onload = ev => document.getElementById('prevImg').src = ev.target.result;
+    r.readAsDataURL(f);
+  }
+  document.getElementById('imgPrev').classList.add('show');
+});
+
+initDrop('xlsDrop', 'xlsInput', files => {
+  for (let f of files) {
+    const r = new FileReader();
+    r.onload = ev => {
+      // [v9.1 fix] cellDates:true 제거 — KST 환경에서 1일 밀림 버그 차단. 날짜는 normDate의 숫자 분기로 처리됨.
+      const wb = XLSX.read(ev.target.result, {type:'array'});
+      excelFiles.push({name: f.name, wb: wb, total: getExcelTotal(wb)});
+      document.getElementById('fileList').innerHTML = excelFiles.map((x, i) => `<div class="file-card">📊 ${x.name} <strong style="color:var(--ok); margin-left:10px">${fmtAmt(x.total)}</strong> <span class="btn-remove" onclick="event.stopPropagation(); excelFiles.splice(${i},1); this.parentElement.remove()">✕</span></div>`).join('');
+    };
+    r.readAsArrayBuffer(f);
+  }
+});
+
+initDrop('mailDrop', 'mailInput', fs => { mailFiles.push(...fs); document.getElementById('mailCount').innerText = mailFiles.length+'개 완료'; });
+initDrop('webDrop', 'webInput', fs => { webFiles.push(...fs); document.getElementById('webCount').innerText = webFiles.length+'개 완료'; });
+initDrop('bizDrop', 'bizInput', fs => { bizFiles.push(...fs); document.getElementById('bizCount').innerText = bizFiles.length+'개 완료'; });
+initDrop('conDrop', 'conInput', fs => { conFiles.push(...fs); document.getElementById('conCount').innerText = conFiles.length+'개 완료'; });
+
+// --- [v9.1 fix] 엑셀 파싱: 모든 시트 스캔 + 총합계 행의 최우측 금액 추출 ---
+function getExcelTotal(wb){
+  if(!wb || !wb.SheetNames.length) return null;
+
+  // 1순위: '정산요약' 시트가 있으면 우선 사용
+  if(wb.SheetNames.includes('정산요약')){
+    const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',UTC:true});
+    const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
+    const v = parseAmt(map['최종 입금액 (세후)']||map['정산총액']);
+    if(v) return v;
+  }
+
+  // 2순위: 모든 시트를 스캔하여 '총합계' 또는 '최종 입금액' 행 탐색
+  // 발견 시 → 같은 행의 모든 셀 중 최우측(rightmost) 숫자값 반환 (테라핀 매출액 = 마지막 금액 컬럼)
+  for(const sn of wb.SheetNames) {
+    const ws = wb.Sheets[sn];
+    if(!ws) continue;
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+    for(let r=0; r<rows.length; r++) {
+      const row = rows[r] || [];
+      let labelCol = -1;
+      for(let c=0; c<row.length; c++) {
+        const txt = String(row[c]||'').replace(/\s/g,'');
+        if(txt.includes('총합계') || txt.includes('합계') || txt.includes('최종입금액') || txt.includes('총계')) {
+          labelCol = c; break;
+        }
+      }
+      if(labelCol === -1) continue;
+      // 라벨 발견 → 같은 행에서 라벨 오른쪽의 모든 숫자 후보 수집, 최우측 값 채택
+      let lastNum = null;
+      for(let c=labelCol+1; c<row.length; c++) {
+        const v = parseAmt(row[c]);
+        if(v && v > 0) lastNum = v;
+      }
+      if(lastNum) return lastNum;
+      // 같은 행에 없으면 다음 행도 한 번 시도
+      const nextRow = rows[r+1] || [];
+      for(let c=labelCol+1; c<nextRow.length; c++) {
+        const v = parseAmt(nextRow[c]);
+        if(v && v > 0) lastNum = v;
+      }
+      if(lastNum) return lastNum;
+    }
+  }
+
+  // 3순위: 첫 시트의 '금액' 컬럼 합산 (기존 fallback 유지)
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+  let listTotal = 0;
+  let amtColIndex = -1;
+  for(let r=0; r<rows.length; r++) {
+    const row = rows[r] || [];
+    if(amtColIndex === -1) {
+      for(let c=0; c<row.length; c++) {
+        if(String(row[c]).replace(/\s/g, '').includes('금액')) { amtColIndex = c; break; }
+      }
+    } else {
+      const val = parseAmt(row[amtColIndex]);
+      if(val) listTotal += val;
+    }
+  }
+  return listTotal > 0 ? listTotal : null;
+}
+
+// --- [v9.1 fix] 엑셀 메타: 모든 시트 스캔 + 정산월/서비스월/지급일/이메일/사업자번호 추출 ---
+function getExcelMeta(wb) {
+  let meta = { 작성일자: null, 서비스월: null, 입금예정일: null, 이메일: null, 사업자등록번호: null };
+  if(!wb || !wb.SheetNames.length) return meta;
+
+  // 패턴 기반 추출 헬퍼
+  const emailPat = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  const bizPat = /\d{3}-\d{2}-\d{5}/;
+
+  for(const sn of wb.SheetNames) {
+    const ws = wb.Sheets[sn];
+    if(!ws) continue;
+    const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+    // === A. 정산월/서비스월: 헤더 기반 (테이블형) ===
+    let colSettle = -1, colService = -1, headerRow = -1;
+    for (let r = 0; r < Math.min(data.length, 15); r++) {
+      const row = data[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const v = String(row[c]||"").replace(/\s/g,'');
+        if (v === '정산월' && colSettle === -1) { colSettle = c; headerRow = r; }
+        if (v === '서비스월' && colService === -1) { colService = c; headerRow = r; }
+      }
+      if(colSettle !== -1 || colService !== -1) break;
+    }
+    if(headerRow !== -1) {
+      for(let r = headerRow + 1; r < Math.min(data.length, headerRow + 10); r++) {
+        const row = data[r] || [];
+        if(colSettle !== -1 && !meta.작성일자 && row[colSettle]) meta.작성일자 = normDate(row[colSettle]);
+        if(colService !== -1 && !meta.서비스월 && row[colService]) meta.서비스월 = normDate(row[colService]);
+        if(meta.작성일자 || meta.서비스월) break;
+      }
+    }
+
+    // === B. 라벨-값 인접 스캔 (라벨형 표지/요약 시트 대응) ===
+    for (let r = 0; r < Math.min(data.length, 100); r++) {
+      const row = data[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const cell = row[c];
+        if(cell === null || cell === undefined) continue;
+        const label = String(cell).replace(/\s/g,'');
+        // 라벨 발견 시 같은 행의 오른쪽 셀들 중 첫 번째 값을 가져옴
+        const grabRight = () => {
+          for(let cc = c+1; cc < row.length; cc++) {
+            if(row[cc] !== null && row[cc] !== undefined && row[cc] !== '') return row[cc];
+          }
+          return null;
+        };
+        if(!meta.작성일자 && (label.includes('정산월') || label.includes('계산서작성일') || label.includes('계산서발행일') || label.includes('작성일자'))) {
+          const v = grabRight();
+          if(v) meta.작성일자 = normDate(v);
+        }
+        if(!meta.서비스월 && (label.includes('서비스월') || label.includes('대상기간'))) {
+          const v = grabRight();
+          if(v) meta.서비스월 = normDate(v);
+        }
+        if(!meta.입금예정일 && (label.includes('지급일') || label.includes('이체일') || label.includes('입금예정') || label.includes('정산금이체') || label.includes('송금일'))) {
+          const v = grabRight();
+          if(v) meta.입금예정일 = normDate(v);
+        }
+        if(!meta.이메일 && (label.includes('이메일') || label.includes('메일') || label.includes('담당자'))) {
+          const v = grabRight();
+          if(v) {
+            const m = String(v).match(emailPat);
+            if(m) meta.이메일 = m[0];
+          }
+        }
+        if(!meta.사업자등록번호 && (label.includes('사업자등록번호') || label.includes('사업자번호'))) {
+          const v = grabRight();
+          if(v) {
+            const m = String(v).match(bizPat);
+            if(m) meta.사업자등록번호 = m[0].replace(/-/g,'');
+          }
+        }
+      }
+    }
+
+    // === C. 패턴 전역 스캔 (이메일/사업자번호가 라벨 없이 셀에 박혀있는 경우) ===
+    if(!meta.이메일 || !meta.사업자등록번호) {
+      for (let r = 0; r < Math.min(data.length, 100); r++) {
+        const row = data[r] || [];
+        for (let c = 0; c < row.length; c++) {
+          const txt = String(row[c]||'');
+          if(!meta.이메일) {
+            const m = txt.match(emailPat);
+            if(m) meta.이메일 = m[0];
+          }
+          if(!meta.사업자등록번호) {
+            const m = txt.match(bizPat);
+            if(m) meta.사업자등록번호 = m[0].replace(/-/g,'');
+          }
+        }
+      }
+    }
+  }
+  return meta;
+}
+
+// --- [v9.1] AI 프롬프트: 모호한 표기 제거, 한국어 지시문 명확화 ---
+const PROMPT_기안서=`당신은 한국 회사의 정산 기안서를 분석하는 OCR 전문가입니다.
+이미지 속 한국어 텍스트를 모두 읽고, 아래 8개 항목을 추출하여 순수 JSON 객체 하나로만 응답하세요.
+
+[엄수 규칙]
+- 코드펜스(\`\`\`), 설명, 머리말, 꼬리말 절대 금지. 오직 { 로 시작하고 } 로 끝나는 JSON만.
+- 금액은 쉼표/원/단위 없이 정수(number)로만. 예: 5500000
+- 날짜는 "YYYY-MM-DD" 형식 문자열. 월만 있으면 "YYYY-MM".
+- 찾을 수 없으면 해당 키의 값은 null.
+
+[추출 항목]
+- 총금액: 본문 표의 합계 금액(공급가액+부가세 = 합계). 합계가 표에 있으면 합계를 우선.
+- 작성일자: "계산서 작성일자" 라벨 옆 날짜.
+- 마감일: "계산서 마감기한" 또는 "발행마감일" 옆 날짜.
+- 서비스월: "정산월" 또는 "서비스월" 옆 값. 없으면 작성일자의 연-월.
+- 입금예정일: "입금예정일" 셀 또는 본문의 지급/입금 관련 문장 전체(예: "발행일 기준 30영업일 이내").
+- 품목명: 작품명/품목 칸의 텍스트 (예: "웹툰_불량 식품에 길들여지면_원작사용료_선급금").
+- 이메일: 발신/담당자 이메일 주소.
+- 사업자등록번호: "XXX-XX-XXXXX" 형식 그대로.
+
+[출력 JSON 키]
+{"총금액": null, "작성일자": null, "마감일": null, "서비스월": null, "입금예정일": null, "품목명": null, "이메일": null, "사업자등록번호": null}`;
+
+const PROMPT_메일=`당신은 거래처 메일 캡처를 분석하는 OCR 전문가입니다.
+이미지 속 한국어 텍스트를 모두 읽고, 아래 항목을 순수 JSON 객체 하나로만 응답하세요.
+
+[엄수 규칙]
+- 코드펜스, 설명 금지. 오직 JSON만.
+- 금액은 정수(number), 쉼표/단위 없이.
+- 날짜는 "YYYY-MM-DD".
+- 없으면 null.
+
+[추출 항목]
+- 작성일자: 본문에 명시된 발행 요청일(메일 발송일 아님).
+- 마감일: 본문에 명시된 마감 기한.
+- 입금예정일: 입금/지급 관련 문장 전체.
+- 총금액: 명시된 총 청구/지급 금액.
+- 품목명: 작품명/품목명.
+- 이메일: 계산서 수신 이메일 주소.
+- 사업자등록번호: "XXX-XX-XXXXX".
+- 중요공지: 본문의 강조/특이사항/주의문구 전체.
+
+[출력 JSON 키]
+{"작성일자": null, "마감일": null, "입금예정일": null, "총금액": null, "품목명": null, "이메일": null, "사업자등록번호": null, "중요공지": null}`;
+
+const PROMPT_계약서=`이미지 속 계약서를 읽고 순수 JSON으로만 응답하세요. 코드펜스 금지.
+- 총계약금액: 매절/선투자금/계약금 등 명시된 총 금액 (정수, 쉼표 없이). 없으면 null.
+- 입금조건: 입금/지급 관련 조건 텍스트 전체. 없으면 null.
+
+{"총계약금액": null, "입금조건": null}`;
+
+const PROMPT_사업자=`이미지 속 사업자등록증을 읽고 순수 JSON으로만 응답하세요. 코드펜스 금지.
+- 사업자등록번호: 숫자만 추출 (하이픈 제외, 10자리 문자열).
+- 이메일: 표시된 이메일 주소. 없으면 null.
+
+{"사업자등록번호": null, "이메일": null}`;
+
+// --- [v9.1] AI 호출: Haiku 4.5, 에러 가시화, JSON 정리 강화 ---
+async function aiCall(file, prompt, label) {
+  if(!file) return null;
+  let b64Objs;
+  try {
+    b64Objs = await fileToBase64s(file);
+  } catch(e) {
+    aiErrors.push(`[${label}] 파일 읽기 실패: ${e.message}`);
+    return null;
+  }
+  
+  let contentBlocks = [];
+  for(const obj of b64Objs) {
+    contentBlocks.push({type:'image', source:{type:'base64', media_type: obj.media_type, data: obj.data}});
+  }
+  contentBlocks.push({type:'text', text:prompt});
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'x-api-key': apiKey, 
+        'anthropic-version': '2023-06-01', 
+        'anthropic-dangerous-direct-browser-access': 'true' 
+      },
+      body: JSON.stringify({ 
+        model: 'claude-haiku-4-5', // [v9.1] 핵심: 모델 업그레이드
+        max_tokens: 2500,           // [v9.1] 1500 → 2500
+        messages: [{role:'user', content: contentBlocks}] 
+      })
+    });
+    const d = await res.json();
+    if (d.error) {
+      aiErrors.push(`[${label}] API 오류: ${d.error.message}`);
+      return null;
+    }
+    if (!d.content || !d.content[0] || !d.content[0].text) {
+      aiErrors.push(`[${label}] 응답 비어있음`);
+      return null;
+    }
+    
+    let raw = d.content[0].text;
+    // [v9.1] 코드펜스/주석 제거 후 JSON만 추출
+    raw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) {
+      aiErrors.push(`[${label}] JSON 형식 아님: ${raw.substring(0,80)}`);
+      return null;
+    }
+    let cleaned = match[0]
+      .replace(/,\s*([}\]])/g, '$1')   // 후행 콤마
+      .replace(/\/\/[^\n]*/g, '');     // 라인 주석
+    try {
+      return JSON.parse(cleaned);
+    } catch(parseErr) {
+      aiErrors.push(`[${label}] JSON 파싱 실패: ${parseErr.message}`);
+      return null;
+    }
+  } catch(e) { 
+    aiErrors.push(`[${label}] 통신 실패: ${e.message}`);
+    return null; 
+  }
+}
+
+// --- 1:N 통합 비교기 ---
+function cmpMulti(label, baseVal, targets, isAmt=false, isText=false) {
+  let isFail = false;
+  let hasValidTarget = false;
+  
+  let sBase = isAmt && baseVal ? fmtAmt(baseVal) : (baseVal || '미기재');
+  let diffHtml = `<div class="diff"><div class="dr"><span class="dtag src1">기안서</span><span class="dval" style="color:var(--navy);font-weight:600">${sBase}</span></div>`;
+  
+  for (let t of targets) {
+    if (!t.provided) continue; 
+    
+    if (!t.val) {
+      diffHtml += `<div class="dr"><span class="dtag" style="background:#e8edf8;color:#6b7a99">${t.name}</span><span class="dval" style="color:var(--sub)">확인 불가</span></div>`;
+      continue;
+    }
+    
+    hasValidTarget = true;
+    let sTarget = isAmt ? fmtAmt(t.val) : t.val;
+    let match = false;
+    
+    if (isText) {
+      const nB = String(baseVal||'').replace(/[\s-]/g,'').toLowerCase();
+      const nT = String(t.val).replace(/[\s-]/g,'').toLowerCase();
+      match = (nB && nT && (nB.includes(nT) || nT.includes(nB)));
+    } else {
+      match = (String(baseVal) === String(t.val));
+    }
+    
+    if (!match) isFail = true;
+    diffHtml += `<div class="dr"><span class="dtag" style="background:#e8edf8;color:#6b7a99">${t.name}</span><span class="dval" style="color:${match?'var(--ok)':'var(--err)'}; font-weight:${match?'normal':'bold'}">${sTarget} ${match?'✓':'✕'}</span></div>`;
+  }
+  diffHtml += `</div>`;
+  
+  if (!hasValidTarget) {
+     return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub);font-weight:400">대사 대상 자료 없음 (또는 미기재)</div>${diffHtml}</div></div>`;
+  }
+  
+  if (!baseVal) isFail = true; 
+  if (isFail) globalErrors++;
+  
+  const status = isFail ? 'fail' : 'pass';
+  const statusTxt = isFail ? '불일치 ⚠' : '일치 ✓';
+  
+  return `<div class="ci ${status}"><div class="cs">${status==='pass'?'✓':'✕'}</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det">${statusTxt}</div>${diffHtml}</div></div>`;
+}
+
+// --- 메인 검증 실행 ---
+async function run() {
+  if(!apiKey || !imgFileObj) return alert('기안서 캡처 파일을 먼저 등록해주세요.');
+  const btn = document.getElementById('vBtn'); btn.disabled = true; btn.innerHTML = '<div class="spin"></div>';
+  document.getElementById('prog').classList.add('show');
+  globalErrors = 0; 
+  aiErrors = []; // [v9.1] 초기화
+  
+  try {
+    setStep(1, 'active'); const 기안 = await aiCall(imgFileObj, PROMPT_기안서, '기안서'); setStep(1, 'done');
+    setStep(2, mailFiles.length ? 'active' : 'skip'); const 메일 = mailFiles.length ? await aiCall(mailFiles[0], PROMPT_메일, '메일') : null; if(메일) setStep(2, 'done');
+    setStep(4, excelFiles.length ? 'active' : 'skip'); const 엑셀 = excelFiles.length ? getExcelMeta(excelFiles[0].wb) : null; if(엑셀) setStep(4, 'done');
+    setStep(5, (conFiles.length || bizFiles.length) ? 'active' : 'skip');
+    const 계약서 = conFiles.length ? await aiCall(conFiles[0], PROMPT_계약서, '계약서') : null;
+    const 사업자 = bizFiles.length ? await aiCall(bizFiles[0], PROMPT_사업자, '사업자등록증') : null;
+    if(계약서 || 사업자) setStep(5, 'done');
+
+    const imgTotal = parseAmt(기안?.총금액);
+    const xlTotal = excelFiles.length ? excelFiles.reduce((s,f)=>s+(f.total||0), 0) : null;
+    const imgDate = normDate(기안?.작성일자);
+    const imgDue = normDate(기안?.마감일);
+    const imgDeposit = normDate(기안?.입금예정일) || 기안?.입금예정일; 
+    
+    // [v9.1] AI 호출 실패 시 에러 배너 표시
+    if (aiErrors.length > 0) {
+      document.getElementById('r_err').innerHTML = 
+        `<div class="err-banner">⚠️ AI 인식 실패 항목이 있습니다:<br>` +
+        aiErrors.map(e=>`• ${e}`).join('<br>') + 
+        `</div>`;
+    } else {
+      document.getElementById('r_err').innerHTML = '';
+    }
+    
+    // --- 통합 코어 대사판 렌더링 ---
+    let coreHtml = `<div class="chk-group"><div class="gt">🔍 필수 항목 통합 대사 (기안서 기준)</div>`;
+    
+    coreHtml += cmpMulti('1. 청구/정산 금액', imgTotal, [
+      {name: '엑셀', val: xlTotal, provided: excelFiles.length > 0},
+      {name: '메일', val: parseAmt(메일?.총금액), provided: !!메일},
+      {name: '계약서', val: parseAmt(계약서?.총계약금액), provided: !!계약서}
+    ], true, false);
+
+    coreHtml += cmpMulti('2. 작성일자 (정산월)', imgDate, [
+      {name: '엑셀', val: 엑셀?.작성일자, provided: !!엑셀},
+      {name: '메일', val: normDate(메일?.작성일자), provided: !!메일}
+    ], false, false);
+
+    coreHtml += cmpMulti('3. 세금계산서 마감일자', imgDue, [
+      {name: '메일', val: normDate(메일?.마감일), provided: !!메일}
+    ], false, false);
+
+    coreHtml += cmpMulti('4. 입금/지급 예정일', imgDeposit, [
+      {name: '엑셀', val: 엑셀?.입금예정일, provided: !!엑셀, isText: true},
+      {name: '메일', val: normDate(메일?.입금예정일) || 메일?.입금예정일, provided: !!메일},
+      {name: '계약서', val: 계약서?.입금조건, provided: !!계약서, isText: true}
+    ], false, true);
+
+    coreHtml += cmpMulti('5. 청구 품목 (작품명)', 기안?.품목명, [
+      {name: '메일', val: 메일?.품목명, provided: !!메일}
+    ], false, true);
+
+    coreHtml += cmpMulti('6. 발신 이메일 주소', 기안?.이메일, [
+      {name: '엑셀', val: 엑셀?.이메일, provided: !!엑셀},
+      {name: '메일', val: 메일?.이메일, provided: !!메일},
+      {name: '등록증', val: 사업자?.이메일, provided: !!사업자}
+    ], false, true);
+
+    const cleanBiz = v => v ? String(v).replace(/[^0-9]/g,'') : null;
+    coreHtml += cmpMulti('7. 사업자등록번호', cleanBiz(기안?.사업자등록번호), [
+      {name: '엑셀', val: cleanBiz(엑셀?.사업자등록번호), provided: !!엑셀},
+      {name: '메일', val: cleanBiz(메일?.사업자등록번호), provided: !!메일},
+      {name: '등록증', val: cleanBiz(사업자?.사업자등록번호), provided: !!사업자}
+    ], false, true);
+
+    coreHtml += `</div>`;
+    document.getElementById('r_core').innerHTML = coreHtml;
+
+    // --- 부가 정보 (메일 공지 등) ---
+    if(메일?.중요공지) {
+      document.getElementById('r_extra').innerHTML = `<div class="chk-group"><div style="padding:12px 14px;background:#fff3cd;border:2px solid #ffc107;border-radius:8px;font-size:12px;"><div style="font-weight:700;color:#856404;margin-bottom:4px">⚠️ 메일 특이사항/공지</div><div style="color:#5a3e00;line-height:1.6">${메일.중요공지}</div></div></div>`;
+    } else {
+      document.getElementById('r_extra').innerHTML = '';
+    }
+
+    // 결과 배너
+    document.getElementById('rsum').innerHTML = globalErrors === 0
+      ? `<div class="r-sum"><div class="ri ok">✅</div><div class="rt"><h3 class="ok">이상 없음 — 기안 상신 가능합니다</h3><p>주요 필수 항목이 모두 일치합니다. (i 마크는 서류 누락)</p></div></div>`
+      : `<div class="r-sum"><div class="ri fail">❌</div><div class="rt"><h3 class="fail">오류 발생 — ${globalErrors}개 항목 불일치</h3><p>붉은색(✕)으로 표시된 항목을 확인 후 기안서를 수정하세요.</p></div></div>`;
+
+    setStep(6, 'done');
+    document.getElementById('rc').classList.add('show');
+  } catch(e) { alert('오류: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = '🔍 AI 검증 시작'; }
+}
+
+function setStep(n,s){ document.getElementById('ps'+n).className='ps '+s; }
+</script>
+</body>
+</html>
