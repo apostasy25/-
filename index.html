@@ -334,25 +334,55 @@ initDrop('webDrop', 'webInput', fs => { webFiles.push(...fs); document.getElemen
 initDrop('bizDrop', 'bizInput', fs => { bizFiles.push(...fs); document.getElementById('bizCount').innerText = bizFiles.length+'개 완료'; });
 initDrop('conDrop', 'conInput', fs => { conFiles.push(...fs); document.getElementById('conCount').innerText = conFiles.length+'개 완료'; });
 
-// --- 엑셀 파싱 ---
+// --- [v9.1 fix] 엑셀 파싱: 모든 시트 스캔 + 총합계 행의 최우측 금액 추출 ---
 function getExcelTotal(wb){
+  if(!wb || !wb.SheetNames.length) return null;
+
+  // 1순위: '정산요약' 시트가 있으면 우선 사용
   if(wb.SheetNames.includes('정산요약')){
     const ws=wb.Sheets['정산요약']; const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',UTC:true});
     const map={}; for(const row of rows) if(row[0]&&row[1]!=='') map[String(row[0]).trim()]=row[1];
-    return parseAmt(map['최종 입금액 (세후)']||map['정산총액']);
+    const v = parseAmt(map['최종 입금액 (세후)']||map['정산총액']);
+    if(v) return v;
   }
+
+  // 2순위: 모든 시트를 스캔하여 '총합계' 또는 '최종 입금액' 행 탐색
+  // 발견 시 → 같은 행의 모든 셀 중 최우측(rightmost) 숫자값 반환 (테라핀 매출액 = 마지막 금액 컬럼)
+  for(const sn of wb.SheetNames) {
+    const ws = wb.Sheets[sn];
+    if(!ws) continue;
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+    for(let r=0; r<rows.length; r++) {
+      const row = rows[r] || [];
+      let labelCol = -1;
+      for(let c=0; c<row.length; c++) {
+        const txt = String(row[c]||'').replace(/\s/g,'');
+        if(txt.includes('총합계') || txt.includes('합계') || txt.includes('최종입금액') || txt.includes('총계')) {
+          labelCol = c; break;
+        }
+      }
+      if(labelCol === -1) continue;
+      // 라벨 발견 → 같은 행에서 라벨 오른쪽의 모든 숫자 후보 수집, 최우측 값 채택
+      let lastNum = null;
+      for(let c=labelCol+1; c<row.length; c++) {
+        const v = parseAmt(row[c]);
+        if(v && v > 0) lastNum = v;
+      }
+      if(lastNum) return lastNum;
+      // 같은 행에 없으면 다음 행도 한 번 시도
+      const nextRow = rows[r+1] || [];
+      for(let c=labelCol+1; c<nextRow.length; c++) {
+        const v = parseAmt(nextRow[c]);
+        if(v && v > 0) lastNum = v;
+      }
+      if(lastNum) return lastNum;
+    }
+  }
+
+  // 3순위: 첫 시트의 '금액' 컬럼 합산 (기존 fallback 유지)
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
   let listTotal = 0;
-  for(let r=0; r<rows.length; r++) {
-    const row = rows[r] || [];
-    for(let c=0; c<row.length; c++) {
-      if(String(row[c]).includes('총합계') || String(row[c]).includes('최종 입금액')) {
-         const val = parseAmt(row[c+1] || row[c+2] || (rows[r+1]?rows[r+1][c]:null));
-         if(val) return val;
-      }
-    }
-  }
   let amtColIndex = -1;
   for(let r=0; r<rows.length; r++) {
     const row = rows[r] || [];
@@ -368,20 +398,58 @@ function getExcelTotal(wb){
   return listTotal > 0 ? listTotal : null;
 }
 
+// --- [v9.1 fix] 엑셀 메타: 모든 시트 스캔 + 정산월/서비스월 헤더 찾기 ---
 function getExcelMeta(wb) {
   let meta = { 작성일자: null, 서비스월: null };
   if(!wb || !wb.SheetNames.length) return meta;
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-  for (let r = 0; r < Math.min(data.length, 50); r++) {
-    const row = data[r] || [];
-    if (row[30] && !meta.작성일자) meta.작성일자 = normDate(row[30]);
-    if (row[29] && !meta.서비스월) meta.서비스월 = normDate(row[29]);
-    for (let c = 0; c < row.length; c++) {
-      const v = String(row[c]||"");
-      if (v.includes("정산월") && !meta.작성일자) meta.작성일자 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
-      if (v.includes("서비스월") && !meta.서비스월) meta.서비스월 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
+
+  // 모든 시트를 순회
+  for(const sn of wb.SheetNames) {
+    const ws = wb.Sheets[sn];
+    if(!ws) continue;
+    const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+
+    // 1단계: 헤더 행에서 '정산월' / '서비스월' 컬럼 위치 찾기
+    let colSettle = -1, colService = -1, headerRow = -1;
+    for (let r = 0; r < Math.min(data.length, 15); r++) {
+      const row = data[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const v = String(row[c]||"").replace(/\s/g,'');
+        if (v === '정산월' && colSettle === -1) { colSettle = c; headerRow = r; }
+        if (v === '서비스월' && colService === -1) { colService = c; headerRow = r; }
+      }
+      if(colSettle !== -1 || colService !== -1) break;
     }
+
+    // 2단계: 헤더를 찾았으면 그 아래 첫 번째 데이터 행에서 날짜 추출
+    if(headerRow !== -1) {
+      for(let r = headerRow + 1; r < Math.min(data.length, headerRow + 10); r++) {
+        const row = data[r] || [];
+        if(colSettle !== -1 && !meta.작성일자 && row[colSettle]) {
+          meta.작성일자 = normDate(row[colSettle]);
+        }
+        if(colService !== -1 && !meta.서비스월 && row[colService]) {
+          meta.서비스월 = normDate(row[colService]);
+        }
+        if(meta.작성일자 || meta.서비스월) break;
+      }
+    }
+
+    // 3단계: 헤더 못 찾았으면 라벨-값 인접 패턴 시도 (예: A1="정산월", B1="2026-03-31")
+    for (let r = 0; r < Math.min(data.length, 50); r++) {
+      const row = data[r] || [];
+      for (let c = 0; c < row.length; c++) {
+        const v = String(row[c]||"");
+        if (v.includes("정산월") && !meta.작성일자) {
+          meta.작성일자 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
+        }
+        if (v.includes("서비스월") && !meta.서비스월) {
+          meta.서비스월 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
+        }
+      }
+    }
+
+    if(meta.작성일자 && meta.서비스월) break; // 둘 다 찾으면 종료
   }
   return meta;
 }
