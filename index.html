@@ -228,28 +228,32 @@ function parseAmt(v){
   return isNaN(n)?null:n; 
 }
 
+// [v9.1 fix] timezone-safe: SheetJS가 어떤 시간대로 Date를 만들어도
+// 가장 가까운 자정으로 반올림한 뒤 UTC 기준으로 날짜 추출 (±1일 버그 차단)
 function normDate(v) {
   if (v === null || v === undefined || v === '') return null;
   if (typeof v === 'number') {
     if (v < 10000) return null;
-    const d = new Date((v - 25569) * 86400 * 1000);
+    const d = new Date(Math.round(v - 25569) * 86400 * 1000);
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
   }
   if (v instanceof Date) {
-    const kst = new Date(v.getTime() + 9 * 60 * 60 * 1000);
-    return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
+    // Date → Excel 시리얼 → 가장 가까운 정수(자정)로 반올림 → UTC 변환
+    const serial = v.getTime() / 86400000 + 25569;
+    const rounded = Math.round(serial);
+    const d = new Date((rounded - 25569) * 86400000);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
   }
   let s = String(v).trim();
   if (s.includes('T') && s.includes('Z')) {
     const d = new Date(s);
-    const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
-    return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`;
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
   }
   let m = s.match(/(\d{4})[-./년]\s*(\d{1,2})[-./월]\s*(\d{1,2})/);
   if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${(m[3]||'01').padStart(2,'0')}`;
   m = s.match(/(\d{4})[-./년]\s*(\d{1,2})/);
-  if (m) return `${m[1]}-${m[2].padStart(2,'0')}`; 
-  return s; 
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}`;
+  return s;
 }
 
 // --- [v9.1] PDF 렌더링 엔진: 화질 대폭 향상 (scale 2.0, PNG 무손실) ---
@@ -321,7 +325,8 @@ initDrop('xlsDrop', 'xlsInput', files => {
   for (let f of files) {
     const r = new FileReader();
     r.onload = ev => {
-      const wb = XLSX.read(ev.target.result, {type:'array', cellDates:true});
+      // [v9.1 fix] cellDates:true 제거 — KST 환경에서 1일 밀림 버그 차단. 날짜는 normDate의 숫자 분기로 처리됨.
+      const wb = XLSX.read(ev.target.result, {type:'array'});
       excelFiles.push({name: f.name, wb: wb, total: getExcelTotal(wb)});
       document.getElementById('fileList').innerHTML = excelFiles.map((x, i) => `<div class="file-card">📊 ${x.name} <strong style="color:var(--ok); margin-left:10px">${fmtAmt(x.total)}</strong> <span class="btn-remove" onclick="event.stopPropagation(); excelFiles.splice(${i},1); this.parentElement.remove()">✕</span></div>`).join('');
     };
@@ -398,18 +403,21 @@ function getExcelTotal(wb){
   return listTotal > 0 ? listTotal : null;
 }
 
-// --- [v9.1 fix] 엑셀 메타: 모든 시트 스캔 + 정산월/서비스월 헤더 찾기 ---
+// --- [v9.1 fix] 엑셀 메타: 모든 시트 스캔 + 정산월/서비스월/지급일/이메일/사업자번호 추출 ---
 function getExcelMeta(wb) {
-  let meta = { 작성일자: null, 서비스월: null };
+  let meta = { 작성일자: null, 서비스월: null, 입금예정일: null, 이메일: null, 사업자등록번호: null };
   if(!wb || !wb.SheetNames.length) return meta;
 
-  // 모든 시트를 순회
+  // 패턴 기반 추출 헬퍼
+  const emailPat = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  const bizPat = /\d{3}-\d{2}-\d{5}/;
+
   for(const sn of wb.SheetNames) {
     const ws = wb.Sheets[sn];
     if(!ws) continue;
     const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
 
-    // 1단계: 헤더 행에서 '정산월' / '서비스월' 컬럼 위치 찾기
+    // === A. 정산월/서비스월: 헤더 기반 (테이블형) ===
     let colSettle = -1, colService = -1, headerRow = -1;
     for (let r = 0; r < Math.min(data.length, 15); r++) {
       const row = data[r] || [];
@@ -420,36 +428,75 @@ function getExcelMeta(wb) {
       }
       if(colSettle !== -1 || colService !== -1) break;
     }
-
-    // 2단계: 헤더를 찾았으면 그 아래 첫 번째 데이터 행에서 날짜 추출
     if(headerRow !== -1) {
       for(let r = headerRow + 1; r < Math.min(data.length, headerRow + 10); r++) {
         const row = data[r] || [];
-        if(colSettle !== -1 && !meta.작성일자 && row[colSettle]) {
-          meta.작성일자 = normDate(row[colSettle]);
-        }
-        if(colService !== -1 && !meta.서비스월 && row[colService]) {
-          meta.서비스월 = normDate(row[colService]);
-        }
+        if(colSettle !== -1 && !meta.작성일자 && row[colSettle]) meta.작성일자 = normDate(row[colSettle]);
+        if(colService !== -1 && !meta.서비스월 && row[colService]) meta.서비스월 = normDate(row[colService]);
         if(meta.작성일자 || meta.서비스월) break;
       }
     }
 
-    // 3단계: 헤더 못 찾았으면 라벨-값 인접 패턴 시도 (예: A1="정산월", B1="2026-03-31")
-    for (let r = 0; r < Math.min(data.length, 50); r++) {
+    // === B. 라벨-값 인접 스캔 (라벨형 표지/요약 시트 대응) ===
+    for (let r = 0; r < Math.min(data.length, 100); r++) {
       const row = data[r] || [];
       for (let c = 0; c < row.length; c++) {
-        const v = String(row[c]||"");
-        if (v.includes("정산월") && !meta.작성일자) {
-          meta.작성일자 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
+        const cell = row[c];
+        if(cell === null || cell === undefined) continue;
+        const label = String(cell).replace(/\s/g,'');
+        // 라벨 발견 시 같은 행의 오른쪽 셀들 중 첫 번째 값을 가져옴
+        const grabRight = () => {
+          for(let cc = c+1; cc < row.length; cc++) {
+            if(row[cc] !== null && row[cc] !== undefined && row[cc] !== '') return row[cc];
+          }
+          return null;
+        };
+        if(!meta.작성일자 && (label.includes('정산월') || label.includes('계산서작성일') || label.includes('계산서발행일') || label.includes('작성일자'))) {
+          const v = grabRight();
+          if(v) meta.작성일자 = normDate(v);
         }
-        if (v.includes("서비스월") && !meta.서비스월) {
-          meta.서비스월 = normDate(row[c+1] || (data[r+1]?data[r+1][c]:null));
+        if(!meta.서비스월 && (label.includes('서비스월') || label.includes('대상기간'))) {
+          const v = grabRight();
+          if(v) meta.서비스월 = normDate(v);
+        }
+        if(!meta.입금예정일 && (label.includes('지급일') || label.includes('이체일') || label.includes('입금예정') || label.includes('정산금이체') || label.includes('송금일'))) {
+          const v = grabRight();
+          if(v) meta.입금예정일 = normDate(v);
+        }
+        if(!meta.이메일 && (label.includes('이메일') || label.includes('메일') || label.includes('담당자'))) {
+          const v = grabRight();
+          if(v) {
+            const m = String(v).match(emailPat);
+            if(m) meta.이메일 = m[0];
+          }
+        }
+        if(!meta.사업자등록번호 && (label.includes('사업자등록번호') || label.includes('사업자번호'))) {
+          const v = grabRight();
+          if(v) {
+            const m = String(v).match(bizPat);
+            if(m) meta.사업자등록번호 = m[0].replace(/-/g,'');
+          }
         }
       }
     }
 
-    if(meta.작성일자 && meta.서비스월) break; // 둘 다 찾으면 종료
+    // === C. 패턴 전역 스캔 (이메일/사업자번호가 라벨 없이 셀에 박혀있는 경우) ===
+    if(!meta.이메일 || !meta.사업자등록번호) {
+      for (let r = 0; r < Math.min(data.length, 100); r++) {
+        const row = data[r] || [];
+        for (let c = 0; c < row.length; c++) {
+          const txt = String(row[c]||'');
+          if(!meta.이메일) {
+            const m = txt.match(emailPat);
+            if(m) meta.이메일 = m[0];
+          }
+          if(!meta.사업자등록번호) {
+            const m = txt.match(bizPat);
+            if(m) meta.사업자등록번호 = m[0].replace(/-/g,'');
+          }
+        }
+      }
+    }
   }
   return meta;
 }
@@ -674,6 +721,7 @@ async function run() {
     ], false, false);
 
     coreHtml += cmpMulti('4. 입금/지급 예정일', imgDeposit, [
+      {name: '엑셀', val: 엑셀?.입금예정일, provided: !!엑셀, isText: true},
       {name: '메일', val: normDate(메일?.입금예정일) || 메일?.입금예정일, provided: !!메일},
       {name: '계약서', val: 계약서?.입금조건, provided: !!계약서, isText: true}
     ], false, true);
@@ -683,12 +731,14 @@ async function run() {
     ], false, true);
 
     coreHtml += cmpMulti('6. 발신 이메일 주소', 기안?.이메일, [
+      {name: '엑셀', val: 엑셀?.이메일, provided: !!엑셀},
       {name: '메일', val: 메일?.이메일, provided: !!메일},
       {name: '등록증', val: 사업자?.이메일, provided: !!사업자}
     ], false, true);
 
     const cleanBiz = v => v ? String(v).replace(/[^0-9]/g,'') : null;
     coreHtml += cmpMulti('7. 사업자등록번호', cleanBiz(기안?.사업자등록번호), [
+      {name: '엑셀', val: cleanBiz(엑셀?.사업자등록번호), provided: !!엑셀},
       {name: '메일', val: cleanBiz(메일?.사업자등록번호), provided: !!메일},
       {name: '등록증', val: cleanBiz(사업자?.사업자등록번호), provided: !!사업자}
     ], false, true);
