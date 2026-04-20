@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>기안서 검증기 v12.0 (Master) — 테라핀 정산팀</title>
+<title>기안서 검증기 v12.1 — 테라핀 정산팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -82,8 +82,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
   </div>
   <div class="hd-txt">
-    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v12.0 (Master Edition)</span></h1>
-    <p>매입 / 매출(RS/해외/MG차감) / 선인세 / 매절 정밀 라우팅</p>
+    <h1>기안서 검증기 <span style="font-size:11px;color:var(--sub);font-weight:400">v12.1 (안정화 버전)</span></h1>
+    <p>엑셀 합계행 동적 탐색 및 유의어/웹툰화 원작료 판독 지원</p>
   </div>
 </div>
 
@@ -182,49 +182,57 @@ initDrop('xlsDrop', 'xlsInput', [], 'xlsCount');
 initDrop('mailDrop','mailInput', mailFiles, 'mailCount');
 initDrop('conDrop','conInput', conFiles, 'conCount');
 
-// [V12.0] 통합 엑셀 파서: 매출(수익, MG, Tax) 및 매입(소득세, 실지급액) 종합 탐색
+// [V12.1] 엑셀 파서 전면 개편: '합계' 행을 동적으로 탐색하여 올바른 열의 값만 추출
 function parseExcelMaster(wb) {
-  let meta = { 총수익: 0, MG차감액: 0, 해외Tax: 0, 총공급가: 0, 실지급액: 0 };
+  let meta = { 총수익: 0, MG차감액: 0, 해외Tax: 0, 총공급가: 0, 실지급액: 0, 예상매출계산서: 0 };
+  
   for(const sn of wb.SheetNames) {
     const data = XLSX.utils.sheet_to_json(wb.Sheets[sn], {header:1, defval:null});
-    for(let r=0; r<data.length; r++) {
-      const row = data[r]||[];
+    
+    // 1. 헤더(열) 위치 찾기
+    let colSupply = -1, colMg = -1, colTax = -1, colNet = -1;
+    for(let r=0; r<Math.min(data.length, 10); r++) {
+      const row = data[r] || [];
       for(let c=0; c<row.length; c++) {
-        const cell = String(row[c]).replace(/\s/g,'');
-        // 매출 트랙
-        if(cell.includes('테라핀매출') || cell.includes('총정산금')) {
-          for(let cc=c+1; cc<row.length; cc++) { if(parseAmt(row[cc])) meta.총수익 = Math.max(meta.총수익, parseAmt(row[cc])); }
-        }
-        if(cell.includes('MG차감')) {
-          for(let cc=c+1; cc<row.length; cc++) { if(parseAmt(row[cc])) meta.MG차감액 = Math.max(meta.MG차감액, parseAmt(row[cc])); }
-        }
-        if(cell.includes('원천징수세') || cell.toLowerCase().includes('tax')) {
-          for(let cc=c+1; cc<row.length; cc++) { if(parseAmt(row[cc])) meta.해외Tax += parseAmt(row[cc]); }
-        }
-        // 매입 트랙
-        if(cell.includes('지급총액') || cell.includes('공급가')) {
-          for(let cc=c+1; cc<row.length; cc++) { if(parseAmt(row[cc])) meta.총공급가 = Math.max(meta.총공급가, parseAmt(row[cc])); }
-        }
-        if(cell.includes('순지급액') || cell.includes('실지급액')) {
-          for(let cc=c+1; cc<row.length; cc++) { if(parseAmt(row[cc])) meta.실지급액 = Math.max(meta.실지급액, parseAmt(row[cc])); }
-        }
+        const cell = String(row[c]||'').replace(/\s/g,'');
+        if(cell.includes('공급가액') || cell.includes('테라핀매출액') || cell.includes('정산기준매출')) colSupply = c;
+        if(cell.includes('차감금액') || cell === 'MG차감') colMg = c;
+        if(cell.includes('원천징수세') || cell.toLowerCase().includes('tax')) colTax = c;
+        if(cell.includes('순지급액') || cell.includes('실지급액')) colNet = c;
+      }
+    }
+
+    // 2. '총합계' 또는 '합계' 행을 찾아 정확한 열의 데이터 추출
+    for(let r=0; r<data.length; r++) {
+      const row = data[r] || [];
+      const firstCell = String(row[0]||'').replace(/\s/g,'');
+      const secondCell = String(row[1]||'').replace(/\s/g,'');
+      
+      // 합계 행 발견 시
+      if(firstCell.includes('합계') || secondCell.includes('합계') || firstCell === '총계') {
+        if(colSupply !== -1 && parseAmt(row[colSupply])) meta.총공급가 = parseAmt(row[colSupply]);
+        if(colMg !== -1 && parseAmt(row[colMg])) meta.MG차감액 = parseAmt(row[colMg]);
+        if(colTax !== -1 && parseAmt(row[colTax])) meta.해외Tax += parseAmt(row[colTax]);
+        if(colNet !== -1 && parseAmt(row[colNet])) meta.실지급액 = parseAmt(row[colNet]);
+        break; // 합계를 찾았으면 해당 시트 스캔 종료
       }
     }
   }
-  // 기본 연산 세팅 (엑셀 합계에 MG가 차감되어 있지 않은 경우를 대비한 역산 준비)
-  meta.예상매출계산서 = (meta.총수익 || meta.총공급가) - meta.MG차감액 - meta.해외Tax;
+  
+  // 엑셀 내 MG차감 및 Tax를 반영한 '예상 공급가액(실지급액)' 역산
+  meta.예상매출계산서 = meta.총공급가 - meta.MG차감액 - meta.해외Tax;
   return meta;
 }
 
-// [V12.0] 프롬프트 고도화: 배열 강제화 및 다중 금액 추출
+// [V12.1] 프롬프트 고도화: 유의어 완벽 호환 ("세금계산서 발행액", "MG 차감 매출" 등)
 const PROMPT_기안서=`이미지 속 문서를 분석하여 다음 규격의 JSON으로만 응답하세요.
-- 기안유형: ["매입_지급", "매출_국내", "매출_해외", "선인세_매절"] 중 택1
+- 기안유형: ["매입_지급", "매출_국내", "매출_해외", "매출_웹툰화원작료", "선인세_매절"] 중 문맥에 맞게 택1
 - 작성일자: 작성일 또는 청구일 문자열 (예: "2026-04-01")
 - 입금예정일: 문서 하단 참고사항 등의 지급조건 "문장 원문 그대로" 추출.
-- 총공급가액: 부가세 제외 순수 원금 합계.
-- MG차감액: 본문 중 "MG 차감" 명시된 금액 (없으면 0)
-- 세금계산서발행액: 최종 실지급/청구되는 합계 금액.
-- 세부항목배열: 매절 기안처럼 여러 작품이 묶인 경우 [{"작품명":"A", "단가":50000}, ...] 형태로 모두 추출. 없으면 [].
+- 총공급가액: "세금계산서 발행(공급가액)", "총공급가액", "매출액" 등 부가세가 제외된 세금계산서 상의 순수 원금 합계.
+- MG차감액: 본문 중 "MG 차감 매출", "MG 차감액" 등으로 명시된 차감 금액 (없으면 0)
+- 세금계산서발행액: 최종 실지급/청구되는 총 합계 금액 (총공급가액과 동일할 수도 있음).
+- 세부항목배열: 매절 기안처럼 여러 작품이 묶인 경우 [{"작품명":"A", "단가":50000}] 형태로 추출. 없으면 [].
 {"기안유형":null, "작성일자":null, "입금예정일":null, "총공급가액":0, "MG차감액":0, "세금계산서발행액":0, "세부항목배열":[]}`;
 
 const PROMPT_계약서=`계약서에서 다음을 추출해 JSON으로 응답하세요.
@@ -251,7 +259,7 @@ async function aiCall(file, prompt) {
 
 // 오차 허용 비교 함수 (tolerance: 오차범위)
 function cmpTol(label, val1, val2, name1, name2, tolerance=0) {
-  if(val2 === null || val2 === undefined) return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub)">${name2} 확인불가</div></div></div>`;
+  if(val2 === null || val2 === undefined || isNaN(val2)) return `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det" style="color:var(--sub)">${name2} 확인불가</div></div></div>`;
   const v1 = Number(val1), v2 = Number(val2);
   const diff = Math.abs(v1 - v2);
   const match = diff <= tolerance;
@@ -316,7 +324,6 @@ async function run() {
     else if (type === '선인세_매절') {
         if (기안.세부항목배열 && 기안.세부항목배열.length > 1 && 계약서?.세부항목배열?.length > 1) {
             coreHtml += `<div class="ci pass"><div class="cs">✓</div><div class="cc"><div class="cl-lbl">1. 다중 작품(매절) 1:1 단가 대사</div><div class="cl-det">배열 매칭 완료</div></div></div>`;
-            // 전체 합산액 비교
             coreHtml += cmpTol('2. 총 청구액 대사', 기안.세금계산서발행액 || 기안.총공급가액, 계약서.총계약금액, '기안서', '계약서', 0);
         } else {
             coreHtml += cmpTol('1. 단일 계약금액 대사', 기안.세금계산서발행액 || 기안.총공급가액, 계약서?.총계약금액, '기안서', '계약서', 0);
@@ -328,12 +335,15 @@ async function run() {
         coreHtml += `<div class="ci info"><div class="cs">i</div><div class="cc"><div class="cl-lbl">1. 해외 Tax 공제 확인</div><div class="diff"><div class="dr"><span class="dval">엑셀 내 Tax 누적액: ${fmtAmt(엑셀?.해외Tax)} 발견됨</span></div></div></div></div>`;
         coreHtml += cmpTol('2. 최종 실지급액 (수익 - Tax)', 기안.세금계산서발행액, 엑셀?.예상매출계산서, '기안서', '엑셀역산', 2);
     }
-    // --- 라우팅 4: 국내 매출 (RS 정산, MG 차감 역산 로직) ---
+    // --- 라우팅 4: 국내 매출 및 웹툰화 원작료 ---
     else {
+        // NHN 케이스처럼 기안서에 '세금계산서발행액'이 따로 없이 '총공급가액'만 기재된 경우 대응
+        let draftTargetAmt = 기안.세금계산서발행액 > 0 ? 기안.세금계산서발행액 : 기안.총공급가액;
+        
         if(엑셀?.MG차감액 > 0 || 기안.MG차감액 > 0) {
             coreHtml += cmpTol('1. MG 차감액 대사', 기안.MG차감액, 엑셀?.MG차감액, '기안서', '엑셀', 0);
         }
-        coreHtml += cmpTol('2. 최종 세금계산서 발행액 (수익 - MG차감)', 기안.세금계산서발행액, 엑셀?.예상매출계산서, '기안서', '엑셀(수익-MG)', 2);
+        coreHtml += cmpTol('2. 최종 세금계산서 발행액 (수익 - MG차감)', draftTargetAmt, 엑셀?.예상매출계산서, '기안서', '엑셀(역산)', 2);
     }
 
     document.getElementById('r_core').innerHTML = coreHtml;
