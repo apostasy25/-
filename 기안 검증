@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기안서 검증기 v16.6 — 테라핀 정산팀</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(typeof pdfjsLib!=='undefined') pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+:root{
+  --navy:#1a2744;--navy-l:#2a3a60;--accent:#3b6fd4;--accent-l:#e8edf8;
+  --ok:#1a7f4b;--ok-bg:#eafaf1;--err:#c0392b;--err-bg:#fdf0ee;
+  --warn:#b7700a;--warn-bg:#fef9ec;--border:#d8dde8;
+  --text:#1a2744;--sub:#6b7a99;--bg:#f4f6fb;--white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);padding:24px 16px 80px}
+.wrap{max-width:760px;margin:0 auto}
+
+/* 헤더 */
+.hd{display:flex;align-items:center;gap:13px;margin-bottom:18px}
+.logo{width:42px;height:42px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:21px;height:21px}
+.hd h1{font-size:17px;font-weight:700;color:var(--navy)}
+.hd h1 span{font-size:11px;color:var(--sub);font-weight:400}
+.hd p{font-size:11px;color:var(--sub);margin-top:2px}
+
+/* 카드 */
+.card{background:var(--white);border:1px solid var(--border);border-radius:13px;margin-bottom:13px;overflow:hidden}
+.ch{background:var(--navy);padding:12px 18px;display:flex;align-items:center;gap:9px}
+.ch h2{color:#fff;font-size:13px;font-weight:600}
+.sb{background:rgba(255,255,255,.2);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.cb{padding:16px 18px}
+
+/* API 설정 */
+.api-bar{background:var(--white);border:1.5px solid #f0c96a;border-radius:10px;margin-bottom:13px;padding:10px 14px;display:flex;align-items:center;gap:8px}
+.api-bar label{font-size:11px;font-weight:700;color:#7a5800;white-space:nowrap}
+.api-bar input{flex:1;height:32px;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:12px;font-family:monospace}
+.api-bar button{height:32px;padding:0 12px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
+
+/* 드롭존 */
+.drop{border:2px dashed var(--border);border-radius:9px;padding:18px;text-align:center;cursor:pointer;background:#fafbfd;transition:.2s}
+.drop.over{border-color:var(--accent);background:var(--accent-l)}
+.drop.done{border-color:var(--ok);border-style:solid;background:var(--ok-bg)}
+.drop-ic{font-size:22px;margin-bottom:4px}
+.drop p{font-size:11px;color:var(--sub)}
+.drop .cnt{font-size:10px;color:var(--accent);margin-top:3px;font-weight:600}
+.opt-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:600px){.opt-grid{grid-template-columns:1fr}}
+
+/* 유형 뱃지 */
+.type-badge{display:inline-block;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;margin:8px 0}
+.type-badge.t1{background:#dbeafe;color:#1e40af}
+.type-badge.t2{background:#fce7f3;color:#9d174d}
+.type-badge.t3{background:#d1fae5;color:#065f46}
+
+/* 버튼 */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:50px;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin:8px 0}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-secondary{background:#fff;color:var(--navy);border:2px solid var(--navy) !important}
+.btn-green{background:#27ae60;color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* 폼 */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:11px;font-weight:700;color:var(--navy)}
+.fg input,.fg select{height:34px;border:1px solid var(--border);border-radius:6px;padding:0 10px;font-size:12px}
+.fg input.num{text-align:right;font-weight:bold;color:var(--accent)}
+.fg input:read-only{background:#f4f6fb;color:var(--sub)}
+
+/* 검증 결과 아이템 */
+.ci{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:7px}
+.ci.pass{background:var(--ok-bg);border:1.5px solid #b2e0cc}
+.ci.fail{background:var(--err-bg);border:1.5px solid #f5c0bb}
+.ci.info{background:#fdfdfd;border:1.5px solid var(--border)}
+.ci.warn{background:var(--warn-bg);border:1.5px solid #f0e4bb}
+.cs{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;font-weight:700;margin-top:2px;color:#fff}
+.ci.pass .cs{background:var(--ok)}
+.ci.fail .cs{background:var(--err)}
+.ci.info .cs{background:var(--sub)}
+.ci.warn .cs{background:var(--warn)}
+.cc{flex:1}
+.cl-lbl{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.cl-det{font-size:12px;font-weight:600;line-height:1.4}
+.diff{margin-top:6px;display:flex;flex-direction:column;gap:4px;background:#fff;padding:7px 10px;border-radius:6px;border:1px solid #eee}
+.dr{display:flex;align-items:center;gap:6px;font-size:12px}
+.dtag{font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px;border:1px solid var(--border);background:#f4f6fb;color:var(--navy)}
+.dtag.s2{background:#e3f5ec;color:#1a7f4b;border-color:#b2e0cc}
+.gt{font-size:13px;font-weight:700;color:var(--navy);margin:16px 0 10px;padding-left:8px;border-left:3px solid var(--accent)}
+
+/* 스피너 */
+.spin{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* 결과 카드 */
+.rc{display:none}.rc.show{display:block}
+
+/* 안내 박스 */
+.notice{padding:10px 14px;border-radius:8px;font-size:11px;margin-bottom:12px;line-height:1.5}
+.notice.blue{background:var(--accent-l);border:1px solid #c0d4f0;color:#1e3a6e}
+.notice.green{background:var(--ok-bg);border:1px solid #b2e0cc;color:var(--ok)}
+.notice.yellow{background:var(--warn-bg);border:1px solid #f0e4bb;color:#7a5800}
+
+/* 숨김 */
+.hidden{display:none !important}
+
+/* 인쇄 */
+@media print{
+  body{background:#fff;padding:0;color:#000}
+  .wrap>*:not(#reportCard){display:none !important}
+  #reportCard{display:block !important;border:none;box-shadow:none;margin:0}
+  .ch{display:none !important}
+  .btn{display:none !important}
+  @page{margin:1.5cm}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- 헤더 -->
+<div class="hd">
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+  <div>
+    <h1>기안서 검증기 <span>v16.6</span></h1>
+    <p>유형 자동 감지 → 증빙 요구 → 교차 대사 → 보고서 출력</p>
+  </div>
+</div>
+
+<!-- API 키 -->
+<div class="api-bar">
+  <label>🔑 API Key</label>
+  <input type="password" id="apiKey" placeholder="sk-ant-api03-...">
+  <button onclick="localStorage.setItem('tf_key',document.getElementById('apiKey').value.trim());alert('저장됨')">저장</button>
+</div>
+
+<!-- ===== STEP 1: 기안서 업로드 ===== -->
+<div class="card" id="step1Card">
+  <div class="ch"><span class="sb">STEP 1</span><h2>기안서 업로드 (PDF/이미지)</h2></div>
+  <div class="cb">
+    <div class="drop" id="draftDrop">
+      <input type="file" id="draftInput" accept="image/*,.pdf" style="display:none">
+      <div class="drop-ic">📄</div>
+      <p>기안서 파일을 여기에 올려주세요</p>
+    </div>
+    <button class="btn btn-primary" id="btnStep1" onclick="runStep1()" style="margin-top:12px" disabled>
+      🔍 AI 기안서 판독 시작
+    </button>
+  </div>
+</div>
+
+<!-- ===== STEP 2: 유형 확인 + 증빙 요구 (AI 판독 후 표시) ===== -->
+<div class="card hidden" id="step2Card">
+  <div class="ch" style="background:var(--accent)"><span class="sb">STEP 2</span><h2>증빙 서류 첨부</h2></div>
+  <div class="cb">
+    <div id="typeNotice"></div>
+    <div id="evidenceSlots"></div>
+  </div>
+</div>
+
+<!-- ===== STEP 3: 추출 데이터 검토 ===== -->
+<div class="card hidden" id="step3Card">
+  <div class="ch" style="background:#2d6a4f"><span class="sb">STEP 3</span><h2>추출 데이터 확인 및 수정</h2></div>
+  <div class="cb">
+    <div class="notice green">💡 AI가 기안서에서 읽어온 값입니다. 틀린 부분이 있으면 직접 수정하세요.</div>
+    <div id="formArea"></div>
+  </div>
+</div>
+
+<!-- 최종 검증 버튼 -->
+<button class="btn btn-primary hidden" id="btnValidate" onclick="runValidation()">
+  🧮 최종 검증 실행
+</button>
+
+<!-- ===== 보고서 ===== -->
+<div class="card rc" id="reportCard">
+  <div class="ch" style="background:#1a2744"><span class="sb">REPORT</span><h2>검증 보고서</h2></div>
+  <div id="r_core" style="padding:20px"></div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+/* ========== 전역 상태 ========== */
+let apiKey = localStorage.getItem('tf_key') || '';
+if(apiKey) document.getElementById('apiKey').value = apiKey;
+
+let draftFile = null;
+let detectedType = ''; // 매출정산, 매입정산, 선인세매절
+let draftData = {};    // AI가 추출한 기안서 데이터
+let excelFiles = [];   // [{name, data}]
+let evidenceFiles = { excel:[], scm:[], mail:[], contract:[], bizreg:[] };
+let globalErrors = 0;
+
+/* ========== 유틸리티 ========== */
+function fmtAmt(n){ if(n===null||n===undefined||isNaN(n)||n==='') return '—'; return Number(n).toLocaleString('ko-KR'); }
+function parseAmt(v){ if(v===null||v===undefined||v==='') return null; const n=parseFloat(String(v).replace(/[^0-9.\-]/g,'')); return isNaN(n)?null:n; }
+function cleanStr(s){ return String(s||'').replace(/[\s\-]/g,''); }
+function $(id){ return document.getElementById(id); }
+
+/* ========== 파일 처리 ========== */
+async function extractPDF(file, scale=1.5){
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+  const imgs=[]; let txt='';
+  for(let i=1;i<=Math.min(pdf.numPages,4);i++){
+    const pg=await pdf.getPage(i);
+    const tc=await pg.getTextContent();
+    txt+=tc.items.map(t=>t.str).join(' ')+'\n';
+    const vp=pg.getViewport({scale});
+    const cv=document.createElement('canvas');
+    cv.width=vp.width;cv.height=vp.height;
+    await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
+    imgs.push({media_type:'image/jpeg',data:cv.toDataURL('image/jpeg',0.8).split(',')[1]});
+  }
+  return {imgs,text:txt};
+}
+
+async function fileToData(file, scale=1.5){
+  if(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf'))
+    return await extractPDF(file,scale);
+  const b64=await new Promise(r=>{const rd=new FileReader();rd.onload=e=>r(rd.result);rd.readAsDataURL(file);});
+  return {imgs:[{media_type:b64.match(/^data:(image\/[a-z+.-]+);/)?.[1]||'image/jpeg',data:b64.split(',')[1]}],text:''};
+}
+
+/* ========== AI 호출 ========== */
+async function callAI(file, prompt, scale=1.5){
+  apiKey = $('apiKey').value.trim();
+  if(!apiKey) throw new Error('API 키를 입력해주세요.');
+  const fd = await fileToData(file, scale);
+  let content = fd.imgs.map(o=>({type:'image',source:{type:'base64',media_type:o.media_type,data:o.data}}));
+  const finalPrompt = fd.text ? `[PDF에서 추출한 텍스트]\n${fd.text}\n\n[요청]\n${prompt}` : prompt;
+  content.push({type:'text',text:finalPrompt});
+  const res = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:2000,messages:[{role:'user',content}]})
+  });
+  const d = await res.json();
+  if(d.error) throw new Error(d.error.message);
+  let raw = d.content[0].text.replace(/```json/gi,'').replace(/```/g,'').trim();
+  return JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
+}
+
+/* ========== 엑셀 파서 v3 — 요약 시트 전용, 디버그 로그 포함 ========== */
+function parseExcel(wb){
+  let meta={테라핀매출액:0,계산서발행액:0,MG차감액:0,해외Tax:0,실지급액:0,총공급가:0,예상매출계산서:0,날짜:null,이메일:null,사업자번호:null,제목:null};
+  const ePat=/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+  const bPat=/\d{3}-\d{2}-\d{5}/;
+
+  // 요약 시트 우선, 없으면 정산용
+  let targetSheet = wb.SheetNames.find(s=>s==='요약') || wb.SheetNames.find(s=>s.includes('요약')) || wb.SheetNames.find(s=>s.includes('정산용')) || wb.SheetNames[0];
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[targetSheet],{header:1,defval:null});
+  console.log('[파서] 대상시트:', targetSheet, '행수:', rows.length);
+
+  // 제목 추출 (첫 5행)
+  for(let r=0;r<Math.min(5,rows.length);r++){
+    for(let c=0;rows[r]&&c<(rows[r].length||0);c++){
+      const v=String(rows[r][c]||'');
+      if(v.length>5&&(v.includes('정산')||v.includes('매출')||v.includes('지급'))){meta.제목=v;break;}
+    }
+    if(meta.제목) break;
+  }
+
+  // === 헤더 탐색: "매출액" 또는 "RS" 키워드가 있는 행 찾기 ===
+  let headerR1=-1, headerR2=-1; // R1=주헤더(구분/작품명), R2=부헤더(RS/매출액)
+  for(let r=0;r<Math.min(10,rows.length);r++){
+    const nsp=(rows[r]||[]).map(c=>String(c||'').replace(/[\s\r\n]/g,''));
+    if(nsp.includes('매출액') || nsp.some(v=>v==='RS')) headerR2=r;
+    if(nsp.includes('계산서') || nsp.includes('작품명') || nsp.includes('작품코드')) headerR1=r;
+  }
+  // headerR1이 headerR2보다 뒤에 있으면 스왑 (보통 R1=R3, R2=R4)
+  if(headerR1>headerR2 && headerR2!==-1){[headerR1,headerR2]=[headerR2,headerR1];}
+  if(headerR2===-1) headerR2=headerR1; // 단일 헤더
+  console.log('[파서] 헤더행:', headerR1, headerR2);
+
+  // === 2행 헤더에서 컬럼 매핑 ===
+  let cols={revenue:-1, invoice:-1, mgDeduct:-1, tax:-1, net:-1, supply:-1};
+
+  for(let hr of [headerR1,headerR2]){
+    if(hr===-1) continue;
+    const nsp=(rows[hr]||[]).map(c=>String(c||'').replace(/[\s\r\n]/g,''));
+    for(let c=0;c<nsp.length;c++){
+      const v=nsp[c];
+      if(v==='매출액'||v==='매출액(원화)'||v.includes('테라핀매출액')) cols.revenue=c;
+      if(v==='계산서'||v.includes('계산서요청')||v.includes('웹소설계산서')) cols.invoice=c;
+      if(v==='차감금액'||v==='MG차감액'||v==='MG차감') cols.mgDeduct=c;
+      if(v.includes('원천징수세')||v.toLowerCase()==='tax') cols.tax=c;
+      if(v.includes('순지급액')||v.includes('실지급액')) cols.net=c;
+      if(v==='공급가액') cols.supply=c;
+    }
+  }
+  console.log('[파서] 컬럼 매핑:', JSON.stringify(cols));
+
+  // === 전체 행 스캔: 메타+합계 ===
+  for(let r=0;r<rows.length;r++){
+    const row=rows[r]||[];
+    const vals=row.map(c=>String(c||''));
+
+    // 메타데이터
+    for(let v of vals){
+      if(!meta.이메일&&ePat.test(v)) meta.이메일=v.match(ePat)[0];
+      if(!meta.사업자번호&&bPat.test(v)) meta.사업자번호=v.match(bPat)[0];
+      if(!meta.날짜&&/202\d[년.\-]\s*\d{1,2}[월.\-]\s*\d{1,2}/.test(v))
+        meta.날짜=v.match(/202\d[년.\-]\s*\d{1,2}[월.\-]\s*\d{1,2}/)[0];
+    }
+
+    // "계산서 요청금액" 독립 라벨 (원스토어 하단 스타일)
+    const nsp=vals.map(v=>v.replace(/\s/g,''));
+    for(let c=0;c<nsp.length;c++){
+      if(nsp[c].includes('계산서')&&nsp[c].includes('요청금액')){
+        for(let cc=c+1;cc<vals.length;cc++){
+          const amt=parseAmt(vals[cc]);
+          if(amt&&amt>0){meta.계산서발행액=Math.max(meta.계산서발행액,amt);break;}
+        }
+      }
+    }
+
+    // 합계행: 첫번째 or 두번째 셀에 "합계"/"총합계"/"총계"
+    const f0=(nsp[0]||''), f1=(nsp[1]||'');
+    if(f0.includes('합계')||f0==='총계'||f1.includes('합계')){
+      console.log('[파서] 합계행 R'+r+':', vals.slice(0,Math.min(18,vals.length)));
+      if(cols.revenue!==-1){ const v=parseAmt(vals[cols.revenue]); if(v) meta.테라핀매출액=Math.max(meta.테라핀매출액,v); }
+      if(cols.invoice!==-1){ const v=parseAmt(vals[cols.invoice]); if(v) meta.계산서발행액=Math.max(meta.계산서발행액,v); }
+      if(cols.mgDeduct!==-1){ const v=parseAmt(vals[cols.mgDeduct]); if(v) meta.MG차감액=Math.max(meta.MG차감액,v); }
+      if(cols.tax!==-1){ const v=parseAmt(vals[cols.tax]); if(v) meta.해외Tax=Math.max(meta.해외Tax,v); }
+      if(cols.net!==-1){ const v=parseAmt(vals[cols.net]); if(v) meta.실지급액=Math.max(meta.실지급액,v); }
+      if(cols.supply!==-1){ const v=parseAmt(vals[cols.supply]); if(v) meta.계산서발행액=Math.max(meta.계산서발행액,v); }
+    }
+  }
+
+  // === RS_요약본 시트에서 이메일 보충 ===
+  const rsSheet = wb.SheetNames.find(s=>s.includes('RS_요약본'));
+  if(rsSheet){
+    const rsRows=XLSX.utils.sheet_to_json(wb.Sheets[rsSheet],{header:1,defval:null});
+    for(let r=0;r<rsRows.length;r++){
+      for(let c=0;c<(rsRows[r]||[]).length;c++){
+        const v=String(rsRows[r][c]||'');
+        if(!meta.이메일&&ePat.test(v)) meta.이메일=v.match(ePat)[0];
+      }
+    }
+  }
+
+  // === 역산/폴백 ===
+  if(meta.계산서발행액===0 && meta.테라핀매출액>0)
+    meta.계산서발행액 = meta.테라핀매출액 - meta.MG차감액 - meta.해외Tax;
+  if(meta.테라핀매출액===0 && meta.계산서발행액>0)
+    meta.테라핀매출액 = meta.계산서발행액;
+
+  meta.총공급가 = meta.테라핀매출액;
+  meta.예상매출계산서 = meta.계산서발행액;
+
+  console.log('[파서] 결과:', JSON.stringify({매출액:meta.테라핀매출액, 계산서:meta.계산서발행액, MG:meta.MG차감액}));
+  return meta;
+}
+
+/* ========== 외주비 전용 엑셀 파서 ========== */
+/* ========== 매입 엑셀 파서 v2 — 기안 첨부 전용 ==========
+   대상 파일명: "(기안)...원천징수...RS.xlsx" 등
+   구조: '지급리스트' 시트의 우측 피벗 테이블에서 '총합계' 행 추출
+   컬럼: 7(행레이블) 8(개수) 9(지급총액) 10(소득세) 11(지방소득세) 12(순지급액)
+*/
+function parseExcelOutsource(wb){
+  let result={
+    파일명:'',
+    소득유형:'',  // '사업소득' 또는 '기타소득'
+    공급가액:0, 소득세:0, 주민세:0, 실지급액:0,
+    지급요청일:null, 귀속년월:null
+  };
+
+  // 1) 입력시트에서 소득유형 판별 + 지급일 추출
+  const inputSheet = wb.Sheets['입력시트'] || wb.Sheets[wb.SheetNames[0]];
+  if(inputSheet){
+    const rows = XLSX.utils.sheet_to_json(inputSheet,{header:1,defval:null});
+    for(let r=0;r<Math.min(20,rows.length);r++){
+      const vals=(rows[r]||[]).map(c=>String(c||''));
+      for(let c=0;c<vals.length;c++){
+        const v=vals[c];
+        // 기타소득/사업소득 판별 (R5부터 소득유형 컬럼)
+        if(v==='기타소득' && !result.소득유형) result.소득유형='기타소득';
+        if(v==='사업소득' && !result.소득유형) result.소득유형='사업소득';
+        // 지급일 추출 (R2: '지급일' 옆 셀)
+        if(v==='지급일' && rows[r][c+1]){
+          const dateVal=rows[r][c+1];
+          // 엑셀 날짜 시리얼 (46136 등)을 yyyy-mm-dd로 변환
+          if(typeof dateVal==='number' && dateVal>40000){
+            const d=new Date((dateVal-25569)*86400*1000);
+            result.지급요청일=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+          } else if(String(dateVal).match(/202\d/)){
+            result.지급요청일=String(dateVal);
+          }
+        }
+        if(v==='귀속년월' && rows[r][c+1]){
+          const ym=rows[r][c+1];
+          if(typeof ym==='string' && ym.match(/202\d-\d{2}/)) result.귀속년월=ym;
+        }
+      }
+    }
+  }
+
+  // 2) 지급리스트 시트에서 '총합계' 행 찾아서 금액 추출
+  const payList = wb.Sheets['지급리스트'];
+  if(payList){
+    const rows = XLSX.utils.sheet_to_json(payList,{header:1,defval:null});
+    for(let r=0;r<rows.length;r++){
+      const vals=(rows[r]||[]).map(c=>String(c||''));
+      // '총합계' 라벨이 있는 행 찾기
+      const totalIdx = vals.findIndex(v=>v.replace(/\s/g,'')==='총합계');
+      if(totalIdx>=0){
+        // 총합계 라벨 위치 기준으로 오른쪽 4개 값이 금액
+        // 실제 구조: [행레이블='총합계', 개수, 지급총액, 소득세, 지방소득세, 순지급액]
+        const supply = parseAmt(vals[totalIdx+2]);
+        const income = parseAmt(vals[totalIdx+3]);
+        const resident = parseAmt(vals[totalIdx+4]);
+        const net = parseAmt(vals[totalIdx+5]);
+        if(supply && supply>result.공급가액){
+          result.공급가액 = supply;
+          result.소득세 = income || 0;
+          result.주민세 = resident || 0;
+          result.실지급액 = net || (supply - (income||0) - (resident||0));
+        }
+      }
+    }
+  }
+
+  console.log('[매입파서] '+result.소득유형+' 결과:', JSON.stringify({공급:result.공급가액, 소득세:result.소득세, 주민세:result.주민세, 실지급:result.실지급액}));
+  return result;
+}
+
+// 기안 관련 매입 파일인지 판별 (파일명 기준)
+function isOutsourceRelevantFile(filename){
+  const fn = filename.toLowerCase();
+  // 관련 키워드: '기안', '원천징수', 'rs', '지급분', '정산요청'
+  const hasKeyword = fn.includes('기안') || fn.includes('원천징수') || fn.includes('지급분');
+  // 제외 키워드: '월별정산', '원본', 'raw'
+  const hasExclude = fn.includes('월별정산') || fn.includes('원본') || fn.includes('raw');
+  return hasKeyword && !hasExclude;
+}
+
+/* ========== 드롭존 초기화 ========== */
+function initDrop(dropId, inputId, onFiles){
+  const zone=$(dropId), inp=$(inputId);
+  zone.onclick=()=>inp.click();
+  zone.ondragover=e=>{e.preventDefault();zone.classList.add('over');};
+  zone.ondragleave=e=>{e.preventDefault();zone.classList.remove('over');};
+  zone.ondrop=e=>{e.preventDefault();zone.classList.remove('over');if(e.dataTransfer.files.length)onFiles(e.dataTransfer.files);};
+  inp.onchange=e=>{if(e.target.files.length)onFiles(e.target.files);};
+}
+
+// 기안서 드롭존
+initDrop('draftDrop','draftInput',files=>{
+  draftFile=files[0];
+  $('draftDrop').classList.add('done');
+  $('draftDrop').innerHTML=`<div class="drop-ic">✅</div><p>${draftFile.name}</p>`;
+  $('btnStep1').disabled=false;
+});
+
+/* ========== STEP 1: AI 기안서 판독 ========== */
+const PROMPT_DRAFT = `이 기안서 문서의 이미지와 텍스트를 분석하여 아래 JSON 형태로 추출하세요. 금액은 쉼표 없이 숫자만 기재. 없는 항목은 null.
+
+[기안유형 판별]
+- "매출정산": RS정산/MG차감/플랫폼 매출 정산
+- "매입정산": 외주비/원고료/작가RS/제작비 등 지급 관련 (계정과목 245/531)
+- "선인세매절": 선인세/매절/계약금/저작권 양수
+
+[매입정산 특별 지침 - 지급요청 표에서 반드시 추출]
+"지급금액(4)" 또는 "지급요청" 표에 여러 행의 증빙(기타소득/사업소득 등)이 있습니다:
+- 매입_공급가액합계: 모든 행의 공급가액 합산 (예: 507,842 + 14,499,126 + 196,885,765 = 211,892,733)
+- 매입_소득세합계: 모든 행의 소득세 합산
+- 매입_주민세합계: 모든 행의 주민세 합산
+- 매입_실지급액합계: "거래처명/지급방법" 표의 "금액" 또는 지급요청 표 실지급액 합산
+- 매입_행수: 지급요청 표 행 개수 (증빙구분이 채워진 행만)
+
+[매출정산 특별 지침 - 세금계산서 발행 정보]
+- 세금계산서_발행건수: "세금계산서 총 N매" 또는 "전자세금계산서 N건" 숫자만 (예: 3)
+- 세금계산서_발행조건: "각각 발급", "통합 발급", "품목 구분" 등 발행 방식 요청사항 (원문 그대로)
+- 발행마감일: "발행마감일" 또는 "세금계산서 마감기한"으로 명시된 날짜
+
+{"기안유형":"매출정산 또는 매입정산 또는 선인세매절",
+"기안제목":null,"작성일자":null,"증빙구분":null,
+"고객명":null,"사업자등록번호":null,"이메일":null,
+"입금예정일":null,"총공급가액":null,"부가가치세":null,
+"MG차감액":null,"세금계산서발행액":null,
+"세금계산서_발행건수":null,"세금계산서_발행조건":null,"발행마감일":null,
+"지급요청일":null,
+"매입_공급가액합계":null,"매입_소득세합계":null,"매입_주민세합계":null,"매입_실지급액합계":null,"매입_행수":null}`;
+
+async function runStep1(){
+  if(!draftFile) return alert('기안서를 먼저 업로드해주세요.');
+  const btn=$('btnStep1');
+  btn.disabled=true; btn.innerHTML='<div class="spin"></div> AI 판독 중...';
+  try{
+    draftData = await callAI(draftFile, PROMPT_DRAFT, 1.5);
+    // 유형 결정
+    const t = draftData.기안유형||'';
+    if(t.includes('매입')) detectedType='매입정산';
+    else if(t.includes('선인세')||t.includes('매절')) detectedType='선인세매절';
+    else detectedType='매출정산';
+
+    showStep2();
+  }catch(e){
+    alert('AI 판독 실패: '+e.message+'\n\n유형을 수동 선택해주세요.');
+    draftData={};
+    showManualTypeSelect();
+  }finally{
+    btn.disabled=false; btn.innerHTML='🔍 AI 기안서 판독 시작';
+  }
+}
+
+function showManualTypeSelect(){
+  $('step2Card').classList.remove('hidden');
+  $('typeNotice').innerHTML=`
+    <div class="notice yellow">⚠️ AI 판독 실패. 기안 유형을 직접 선택해주세요.</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn btn-secondary" style="flex:1;height:42px;min-width:140px" onclick="detectedType='매출정산';showStep2()">① 매출 정산</button>
+      <button class="btn btn-secondary" style="flex:1;height:42px;min-width:140px" onclick="detectedType='매입정산';showStep2()">② 매입 정산</button>
+      <button class="btn btn-secondary" style="flex:1;height:42px;min-width:140px" onclick="detectedType='선인세매절';showStep2()">③ 선인세/매절</button>
+    </div>`;
+}
+
+/* ========== STEP 2: 유형별 증빙 요구 ========== */
+function showStep2(){
+  $('step2Card').classList.remove('hidden');
+  const badgeClass = detectedType==='매출정산'?'t1':detectedType==='매입정산'?'t2':'t3';
+  const typeLabel = detectedType==='매출정산'?'① 매출 정산 (RS/MG)':detectedType==='매입정산'?'② 매입 정산 (외주비/원고료)':'③ 선인세 / 매절';
+
+  let noticeHtml = `<div class="type-badge ${badgeClass}">${typeLabel}</div>`;
+  let slotsHtml = '';
+
+  if(detectedType==='매출정산'){
+    noticeHtml += `<div class="notice blue">매출 정산 검증에 필요한 증빙: <b>정산 엑셀, 플랫폼 SCM 캡처, 메일</b></div>`;
+    slotsHtml = `<div class="opt-grid">
+      <div class="drop" id="evExcelDrop"><input type="file" id="evExcelInput" accept=".xlsx,.xls,.csv" multiple style="display:none"><div class="drop-ic">📊</div><p>정산 엑셀</p><div class="cnt" id="evExcelCnt"></div></div>
+      <div class="drop" id="evScmDrop"><input type="file" id="evScmInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">💻</div><p>SCM 캡처</p><div class="cnt" id="evScmCnt"></div></div>
+      <div class="drop" id="evMailDrop"><input type="file" id="evMailInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">📧</div><p>메일</p><div class="cnt" id="evMailCnt"></div></div>
+    </div>`;
+  } else if(detectedType==='매입정산'){
+    noticeHtml += `<div class="notice blue">매입 정산 검증에 필요한 증빙: <b>기안 지급내역 엑셀 (여러 개 가능), 사업자등록증</b><br><span style="font-size:10px">💡 파일명에 "기안" 또는 "원천징수"가 포함된 파일만 자동 인식됩니다. 원본 데이터(월별정산 등)는 자동 제외됩니다.</span></div>`;
+    slotsHtml = `<div class="opt-grid" style="grid-template-columns:1fr 1fr">
+      <div class="drop" id="evExcelDrop"><input type="file" id="evExcelInput" accept=".xlsx,.xls,.csv" multiple style="display:none"><div class="drop-ic">📊</div><p>지급내역 엑셀 (다중 가능)</p><div class="cnt" id="evExcelCnt"></div></div>
+      <div class="drop" id="evBizDrop"><input type="file" id="evBizInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">🏢</div><p>사업자등록증</p><div class="cnt" id="evBizCnt"></div></div>
+    </div>`;
+  } else {
+    noticeHtml += `<div class="notice blue">선인세/매절 검증에 필요한 증빙: <b>계약서, 메일, 사업자등록증</b></div>`;
+    slotsHtml = `<div class="opt-grid">
+      <div class="drop" id="evContractDrop"><input type="file" id="evContractInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">📑</div><p>계약서</p><div class="cnt" id="evContractCnt"></div></div>
+      <div class="drop" id="evMailDrop"><input type="file" id="evMailInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">📧</div><p>메일</p><div class="cnt" id="evMailCnt"></div></div>
+      <div class="drop" id="evBizDrop"><input type="file" id="evBizInput" accept="image/*,.pdf" multiple style="display:none"><div class="drop-ic">🏢</div><p>사업자등록증</p><div class="cnt" id="evBizCnt"></div></div>
+    </div>`;
+  }
+
+  $('typeNotice').innerHTML = noticeHtml;
+  $('evidenceSlots').innerHTML = slotsHtml;
+
+  // 드롭존 이벤트 바인딩
+  setTimeout(()=>{
+    if($('evExcelDrop')) initDrop('evExcelDrop','evExcelInput',files=>{
+      evidenceFiles.excel=[]; excelFiles=[];  // 재업로드 시 초기화
+      const skipped=[];
+      for(let f of files){
+        // 매입정산은 무관한 파일(월별정산/원본 등) 자동 제외
+        if(detectedType==='매입정산' && !isOutsourceRelevantFile(f.name)){
+          skipped.push(f.name);
+          continue;
+        }
+        evidenceFiles.excel.push(f);
+        const rd=new FileReader();
+        rd.onload=ev=>{
+          const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array'});
+          if(detectedType==='매입정산') excelFiles.push({name:f.name,data:parseExcelOutsource(wb)});
+          else excelFiles.push({name:f.name,data:parseExcel(wb)});
+        };
+        rd.readAsArrayBuffer(f);
+      }
+      $('evExcelDrop').classList.add('done');
+      let cntText = evidenceFiles.excel.length+'개 첨부';
+      if(skipped.length) cntText += ' (무관 '+skipped.length+'개 자동 제외)';
+      $('evExcelCnt').textContent=cntText;
+    });
+    if($('evScmDrop')) initDrop('evScmDrop','evScmInput',files=>{
+      evidenceFiles.scm=[];  // 재업로드 시 초기화
+      for(let f of files) evidenceFiles.scm.push(f);
+      $('evScmDrop').classList.add('done');
+      $('evScmCnt').textContent=evidenceFiles.scm.length+'개 첨부';
+    });
+    if($('evMailDrop')) initDrop('evMailDrop','evMailInput',files=>{
+      evidenceFiles.mail=[];  // 재업로드 시 초기화
+      for(let f of files) evidenceFiles.mail.push(f);
+      $('evMailDrop').classList.add('done');
+      $('evMailCnt').textContent=evidenceFiles.mail.length+'개 첨부';
+    });
+    if($('evContractDrop')) initDrop('evContractDrop','evContractInput',files=>{
+      evidenceFiles.contract=[];  // 재업로드 시 초기화
+      for(let f of files) evidenceFiles.contract.push(f);
+      $('evContractDrop').classList.add('done');
+      $('evContractCnt').textContent=evidenceFiles.contract.length+'개 첨부';
+    });
+    if($('evBizDrop')) initDrop('evBizDrop','evBizInput',files=>{
+      evidenceFiles.bizreg=[];  // 재업로드 시 초기화
+      for(let f of files) evidenceFiles.bizreg.push(f);
+      $('evBizDrop').classList.add('done');
+      $('evBizCnt').textContent=evidenceFiles.bizreg.length+'개 첨부';
+    });
+  },50);
+
+  // 폼 표시
+  showStep3();
+}
+
+/* ========== STEP 3: 유형별 폼 ========== */
+function showStep3(){
+  $('step3Card').classList.remove('hidden');
+  $('btnValidate').classList.remove('hidden');
+  const d = draftData;
+  let html = '';
+
+  if(detectedType==='매출정산'){
+    html = `<div class="form-grid">
+      <div class="fg full"><label>기안 제목</label><input type="text" id="f_title" value="${d.기안제목||''}"></div>
+      <div class="fg"><label>작성일자</label><input type="text" id="f_date" value="${d.작성일자||''}"></div>
+      <div class="fg"><label>증빙구분</label><input type="text" id="f_proof" value="${d.증빙구분||''}"></div>
+      <div class="fg"><label>거래처/고객명</label><input type="text" id="f_client" value="${d.고객명||''}"></div>
+      <div class="fg"><label>사업자등록번호</label><input type="text" id="f_bizno" value="${d.사업자등록번호||''}"></div>
+      <div class="fg full"><label>이메일</label><input type="text" id="f_email" value="${d.이메일||''}"></div>
+      <div class="fg"><label>총공급가액</label><input type="text" class="num" id="f_supply" value="${d.총공급가액||''}"></div>
+      <div class="fg"><label>부가가치세</label><input type="text" class="num" id="f_vat" value="${d.부가가치세||''}"></div>
+      <div class="fg"><label>MG 차감액</label><input type="text" class="num" id="f_mg" value="${d.MG차감액||''}"></div>
+      <div class="fg"><label>세금계산서 발행액</label><input type="text" class="num" id="f_total" value="${d.세금계산서발행액||''}"></div>
+      <div class="fg"><label>입금 예정일</label><input type="text" id="f_duedate" value="${d.입금예정일||''}"></div>
+      <div class="fg"><label>품목/정산월</label><input type="text" id="f_item" value=""></div>
+    </div>`;
+  } else if(detectedType==='매입정산'){
+    html = `<div class="form-grid">
+      <div class="fg full"><label>기안 제목</label><input type="text" id="f_title" value="${d.기안제목||''}"></div>
+      <div class="fg"><label>작성일자</label><input type="text" id="f_date" value="${d.작성일자||''}"></div>
+      <div class="fg"><label>지급요청일</label><input type="text" id="f_duedate" value="${d.지급요청일||''}"></div>
+      <div class="fg"><label>지급건수 (표 행수)</label><input type="text" id="f_count" value="${d.매입_행수||''}" placeholder="예: 3"></div>
+      <div class="fg"><label>총 공급가액 (합계)</label><input type="text" class="num" id="f_supply" value="${d.매입_공급가액합계||''}"></div>
+      <div class="fg"><label>총 소득세 (합계)</label><input type="text" class="num" id="f_incometax" value="${d.매입_소득세합계||''}"></div>
+      <div class="fg"><label>총 주민세 (합계)</label><input type="text" class="num" id="f_restax" value="${d.매입_주민세합계||''}"></div>
+      <div class="fg"><label>총 실지급액 (합계)</label><input type="text" class="num" id="f_netpay" value="${d.매입_실지급액합계||''}"></div>
+    </div>`;
+  } else {
+    html = `<div class="form-grid">
+      <div class="fg full"><label>기안 제목</label><input type="text" id="f_title" value="${d.기안제목||''}"></div>
+      <div class="fg"><label>작성일자</label><input type="text" id="f_date" value="${d.작성일자||''}"></div>
+      <div class="fg"><label>증빙구분</label><input type="text" id="f_proof" value="${d.증빙구분||''}" placeholder="세금계산서/계산서"></div>
+      <div class="fg"><label>고객명</label><input type="text" id="f_client" value="${d.고객명||''}"></div>
+      <div class="fg"><label>사업자등록번호</label><input type="text" id="f_bizno" value="${d.사업자등록번호||''}"></div>
+      <div class="fg full"><label>발신 이메일</label><input type="text" id="f_email" value="${d.이메일||''}"></div>
+      <div class="fg"><label>공급가액</label><input type="text" class="num" id="f_supply" value="${d.총공급가액||''}"></div>
+      <div class="fg"><label>부가가치세</label><input type="text" class="num" id="f_vat" value="${d.부가가치세||''}"></div>
+      <div class="fg"><label>합계</label><input type="text" class="num" id="f_total" value="${d.세금계산서발행액||''}"></div>
+      <div class="fg"><label>입금 예정일</label><input type="text" id="f_duedate" value="${d.입금예정일||''}"></div>
+    </div>`;
+  }
+  $('formArea').innerHTML = html;
+
+  // 폼 위치로 스크롤
+  $('step3Card').scrollIntoView({behavior:'smooth'});
+}
+
+/* ========== 비교 함수 ========== */
+// 날짜 정규화: "2026-04-21", "2026.4.21", "2026.04.21" → "20260421"
+function normDate(s){
+  if(!s) return '';
+  const m = String(s).match(/(\d{4})[년.\-\/\s]*(\d{1,2})[월.\-\/\s]*(\d{1,2})/);
+  if(!m) return cleanStr(s);
+  return m[1]+m[2].padStart(2,'0')+m[3].padStart(2,'0');
+}
+
+function cmpText(label, v1, v2, n1, n2){
+  const a=cleanStr(v1), b=cleanStr(v2);
+  if(!a&&!b) return mkCI('info','i',label,'양쪽 모두 미기재','');
+  if(!a&&b) return mkCI('pass','✓',label,'폼 미입력 (증빙값 참고)',mkDiff([{tag:n2,val:v2,cls:'s2'}]));
+  if(a&&!b) return mkCI('info','i',label,n2+' 미첨부/미기재',mkDiff([{tag:n1,val:v1}]));
+  // 날짜 형식 비교 (포맷 차이 허용)
+  const d1=normDate(v1), d2=normDate(v2);
+  const isDate = d1.length===8 && /^\d{8}$/.test(d1);
+  const ok = isDate ? (d1===d2) : (a.includes(b)||b.includes(a));
+  if(!ok) globalErrors++;
+  return mkCI(ok?'pass':'fail',ok?'✓':'✕',label,ok?'일치 ✓':'불일치 ⚠',mkDiff([{tag:n1,val:v1},{tag:n2,val:v2,cls:'s2'}]));
+}
+
+function cmpAmt(label, v1, v2, n1, n2, tol=0){
+  if(v1===null||v1===undefined||v1===''){
+    if(v2===null||v2===undefined||v2===0) return mkCI('info','i',label,'양쪽 모두 값 없음','');
+    globalErrors++;
+    return mkCI('fail','✕',label,'폼 입력 누락 ⚠',mkDiff([{tag:n1,val:'미입력'},{tag:n2,val:fmtAmt(v2),cls:'s2'}]));
+  }
+  if(v2===null||v2===undefined||isNaN(v2)||v2===0) return mkCI('info','i',label,n2+' 내역 없음',mkDiff([{tag:n1,val:fmtAmt(v1)}]));
+  const a=Number(v1), b=Number(v2);
+  let isOk=Math.abs(a-b)<=tol;
+  let vatNote='';
+  if(!isOk){
+    if(Math.abs(Math.round(a*1.1)-b)<=tol){isOk=true;vatNote=' (VAT포함=✓)';}
+    else if(Math.abs(Math.round(b*1.1)-a)<=tol){isOk=true;vatNote=' (VAT별도=✓)';}
+  }
+  if(!isOk) globalErrors++;
+  return mkCI(isOk?'pass':'fail',isOk?'✓':'✕',label,
+    isOk?'금액 일치 ✓'+vatNote:'오차범위 초과 ⚠ (차이: '+fmtAmt(Math.abs(a-b))+')',
+    mkDiff([{tag:n1,val:fmtAmt(a)},{tag:n2,val:fmtAmt(b),cls:'s2'}]));
+}
+
+// VAT 호환 비교 (매절용)
+function cmpAmtVAT(label, v1, v2, n1, n2){
+  if(v1===null||v1===undefined||v1==='') return cmpAmt(label,v1,v2,n1,n2,0);
+  if(v2===null||v2===undefined||isNaN(v2)||v2===0) return mkCI('info','i',label,n2+' 내역 없음',mkDiff([{tag:n1,val:fmtAmt(v1)}]));
+  const a=Number(v1),b=Number(v2);
+  let ok=Math.abs(a-b)<=1, note='';
+  if(!ok&&Math.abs(Math.round(a*1.1)-b)<=1){ok=true;note=' (VAT포함)';}
+  if(!ok&&Math.abs(Math.round(b*1.1)-a)<=1){ok=true;note=' (VAT별도)';}
+  if(!ok) globalErrors++;
+  return mkCI(ok?'pass':'fail',ok?'✓':'✕',label,
+    ok?'일치 ✓'+note:'불일치 ⚠ (차이: '+fmtAmt(Math.abs(a-b))+')',
+    mkDiff([{tag:n1,val:fmtAmt(a)},{tag:n2,val:fmtAmt(b),cls:'s2'}]));
+}
+
+function mkCI(cls,icon,label,det,diffHtml){
+  return `<div class="ci ${cls}"><div class="cs">${icon}</div><div class="cc"><div class="cl-lbl">${label}</div><div class="cl-det">${det}</div>${diffHtml}</div></div>`;
+}
+function mkDiff(items){
+  if(!items.length) return '';
+  return '<div class="diff">'+items.map(i=>`<div class="dr"><span class="dtag ${i.cls||''}">${i.tag}</span><span class="dval">${i.val}</span></div>`).join('')+'</div>';
+}
+
+/* ========== AI 프롬프트 (증빙용) ========== */
+const P_MAIL = `이 메일 문서에서 아래 정보를 추출하세요.
+주의사항:
+- "보낸사람_회사명": 메일을 보낸 회사/플랫폼 이름 (보낸사람 정보에서 추출. 받는사람은 테라핀 측이므로 제외)
+- "보낸사람_이메일": 보낸사람의 이메일 주소
+- "계산서수신이메일": "(세금)계산서 수신 주소"로 명시된 이메일. 없으면 보낸사람 이메일
+- "사업자등록번호": 보낸사람 회사의 사업자번호
+- "입금예정일": 실제 입금/지급 예정일만 기재. "발행 마감일"이나 "계산서 제출 기한"은 입금예정일이 아님 → null
+- "발행마감일": 세금계산서 발행 기한/마감일 (예: "당월 24일까지")
+- "발행요청사항": 품목 구분, 한 장/각각 발행, 기타 발행 관련 요청사항 (자유 텍스트)
+- 금액은 쉼표 없이 숫자만, 없으면 null
+{"작성일자":null,"보낸사람_회사명":null,"보낸사람_이메일":null,"계산서수신이메일":null,"사업자등록번호":null,"총금액":null,"공급가액":null,"부가가치세":null,"입금예정일":null,"발행마감일":null,"발행요청사항":null}`;
+
+const P_CONTRACT = `계약서에서 아래 정보를 추출하세요.
+{"총계약금액":null,"지급조건":null,"갑회사명":null,"을회사명":null,"갑사업자번호":null,"을사업자번호":null,"작가명":null,"VAT조항":null}`;
+
+const P_SCM = `플랫폼 SCM 화면에서 금액을 추출하세요.
+{"총판매금액":null,"SCM실지급액":null,"공급가액":null}`;
+
+const P_BIZ = `사업자등록증에서 정보를 추출하세요.
+{"상호":null,"사업자등록번호":null,"대표자":null}`;
+
+/* ========== STEP 4: 최종 검증 ========== */
+async function runValidation(){
+  const btn=$('btnValidate');
+  btn.disabled=true; btn.innerHTML='<div class="spin"></div> 검증 중...';
+  globalErrors=0; $('r_core').innerHTML='';
+
+  try{
+    // 증빙 AI 호출
+    let mailData=null, contractData=null, scmData=null, bizData=null;
+    // 증빙 AI 병렬 호출 (순차 → 동시 실행으로 3~4배 빨라짐)
+    const aiTasks=[];
+    if(evidenceFiles.mail.length) aiTasks.push(callAI(evidenceFiles.mail[0],P_MAIL,1.0).then(d=>mailData=d).catch(()=>null));
+    if(evidenceFiles.contract.length) aiTasks.push(callAI(evidenceFiles.contract[0],P_CONTRACT,1.0).then(d=>contractData=d).catch(()=>null));
+    if(evidenceFiles.scm.length) aiTasks.push(callAI(evidenceFiles.scm[0],P_SCM,1.0).then(d=>scmData=d).catch(()=>null));
+    if(evidenceFiles.bizreg.length) aiTasks.push(callAI(evidenceFiles.bizreg[0],P_BIZ,1.0).then(d=>bizData=d).catch(()=>null));
+    await Promise.all(aiTasks);
+
+    // 엑셀 합산
+    let xl = null;
+    if(detectedType==='매입정산' && excelFiles.length>0){
+      // 매입: 여러 기안 파일 (사업소득+기타소득) 합산
+      xl={소득별:{},총합계:{공급가액:0,소득세:0,주민세:0,실지급액:0},지급요청일:null,귀속년월:null,파일목록:[]};
+      excelFiles.forEach(f=>{
+        const d=f.data;
+        xl.파일목록.push({이름:f.name, 소득유형:d.소득유형, 공급:d.공급가액});
+        // 소득유형별 분류 (충돌 시 합산)
+        const key = d.소득유형 || '기타';
+        if(!xl.소득별[key]) xl.소득별[key]={공급가액:0,소득세:0,주민세:0,실지급액:0,파일들:[]};
+        xl.소득별[key].공급가액 += d.공급가액||0;
+        xl.소득별[key].소득세 += d.소득세||0;
+        xl.소득별[key].주민세 += d.주민세||0;
+        xl.소득별[key].실지급액 += d.실지급액||0;
+        xl.소득별[key].파일들.push(f.name);
+        // 총합계 누적
+        xl.총합계.공급가액 += d.공급가액||0;
+        xl.총합계.소득세 += d.소득세||0;
+        xl.총합계.주민세 += d.주민세||0;
+        xl.총합계.실지급액 += d.실지급액||0;
+        if(!xl.지급요청일) xl.지급요청일=d.지급요청일;
+        if(!xl.귀속년월) xl.귀속년월=d.귀속년월;
+      });
+    } else if(excelFiles.length>0){
+      xl={테라핀매출액:0,계산서발행액:0,총공급가:0,MG차감액:0,해외Tax:0,실지급액:0,예상매출계산서:0,날짜:null,이메일:null,사업자번호:null,제목:null};
+      excelFiles.forEach(f=>{
+        xl.테라핀매출액+=(f.data.테라핀매출액||0);
+        xl.계산서발행액+=(f.data.계산서발행액||0);
+        xl.총공급가+=(f.data.총공급가||0);
+        xl.MG차감액+=(f.data.MG차감액||0);
+        xl.해외Tax+=(f.data.해외Tax||0);
+        xl.실지급액+=(f.data.실지급액||0);
+        if(!xl.날짜) xl.날짜=f.data.날짜;
+        if(!xl.이메일) xl.이메일=f.data.이메일;
+        if(!xl.사업자번호) xl.사업자번호=f.data.사업자번호;
+        if(!xl.제목) xl.제목=f.data.제목;
+      });
+      xl.예상매출계산서=xl.계산서발행액 || (xl.총공급가-xl.MG차감액-xl.해외Tax);
+    }
+
+    // 폼 값 읽기
+    const fv = k => { const el=$(k); return el?el.value.trim():''; };
+    const fn = k => parseAmt(fv(k));
+
+    // 보고서 생성
+    const typeLabel = detectedType==='매출정산'?'① 매출 정산':detectedType==='매입정산'?'② 매입 정산':'③ 선인세/매절';
+    let h = `<div style="margin-bottom:20px">
+      <h2 style="font-size:18px;color:var(--navy);margin:0 0 6px">기안서 검증 보고서</h2>
+      <div style="font-size:12px;color:var(--sub)">유형: <b>${typeLabel}</b> &nbsp;|&nbsp; 제목: ${fv('f_title')||'미기재'} &nbsp;|&nbsp; 검증일: ${new Date().toLocaleDateString('ko-KR')}</div>
+    </div>`;
+
+    /* ---- 매출 정산 ---- */
+    if(detectedType==='매출정산'){
+      h += `<div class="gt">📋 텍스트 항목 대사</div>`;
+      h += cmpText('1. 작성일자', fv('f_date'), xl?.날짜||mailData?.작성일자||'', '기안서', '엑셀/메일');
+      h += cmpText('2. 거래처명', fv('f_client'), mailData?.보낸사람_회사명||'', '기안서', '메일');
+      h += cmpText('3. 사업자등록번호', fv('f_bizno'), xl?.사업자번호||mailData?.사업자등록번호||bizData?.사업자등록번호||'', '기안서', '증빙');
+      h += cmpText('4. 이메일', fv('f_email'), mailData?.계산서수신이메일||mailData?.보낸사람_이메일||xl?.이메일||'', '기안서', '메일/엑셀');
+      h += cmpText('5. 입금 예정일', fv('f_duedate'), mailData?.입금예정일||'', '기안서', '메일');
+
+      // 기안 제목에서 발행마감일 추출 및 세금계산서 발행 안내
+      const title = fv('f_title');
+      const titleDeadline = title.match(/발행마감일\s*[:：]\s*([\d.\/\-]+)/)?.[1] || '';
+      const hasIssueInfo = titleDeadline || draftData?.발행마감일 || draftData?.세금계산서_발행건수 || draftData?.세금계산서_발행조건 || mailData?.발행마감일 || mailData?.발행요청사항;
+
+      if(hasIssueInfo){
+        h += `<div class="gt">📌 세금계산서 발행 안내</div>`;
+        // 발행 건수 (매우 중요)
+        if(draftData?.세금계산서_발행건수){
+          h += mkCI('warn','!','⭐ 발행 건수', `<b>총 ${draftData.세금계산서_발행건수}건</b> 발행 필요 (기안서 명시)`, '');
+        }
+        // 발행 조건 (각각/통합/품목 구분)
+        if(draftData?.세금계산서_발행조건){
+          h += mkCI('warn','!','⭐ 발행 방식', draftData.세금계산서_발행조건, '');
+        }
+        // 발행마감일
+        if(titleDeadline) h += mkCI('info','i','기안서 발행마감일 (제목)', titleDeadline, '');
+        if(draftData?.발행마감일 && draftData.발행마감일!==titleDeadline) h += mkCI('info','i','기안서 발행마감일 (본문)', draftData.발행마감일, '');
+        if(mailData?.발행마감일) h += mkCI('info','i','메일 발행마감일', mailData.발행마감일, '');
+        // 메일 발행 요청사항
+        if(mailData?.발행요청사항) h += mkCI('warn','!','메일 발행 요청사항', mailData.발행요청사항, '');
+      }
+
+      h += `<div class="gt">🧮 금액 대사</div>`;
+
+      // 6. 총공급가액: 기안서 값이 매출액(Gross)과 일치하는지, 계산서(Net)과 일치하는지 확인
+      const supplyVal = fn('f_supply');
+      if(xl && supplyVal!==null){
+        const matchGross = Math.abs(supplyVal-(xl.테라핀매출액||0))<=5;
+        const matchInvoice = Math.abs(supplyVal-(xl.계산서발행액||0))<=5;
+        if(matchInvoice){
+          h+=mkCI('pass','✓','6. 총공급가액','계산서 발행 기준 — 일치 ✓',mkDiff([{tag:'기안서',val:fmtAmt(supplyVal)},{tag:'엑셀(계산서)',val:fmtAmt(xl.계산서발행액),cls:'s2'}]));
+        } else if(matchGross){
+          h+=mkCI('pass','✓','6. 총공급가액','테라핀 매출액(Gross) — 일치 ✓',mkDiff([{tag:'기안서',val:fmtAmt(supplyVal)},{tag:'엑셀(매출액)',val:fmtAmt(xl.테라핀매출액),cls:'s2'}]));
+        } else {
+          globalErrors++;
+          h+=mkCI('fail','✕','6. 총공급가액','매출액/계산서 모두 불일치 ⚠',mkDiff([{tag:'기안서',val:fmtAmt(supplyVal)},{tag:'엑셀(매출액)',val:fmtAmt(xl.테라핀매출액),cls:'s2'},{tag:'엑셀(계산서)',val:fmtAmt(xl.계산서발행액),cls:'s2'}]));
+        }
+      } else if(xl){
+        h+=mkCI('info','i','6. 총공급가액','폼 미입력 — 참고: 엑셀 매출액 '+fmtAmt(xl.테라핀매출액)+', 계산서 '+fmtAmt(xl.계산서발행액),'');
+      }
+
+      if(xl?.MG차감액>0||fn('f_mg')>0)
+        h += cmpAmt('7. MG 차감액', fn('f_mg'), xl?.MG차감액, '기안서', '엑셀', 5);
+
+      // 8. 세금계산서 발행액
+      const draftAmt = fn('f_total')||fn('f_supply');
+      if(xl){
+        const matchInv = Math.abs(draftAmt-(xl.계산서발행액||0))<=5;
+        const matchGross2 = Math.abs(draftAmt-(xl.테라핀매출액||0))<=5;
+        if(matchInv){
+          h+=mkCI('pass','✓','8. 세금계산서 발행액','계산서 발행액 — 일치 ✓',mkDiff([{tag:'기안서',val:fmtAmt(draftAmt)},{tag:'엑셀(계산서)',val:fmtAmt(xl.계산서발행액),cls:'s2'}]));
+        } else if(matchGross2){
+          h+=mkCI('pass','✓','8. 세금계산서 발행액','Gross(MG차감 없음) 발행 — 일치 ✓',mkDiff([{tag:'기안서',val:fmtAmt(draftAmt)},{tag:'엑셀(매출액)',val:fmtAmt(xl.테라핀매출액),cls:'s2'}]));
+        } else {
+          globalErrors++;
+          h+=mkCI('fail','✕','8. 세금계산서 발행액','매출액/계산서 모두 불일치 ⚠',mkDiff([{tag:'기안서',val:fmtAmt(draftAmt)},{tag:'엑셀(매출액)',val:fmtAmt(xl.테라핀매출액),cls:'s2'},{tag:'엑셀(계산서)',val:fmtAmt(xl.계산서발행액),cls:'s2'}]));
+        }
+      }
+
+      if(scmData){
+        h += `<div class="gt">💻 SCM 교차 대사</div>`;
+        h += cmpAmt('9. SCM 실지급액', draftAmt, parseAmt(scmData.SCM실지급액)||parseAmt(scmData.공급가액), '기안서', 'SCM', 5);
+      }
+    }
+
+    /* ---- 매입 정산 ---- */
+    else if(detectedType==='매입정산'){
+      h += `<div class="gt">📋 기본 항목</div>`;
+      h += cmpText('1. 작성일자', fv('f_date'), '', '기안서', '—');
+
+      if(xl){
+        h += cmpText('2. 지급요청일', fv('f_duedate'), xl.지급요청일||'', '기안서', '엑셀');
+
+        // 지급 건수 대사 (기안서 표 행수 vs 엑셀 파일 수)
+        const draftCount = parseAmt(fv('f_count'));
+        const xlCount = xl.파일목록?.length || 0;
+        if(draftCount && xlCount){
+          const okCount = draftCount === xlCount;
+          if(!okCount) globalErrors++;
+          h += mkCI(okCount?'pass':'fail', okCount?'✓':'✕', '3. 지급 건수',
+            okCount ? `일치 ✓ (기안서 ${draftCount}건 = 엑셀 ${xlCount}개)` : `불일치 ⚠ (기안서 ${draftCount}건 ≠ 엑셀 ${xlCount}개)`, '');
+        }
+
+        // 첨부 파일 목록 표시
+        if(xl.파일목록 && xl.파일목록.length>0){
+          h += `<div class="gt">📎 분석된 첨부 파일 (${xl.파일목록.length}개)</div>`;
+          for(let f of xl.파일목록){
+            h += mkCI('info','i', f.소득유형||'구분불명', f.이름+' → '+fmtAmt(f.공급)+'원', '');
+          }
+        }
+
+        // 소득유형별 내역
+        h += `<div class="gt">🧮 소득유형별 내역</div>`;
+        const 유형keys = Object.keys(xl.소득별||{});
+        if(유형keys.length>0){
+          for(let key of 유형keys){
+            const a = xl.소득별[key];
+            h += `<div style="font-size:12px;font-weight:700;color:var(--accent);margin:10px 0 5px;padding-left:4px">▸ ${key}</div>`;
+            h += mkCI('info','i', key+' 공급가액', fmtAmt(a.공급가액), '');
+            h += mkCI('info','i', key+' 소득세', fmtAmt(a.소득세), '');
+            h += mkCI('info','i', key+' 주민세', fmtAmt(a.주민세), '');
+            h += mkCI('info','i', key+' 실지급액', fmtAmt(a.실지급액), '');
+          }
+        }
+
+        h += `<div class="gt">📊 총합계 대사 (기안서 ↔ 엑셀 합산)</div>`;
+        h += cmpAmt('총 공급가액', fn('f_supply'), xl.총합계?.공급가액, '기안서', '엑셀합계', 10);
+        h += cmpAmt('총 소득세', fn('f_incometax'), xl.총합계?.소득세, '기안서', '엑셀합계', 10);
+        h += cmpAmt('총 주민세', fn('f_restax'), xl.총합계?.주민세, '기안서', '엑셀합계', 10);
+        h += cmpAmt('총 실지급액', fn('f_netpay'), xl.총합계?.실지급액, '기안서', '엑셀합계', 10);
+      } else {
+        h += mkCI('warn','!','엑셀 미첨부','지급내역 엑셀이 없어 금액 교차 검증 불가','');
+      }
+
+      if(bizData){
+        h += `<div class="gt">🏢 사업자등록증</div>`;
+        h += mkCI('info','i','사업자등록증 확인',`${bizData.상호||'—'} / ${bizData.사업자등록번호||'—'}`,mkDiff([{tag:'등록증',val:`${bizData.상호} (${bizData.사업자등록번호})`,cls:'s2'}]));
+      }
+    }
+
+    /* ---- 선인세/매절 ---- */
+    else {
+      h += `<div class="gt">📋 텍스트 항목 대사</div>`;
+      h += cmpText('1. 작성일자', fv('f_date'), mailData?.작성일자||contractData?.작성일자||'', '기안서', '메일/계약서');
+      h += cmpText('2. 증빙구분', fv('f_proof'), '', '기안서', '—');
+      h += cmpText('3. 고객명', fv('f_client'), contractData?.을회사명||mailData?.보낸사람_회사명||'', '기안서', '계약서/메일');
+      h += cmpText('4. 사업자등록번호', fv('f_bizno'), contractData?.을사업자번호||bizData?.사업자등록번호||mailData?.사업자등록번호||'', '기안서', '증빙');
+      h += cmpText('5. 이메일', fv('f_email'), mailData?.계산서수신이메일||mailData?.보낸사람_이메일||'', '기안서', '메일');
+      h += cmpText('6. 입금 예정일', fv('f_duedate'), contractData?.지급조건||mailData?.입금예정일||'', '기안서', '계약서/메일');
+
+      h += `<div class="gt">🧮 금액 대사 (VAT 호환)</div>`;
+      h += cmpAmtVAT('7. 공급가액', fn('f_supply'), parseAmt(contractData?.총계약금액)||parseAmt(mailData?.공급가액)||parseAmt(mailData?.총금액), '기안서', '계약서/메일');
+
+      if(fn('f_vat')!==null){
+        h += mkCI('info','i','8. 부가가치세',fmtAmt(fn('f_vat')),mkDiff([{tag:'기안서',val:fmtAmt(fn('f_vat'))}]));
+      }
+      if(fn('f_total')!==null){
+        h += cmpAmtVAT('9. 합계(세금계산서 발행액)', fn('f_total'), parseAmt(contractData?.총계약금액)||parseAmt(mailData?.총금액), '기안서', '계약서/메일');
+      }
+
+      if(bizData){
+        h += `<div class="gt">🏢 사업자등록증 확인</div>`;
+        h += cmpText('사업자등록번호', fv('f_bizno'), bizData?.사업자등록번호||'', '기안서', '등록증');
+      }
+    }
+
+    /* ---- 최종 판정 ---- */
+    h += globalErrors===0
+      ? `<div style="background:var(--ok-bg);border:2px solid var(--ok);padding:20px;text-align:center;border-radius:10px;margin-top:24px">
+           <h2 style="color:var(--ok);margin:0 0 8px">✅ 교차 검증 완료 — 오류 없음</h2>
+           <p style="color:#555;font-size:13px;margin:0">기안서와 증빙 자료가 일치합니다.</p></div>`
+      : `<div style="background:var(--err-bg);border:2px solid var(--err);padding:20px;text-align:center;border-radius:10px;margin-top:24px">
+           <h2 style="color:var(--err);margin:0 0 8px">❌ ${globalErrors}건 불일치 발견</h2>
+           <p style="color:#555;font-size:13px;margin:0">붉은색(✕) 항목을 확인 후 기안서를 수정하세요.</p></div>`;
+
+    h += `<div style="text-align:center;margin-top:20px">
+      <button class="btn btn-green" onclick="window.print()" style="max-width:300px;margin:0 auto">🖨️ 보고서 PDF 저장</button>
+      <button style="margin-top:8px;padding:8px 20px;border:1px solid var(--border);border-radius:6px;background:transparent;cursor:pointer;font-size:12px" onclick="location.reload()">↩ 처음으로</button>
+    </div>`;
+
+    $('r_core').innerHTML = h;
+    $('reportCard').classList.add('show');
+    $('reportCard').scrollIntoView({behavior:'smooth'});
+
+  }catch(e){
+    alert('검증 중 오류: '+e.message);
+  }finally{
+    btn.disabled=false; btn.innerHTML='🧮 최종 검증 실행';
+  }
+}
+</script>
+</body>
+</html>
