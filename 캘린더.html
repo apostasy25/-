@@ -8,7 +8,7 @@
         :root { --primary: #E25B19; --dark: #333; --bg: #f4f6f8; --border: #ccc; }
         body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); margin: 0; padding: 15px; overflow-x: hidden; }
         
-        .container { max-width: 96%; margin: auto; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 8px; }
+        .container { max-width: 98%; margin: auto; background: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-radius: 8px; }
         
         /* 헤더 */
         .header { background: var(--primary); color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
@@ -16,8 +16,8 @@
         .header select { font-size: 16px; padding: 3px 8px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; }
         .btn-alert { background: #111; color: #fff; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
-        /* 메인 레이아웃 */
-        .main-layout { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; padding: 20px; height: calc(100vh - 110px); }
+        /* 메인 레이아웃: 달력 비율 1.9 : 1 로 확장 */
+        .main-layout { display: grid; grid-template-columns: 1.9fr 1fr; gap: 20px; padding: 20px; height: calc(100vh - 110px); }
 
         /* 달력 스타일 */
         .calendar-wrap { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
@@ -28,15 +28,15 @@
         .day.sunday .day-num { color: #e74c3c; }
         .day.saturday .day-num { color: #3498db; }
         
-        /* 빈 칸 메모 영역 */
+        /* 빈 칸 메모 영역 (취소선 지원을 위해 div로 변경) */
         .empty-memo-cell { background: #fffbe6 !important; position: relative; grid-column: span var(--span); }
-        .empty-memo-textarea { width: 100%; height: 100%; border: none; background: transparent; resize: none; padding: 15px 10px 10px; font-family: inherit; font-size: 13px; line-height: 1.5; color: #666; outline: none; box-sizing: border-box; }
-        .memo-tag { position: absolute; top: 5px; right: 8px; font-size: 12px; color: #E25B19; font-weight: bold; pointer-events: none; }
+        .empty-memo-editor { width: 100%; height: 100%; border: none; background: transparent; padding: 22px 10px 10px; font-family: inherit; font-size: 13px; line-height: 1.5; color: #444; outline: none; box-sizing: border-box; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
+        .memo-tag { position: absolute; top: 5px; left: 10px; font-size: 11.5px; color: #E25B19; font-weight: bold; pointer-events: none; }
 
-        /* 달력 이벤트(일정) 뱃지 스타일 */
-        .cal-event { font-size: 12px; padding: 4px 6px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; font-weight: bold; line-height: 1.3; }
+        /* 달력 이벤트(일정) 뱃지 스타일 (여러 줄 텍스트 지원) */
+        .cal-event { font-size: 12px; padding: 4px 6px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; font-weight: bold; line-height: 1.3; white-space: pre-wrap; word-break: keep-all; }
         .cal-event[data-cat="정산서 검토"] { border-left-color: #E25B19; background: #fff3ed; }
-        /* 미래 입금 일정 표시용 강조 스타일 */
+        .event-note { font-size: 11px; color: #666; font-weight: normal; margin-top: 4px; border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 3px; }
         .cal-event.deposit { border-left-color: #27ae60 !important; background: #eafaf1 !important; color: #1e8449; }
 
         /* 우측 상세 테이블 */
@@ -44,20 +44,25 @@
         .panel-title { background: var(--dark); color: #fff; padding: 10px 15px; font-size: 14px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .table-scroll { flex-grow: 1; overflow-y: auto; background: #fff; }
         
+        /* 테이블 열 비율 조정 (날짜/상태 축소, 내용/비고 확장) */
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { position: sticky; top: 0; background: #eee; z-index: 10; font-size: 13px; padding: 10px 5px; border-bottom: 2px solid var(--border); }
-        td { border-bottom: 1px solid #eee; padding: 4px; height: 45px; }
-        td input, td select { width: 100%; box-sizing: border-box; border: 1px solid transparent; padding: 6px; font-size: 12px; text-align: center; background: transparent; }
-        td input:focus, td select:focus { border-color: var(--primary); background: #fdfdfd; outline: none; border-radius: 3px; }
+        th { position: sticky; top: 0; background: #eee; z-index: 10; font-size: 13px; padding: 10px 4px; border-bottom: 2px solid var(--border); }
+        td { border-bottom: 1px solid #eee; padding: 4px; vertical-align: top; }
+        
+        /* 텍스트 입력 칸 (여러 줄 지원을 위해 textarea로 변경) */
+        td input, td select { width: 100%; box-sizing: border-box; border: 1px solid transparent; padding: 6px; font-size: 12px; text-align: center; background: transparent; font-family: inherit; }
+        td textarea { width: 100%; box-sizing: border-box; border: 1px solid transparent; padding: 6px; font-size: 12px; background: transparent; font-family: inherit; resize: vertical; min-height: 32px; height: 100%; display: block; white-space: pre-wrap; }
+        
+        td input:focus, td textarea:focus, td select:focus { border-color: var(--primary); background: #fdfdfd; outline: none; border-radius: 3px; }
         
         select[data-status="대기"] { color: #888; }
         select[data-status="진행"] { color: #f39c12; }
         select[data-status="완료"] { color: #27ae60; font-weight: bold; }
 
-        .btn-del { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 18px; font-weight: bold; padding: 0 5px; }
+        .btn-del { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 18px; font-weight: bold; padding: 0 5px; width: 100%; }
         .btn-url-manage { font-size: 13px; background: #555; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; }
 
-        /* 오버레이 (팝업 배경 어둡게) */
+        /* 오버레이 */
         #modalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:150; }
     </style>
 </head>
@@ -85,17 +90,22 @@
         <div class="calendar-wrap">
             <div class="calendar" id="calGrid"></div>
         </div>
+
         <div class="details-panel">
             <div class="panel-title">
                 <span>월별 상세 일정</span>
-                <span style="font-size: 12px; font-weight: normal; color: #ddd;">* 맨 아래 빈칸 입력 시 자동 저장</span>
+                <span style="font-size: 11px; font-weight: normal; color: #ddd;">* 업무내용/비고는 Shift+Enter로 줄바꿈 가능</span>
             </div>
             <div class="table-scroll">
                 <table>
                     <thead>
                         <tr>
-                            <th width="12%">날짜</th><th width="16%">분류</th><th width="28%">업무 내용</th>
-                            <th width="24%">비고(입금 등)</th><th width="14%">상태</th><th width="6%">-</th>
+                            <th width="10%">날짜</th>
+                            <th width="15%">분류</th>
+                            <th width="32%">업무 내용</th>
+                            <th width="26%">비고(입금 등)</th>
+                            <th width="12%">상태</th>
+                            <th width="5%">-</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -135,10 +145,7 @@
 <script>
     let scheduleData = JSON.parse(localStorage.getItem('combined_data_2026')) || [];
     let memos = JSON.parse(localStorage.getItem('monthly_memos_2026')) || {};
-    let urlDataList = JSON.parse(localStorage.getItem('url_links_2026')) || [
-        { id: 1, company: "에이블리", url: "https://ably.com" },
-        { id: 2, company: "조아라", url: "https://joara.com" }
-    ];
+    let urlDataList = JSON.parse(localStorage.getItem('url_links_2026')) || [];
 
     let currentMonth = 4;
     let pendingUrlsToOpen = [];
@@ -146,7 +153,6 @@
     window.onload = () => {
         document.getElementById('monthSelect').value = currentMonth;
         refreshUI();
-        // 페이지 진입 시 자동 알림 체크
         checkAutoAlerts();
     };
 
@@ -166,62 +172,89 @@
         renderTable();
     }
 
-    // [핵심 업데이트] 달력 렌더링 로직 (비고란 미래 날짜 자동 표시)
+    // 에디터 취소선 단축키 (Ctrl + Shift + X)
+    function handleRichText(e) {
+        if (e.ctrlKey && e.shiftKey && (e.key === 'x' || e.key === 'X')) {
+            e.preventDefault();
+            document.execCommand('strikeThrough', false, null);
+        }
+    }
+
+    // [핵심 업데이트] 달력 모든 빈칸을 메모로 활용
     function renderCalendar() {
         const grid = document.getElementById('calGrid');
         grid.innerHTML = '';
         const daysArr = ['일', '월', '화', '수', '목', '금', '토'];
         daysArr.forEach(d => grid.innerHTML += `<div class="cal-header">${d}</div>`);
 
+        const lastDateObj = new Date(2026, currentMonth, 0);
         const firstDay = new Date(2026, currentMonth - 1, 1).getDay();
-        const lastDate = new Date(2026, currentMonth, 0).getDate();
+        const lastDate = lastDateObj.getDate();
+        const lastDayOfWeek = lastDateObj.getDay();
 
+        // 1. 월 시작 전 빈 칸 (상단 메모)
         if(firstDay > 0) {
+            let memoTop = memos[currentMonth + '_top'];
+            if(memoTop === undefined) memoTop = memos[currentMonth] || ''; // 구버전 데이터 호환
+
             let memoCell = document.createElement('div');
             memoCell.className = 'day empty-memo-cell';
             memoCell.style.setProperty('--span', firstDay);
             memoCell.innerHTML = `
-                <span class="memo-tag">${currentMonth}월 중요 메모</span>
-                <textarea class="empty-memo-textarea" oninput="updateMemo(this.value)" placeholder="업무 관련 특이사항이나 메모를 자유롭게 입력하세요...">${memos[currentMonth] || ''}</textarea>
+                <span class="memo-tag">📝 상단 메모 (텍스트 드래그 후 Ctrl+Shift+X 로 취소선)</span>
+                <div class="empty-memo-editor" contenteditable="true" onblur="updateMemo('${currentMonth}_top', this.innerHTML)" onkeydown="handleRichText(event)">${memoTop}</div>
             `;
             grid.appendChild(memoCell);
         }
 
+        // 2. 실제 날짜
         for(let d=1; d<=lastDate; d++) {
             let el = document.createElement('div');
             let dow = new Date(2026, currentMonth - 1, d).getDay();
             el.className = `day ${dow === 0 ? 'sunday' : ''} ${dow === 6 ? 'saturday' : ''}`;
             el.innerHTML = `<div class="day-num">${d}</div>`;
 
-            // 1. 일반 일정 표시 (해당 월에 등록된 일정)
             let daily = scheduleData.filter(s => s.month === currentMonth && extractDay(s.date) === d);
             daily.forEach(evt => {
-                el.innerHTML += `<div class="cal-event" data-cat="${evt.category}">${evt.display || evt.content}</div>`;
+                let noteHtml = "";
+                if (evt.note && evt.note.trim() !== "") {
+                    noteHtml = `<div class="event-note">${evt.note}</div>`;
+                }
+                el.innerHTML += `<div class="cal-event" data-cat="${evt.category}">
+                                    <div>${evt.display || evt.content}</div>
+                                    ${noteHtml}
+                                 </div>`;
             });
 
-            // 2. 비고(note)란 날짜 자동 파싱 및 표시 (모든 월의 데이터 탐색)
+            // 미래 입금 표시
             scheduleData.forEach(evt => {
                 if(!evt.note) return;
-                
-                // M/D 또는 M.D 형태의 날짜 추출
                 let match = evt.note.match(/(\d{1,2})[\/\.](\d{1,2})/);
-                if(match) {
-                    let noteM = parseInt(match[1], 10);
-                    let noteD = parseInt(match[2], 10);
-                    
-                    // 추출한 월/일이 현재 달력의 날짜와 일치하면 입금 강조 뱃지 추가
-                    if(noteM === currentMonth && noteD === d) {
-                        el.innerHTML += `<div class="cal-event deposit">💰 입금: ${evt.display || evt.content}</div>`;
-                    }
+                if(match && parseInt(match[1], 10) === currentMonth && parseInt(match[2], 10) === d) {
+                    el.innerHTML += `<div class="cal-event deposit">💰 입금: ${evt.display || evt.content}</div>`;
                 }
             });
-
             grid.appendChild(el);
+        }
+
+        // 3. 월 종료 후 빈 칸 (하단 메모)
+        if(lastDayOfWeek < 6) {
+            let span = 6 - lastDayOfWeek;
+            let memoBot = memos[currentMonth + '_bot'] || '';
+            let memoCell = document.createElement('div');
+            memoCell.className = 'day empty-memo-cell';
+            memoCell.style.setProperty('--span', span);
+            memoCell.innerHTML = `
+                <span class="memo-tag">📝 하단 메모 (텍스트 드래그 후 Ctrl+Shift+X 로 취소선)</span>
+                <div class="empty-memo-editor" contenteditable="true" onblur="updateMemo('${currentMonth}_bot', this.innerHTML)" onkeydown="handleRichText(event)">${memoBot}</div>
+            `;
+            grid.appendChild(memoCell);
         }
     }
 
-    function updateMemo(val) { memos[currentMonth] = val; save(); }
+    function updateMemo(key, val) { memos[key] = val; save(); }
 
+    // [핵심 업데이트] 업무 내용/비고 다중 라인(textarea) 지원
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -236,8 +269,8 @@
             tr.innerHTML = `
                 <td><input type="text" placeholder="예: 4-1" onchange="addNew(this, 'date')"></td>
                 <td><input type="text" placeholder="분류" onchange="addNew(this, 'category')"></td>
-                <td><input type="text" placeholder="업무내용 입력" onchange="addNew(this, 'content')"></td>
-                <td><input type="text" placeholder="비고(입금 등)" onchange="addNew(this, 'note')"></td>
+                <td><textarea placeholder="업무내용 입력" onchange="addNew(this, 'content')"></textarea></td>
+                <td><textarea placeholder="비고(입금 등)" onchange="addNew(this, 'note')"></textarea></td>
                 <td><select disabled><option>대기</option></select></td>
                 <td></td>
             `;
@@ -245,9 +278,9 @@
             tr.innerHTML = `
                 <td><input type="text" value="${item.date}" onchange="updateItem(${item.id}, 'date', this.value)"></td>
                 <td><input type="text" value="${item.category}" onchange="updateItem(${item.id}, 'category', this.value)"></td>
-                <td><input type="text" value="${item.content}" onchange="updateItem(${item.id}, 'content', this.value)"></td>
-                <td><input type="text" value="${item.note || ''}" onchange="updateItem(${item.id}, 'note', this.value)"></td>
-                <td>
+                <td><textarea onchange="updateItem(${item.id}, 'content', this.value)">${item.content}</textarea></td>
+                <td><textarea onchange="updateItem(${item.id}, 'note', this.value)">${item.note || ''}</textarea></td>
+                <td style="vertical-align: middle;">
                     <select data-status="${item.status}" onchange="updateItem(${item.id}, 'status', this.value); this.dataset.status=this.value;">
                         <option value="대기" ${item.status==='대기'?'selected':''}>대기</option>
                         <option value="진행" ${item.status==='진행'?'selected':''}>진행</option>
@@ -255,7 +288,7 @@
                         <option value="보류" ${item.status==='보류'?'selected':''}>보류</option>
                     </select>
                 </td>
-                <td><button class="btn-del" onclick="delItem(${item.id})">×</button></td>
+                <td style="vertical-align: middle;"><button class="btn-del" onclick="delItem(${item.id})">×</button></td>
             `;
         }
         tbody.appendChild(tr);
@@ -297,7 +330,7 @@
         });
         b.innerHTML += `<tr>
             <td style="padding:5px;"><input type="text" style="width:100%; box-sizing:border-box; padding:5px;" placeholder="새 업체명" onchange="addUrl(this, 'company')"></td>
-            <td style="padding:5px;"><input type="text" style="width:100%; box-sizing:border-box; padding:5px;" placeholder="URL" onchange="addUrl(this, 'url')"></td>
+            <td style="padding:5px;"><input type="text" style="width:100%; box-sizing:border-box; padding:5px;" placeholder="URL (http://...)" onchange="addUrl(this, 'url')"></td>
             <td></td>
         </tr>`;
     }
@@ -315,16 +348,10 @@
         let m = s.match(/-(\d+)/); return m ? parseInt(m[1]) : -1;
     }
 
-    // ==========================================
     // [자동 팝업 알림 로직]
-    // ==========================================
     function checkAutoAlerts(isManual = false) {
         const todayStr = new Date().toLocaleDateString();
-        
-        // 수동 클릭이 아닌데, 오늘 하루 안보기를 체크했다면 패스
-        if (!isManual && localStorage.getItem('hideAlertDate_2026') === todayStr) {
-            return; 
-        }
+        if (!isManual && localStorage.getItem('hideAlertDate_2026') === todayStr) return; 
 
         const today = new Date();
         const tMonth = today.getMonth() + 1;
@@ -335,13 +362,11 @@
         let depositMsgs = [];
 
         scheduleData.forEach(item => {
-            // 입금일 매칭
             let match = (item.note || "").match(/(\d{1,2})[\/\.](\d{1,2})/);
             if(match && parseInt(match[1], 10) === tMonth && parseInt(match[2], 10) === tDay) {
                 depositMsgs.push(`- ${item.display || item.content}`);
             }
 
-            // 정산일 매칭
             if(item.category.includes("정산서") && extractDay(item.date) === tDay) {
                 urlDataList.forEach(u => {
                     if(u.company && item.content.includes(u.company)) {
@@ -355,12 +380,8 @@
         });
 
         let htmlMsg = "";
-        if(depositMsgs.length > 0) {
-            htmlMsg += `<strong style="color:#27ae60;">[입금일 도래]</strong><br>${depositMsgs.join("<br>")}<br><br>`;
-        }
-        if(companies.length > 0) {
-            htmlMsg += `<strong style="color:#E25B19;">[정산서 검토]</strong><br>${companies.join(", ")}<br>`;
-        }
+        if(depositMsgs.length > 0) { htmlMsg += `<strong style="color:#27ae60;">[입금일 도래]</strong><br>${depositMsgs.join("<br>")}<br><br>`; }
+        if(companies.length > 0) { htmlMsg += `<strong style="color:#E25B19;">[정산서 검토]</strong><br>${companies.join(", ")}<br>`; }
 
         if (htmlMsg !== "") {
             document.getElementById('autoAlertMsg').innerHTML = htmlMsg;
@@ -374,9 +395,7 @@
         }
     }
 
-    function showManualAlert() {
-        checkAutoAlerts(true);
-    }
+    function showManualAlert() { checkAutoAlerts(true); }
 
     function openAlertUrls() {
         pendingUrlsToOpen.forEach(url => window.open(url, '_blank'));
