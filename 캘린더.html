@@ -7,44 +7,39 @@
     <style>
         :root { --primary: #E25B19; --dark: #333; --bg: #f4f6f8; --border: #c8c8c8; }
         
-        body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #222; }
-        .container { max-width: 100%; margin: auto; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 8px; overflow: visible; padding-bottom: 20px; }
+        /* 1. 전체 화면 높이 고정 및 스크롤 제어 */
+        body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); margin: 0; padding: 15px; height: 100vh; box-sizing: border-box; overflow: hidden; }
+        .container { max-width: 100%; height: 100%; margin: auto; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 8px; display: flex; flex-direction: column; }
         
         /* 헤더 */
-        .header { background: var(--primary); color: #fff; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
-        .header h1 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
-        .header select { font-size: 16px; padding: 4px 8px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; color: #333; outline: none; }
-        .btn-alert { background: #111; color: #fff; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
-        .btn-alert:hover { background: #000; }
+        .header { background: var(--primary); color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .header h1 { margin: 0; font-size: 19px; display: flex; align-items: center; gap: 10px; }
+        .header select { font-size: 16px; padding: 3px 6px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; color: #333; outline: none; }
+        .btn-alert { background: #111; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
 
-        /* 메인 레이아웃 (달력 1.4 : 테이블 1) */
-        .main-layout { display: flex; gap: 20px; padding: 20px; align-items: flex-start; }
-        .calendar-wrap { flex: 1.4; border: 1px solid var(--border); border-radius: 4px; background: var(--border); display: flex; flex-direction: column; }
-        .details-panel { flex: 1; border: 1px solid var(--border); border-radius: 4px; background: #fff; }
+        /* 2. 메인 레이아웃: 높이를 브라우저에 맞게 고정 */
+        .main-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 15px; padding: 15px; flex-grow: 1; overflow: hidden; }
 
-        /* 달력 스타일 */
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
-        .cal-header { background: var(--dark); color: #fff; text-align: center; padding: 8px; font-size: 14px; font-weight: bold; }
-        .day { background: #fff; padding: 6px; min-height: 130px; display: flex; flex-direction: column; gap: 4px; }
-        .day-num { font-weight: bold; font-size: 13px; color: #555; margin-bottom: 4px; padding-bottom: 4px; border-bottom: 1px solid #f0f0f0; }
+        /* 좌측: 달력 영역 (고정) */
+        .calendar-wrap { height: 100%; border: 1px solid var(--border); border-radius: 4px; background: var(--border); display: flex; flex-direction: column; overflow: hidden; }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(6, 1fr); height: 100%; gap: 1px; }
+        .cal-header { background: var(--dark); color: #fff; text-align: center; padding: 8px; font-size: 13px; font-weight: bold; }
+        
+        /* 달력 각 칸: 내용이 많아도 칸 크기는 균등하게 유지 */
+        .day { background: #fff; padding: 4px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
+        .day-num { font-weight: bold; font-size: 12px; color: #555; margin-bottom: 2px; padding-bottom: 2px; border-bottom: 1px solid #f8f8f8; }
         .day.sunday .day-num { color: #e74c3c; }
         .day.saturday .day-num { color: #3498db; }
         
-        /* 빈 칸 메모 영역 (달력) */
+        /* 달력 빈 칸 메모 */
         .empty-memo-cell { background: #fffbe6 !important; position: relative; padding: 0 !important; }
-        .empty-memo-editor { width: 100%; height: 100%; min-height: 130px; border: none; padding: 30px 10px 10px; font-family: inherit; font-size: 12px; line-height: 1.5; color: #333; outline: none; box-sizing: border-box; background: transparent; resize: none; overflow: hidden; display: block; }
-        .memo-tag { position: absolute; top: 8px; left: 10px; font-size: 12px; color: #E25B19; font-weight: bold; pointer-events: none; }
+        .empty-memo-editor { width: 100%; height: 100%; border: none; padding: 22px 8px 8px; font-family: inherit; font-size: 12px; line-height: 1.4; color: #333; outline: none; box-sizing: border-box; background: transparent; resize: none; overflow-y: auto; }
+        .memo-tag { position: absolute; top: 4px; left: 8px; font-size: 10px; color: #E25B19; font-weight: bold; pointer-events: none; }
 
-        /* 🚀 달력 뱃지: 무조건 1줄로 자르기 (... 표시) */
+        /* 달력 일정 뱃지: 1줄 고정 (... 표시) */
         .cal-event { 
-            font-size: 12px; padding: 4px 6px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; 
-            font-weight: bold; color: #111; margin-bottom: 2px; cursor: default;
-            
-            /* 핵심: 한 줄 고정 및 말줄임표 처리 */
-            display: block;
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
+            font-size: 11px; padding: 3px 5px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; 
+            font-weight: bold; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default;
         }
         .cal-event[data-cat*="정산서"] { border-left-color: #E25B19; background: #fff3ed; }
         .cal-event[data-cat*="선인세"] { border-left-color: #27ae60; background: #eafaf1; }
@@ -52,40 +47,37 @@
         .cal-event[data-cat*="기타"] { border-left-color: #95a5a6; background: #f2f4f4; }
         .cal-event.deposit { border-left-color: #27ae60 !important; background: #eafaf1 !important; color: #1e8449; }
 
-        /* 🚀 우측 상세 테이블 (절대 안 짤리게 세팅) */
-        .panel-title { background: var(--dark); color: #fff; padding: 12px 15px; font-size: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        /* 3. 우측: 상세 일정 영역 (스크롤 허용) */
+        .details-panel { height: 100%; border: 1px solid var(--border); border-radius: 4px; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+        .panel-title { background: var(--dark); color: #fff; padding: 10px 15px; font-size: 14px; font-weight: bold; flex-shrink: 0; }
         
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid var(--border); }
-        th { background: #f4f6f8; font-size: 13px; padding: 10px 5px; border: 1px solid #ddd; border-bottom: 2px solid #ccc; color: #222; text-align: center; font-weight: bold; }
+        /* 🚀 테이블 스크롤 영역 활성화 */
+        .table-scroll-area { flex-grow: 1; overflow-y: auto; }
         
-        td { border: 1px solid #ddd; vertical-align: top; background: #fff; padding: 0; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; border-left: none; border-right: none; }
+        th { position: sticky; top: 0; background: #f4f6f8; font-size: 12px; padding: 10px 4px; border: 1px solid #ddd; border-top: none; z-index: 10; }
+        td { border: 1px solid #ddd; vertical-align: top; padding: 0; background: #fff; }
         tbody tr:hover td { background: #f9fbff; }
         
-        /* 테이블 안의 텍스트 입력창: 복붙 서식 파괴 방지용 순수 textarea 사용 */
+        /* 테이블 입력창: 엑셀처럼 텍스트만 처리 & 무한 자동 높이조절 */
         .cell-input {
-            width: 100%; box-sizing: border-box; border: none; padding: 8px 6px; font-size: 12.5px;
+            width: 100%; box-sizing: border-box; border: none; padding: 8px 6px; font-size: 12px;
             color: #222; background: transparent; font-family: inherit;
             outline: none; resize: none; overflow: hidden; display: block;
-            line-height: 1.5; min-height: 36px; transition: background 0.1s;
+            line-height: 1.5; min-height: 36px;
         }
         .cell-input.center { text-align: center; }
-        
-        /* 엑셀 포커스 효과 */
         .cell-input:focus { background: #fffbe6; box-shadow: inset 0 0 0 2px var(--primary); }
 
-        select.cell-status { width: 90%; margin: 6px auto; display: block; padding: 6px; font-size: 12px; text-align: center; border: 1px solid #ccc; border-radius: 4px; outline: none; cursor: pointer; background: #fff; }
-        select.cell-status:focus { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+        select.cell-status { width: 90%; margin: 6px auto; display: block; padding: 4px; font-size: 11px; text-align: center; border: 1px solid #ccc; border-radius: 3px; outline: none; cursor: pointer; }
         select.cell-status[data-status="대기"] { color: #888; }
         select.cell-status[data-status="진행"] { color: #f39c12; font-weight: bold; }
         select.cell-status[data-status="완료"] { color: #27ae60; font-weight: bold; }
 
-        .btn-del { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 18px; font-weight: bold; padding: 8px 0; width: 100%; height: 100%; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-        .btn-del:hover { background: #ffebeb; color: #c0392b; }
-        
-        .btn-url-manage { font-size: 13px; background: #555; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; transition: 0.2s; }
-        .btn-url-manage:hover { background: #666; }
+        .btn-del { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; height: 36px; }
 
-        /* 오버레이 */
+        /* 기타 UI */
+        .btn-url-manage { font-size: 12px; background: #555; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px; }
         #modalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:150; }
     </style>
 </head>
@@ -105,7 +97,7 @@
         </h1>
         <div>
             <button class="btn-url-manage" onclick="toggleUrlManage()">🔗 업체 URL 관리</button>
-            <button class="btn-alert" onclick="showManualAlert()">🔔 알림 다시보기</button>
+            <button class="btn-alert" onclick="showManualAlert()">🔔 알림 확인</button>
         </div>
     </div>
 
@@ -113,11 +105,10 @@
         <div class="calendar-wrap">
             <div class="calendar" id="calGrid"></div>
         </div>
+
         <div class="details-panel">
-            <div class="panel-title">
-                <span>월별 상세 일정</span>
-            </div>
-            <div>
+            <div class="panel-title">월별 상세 일정</div>
+            <div class="table-scroll-area">
                 <table>
                     <thead>
                         <tr>
@@ -136,31 +127,26 @@
     </div>
 </div>
 
-<div id="urlModal" style="display:none; position:fixed; top:15%; left:30%; width:40%; background:white; border-radius: 8px; z-index:200; padding:25px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
-    <h3 style="margin-top:0; border-bottom:2px solid #333; padding-bottom:10px;">🔗 업체별 정산 사이트 관리</h3>
+<div id="urlModal" style="display:none; position:fixed; top:15%; left:30%; width:40%; background:white; border-radius: 8px; z-index:200; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
+    <h3 style="margin-top:0; border-bottom:2px solid #333; padding-bottom:10px; font-size:16px;">🔗 업체별 정산 사이트 관리</h3>
     <div style="max-height:400px; overflow-y:auto; margin-bottom:15px;">
         <table id="modalUrlTable" style="border:1px solid #eee;">
             <thead><tr style="background:#f4f4f4;"><th width="35%">업체명</th><th width="50%">URL</th><th width="15%">관리</th></tr></thead>
             <tbody id="modalUrlBody"></tbody>
         </table>
     </div>
-    <div style="text-align:right;">
-        <button style="padding:8px 18px; background:#E25B19; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold; font-size:14px;" onclick="toggleUrlManage()">닫기</button>
-    </div>
+    <div style="text-align:right;"><button style="padding:8px 18px; background:#E25B19; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="toggleUrlManage()">닫기</button></div>
 </div>
 
 <div id="modalOverlay"></div>
 <div id="autoAlertModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:380px; background:#fff; border-radius:8px; box-shadow:0 15px 40px rgba(0,0,0,0.4); z-index:200; padding:25px; text-align:center;">
-    <h2 style="color:#E25B19; margin-top:0;">🔔 오늘의 정산 업무</h2>
-    <p id="autoAlertMsg" style="line-height:1.6; font-size:14px; color:#333; text-align:left; background:#f9f9f9; padding:15px; border-radius:4px; margin-bottom:0;"></p>
-    
+    <h2 style="color:#E25B19; margin-top:0; font-size:18px;">🔔 오늘의 정산 업무</h2>
+    <p id="autoAlertMsg" style="line-height:1.6; font-size:14px; color:#333; text-align:left; background:#f9f9f9; padding:15px; border-radius:4px;"></p>
     <div style="margin-top:20px; display:flex; justify-content:center; gap:10px;">
         <button id="btnOpenUrls" onclick="openAlertUrls()" style="padding:10px 16px; background:#E25B19; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer; display:none;">사이트 모두 열기</button>
         <button onclick="closeAutoAlert()" style="padding:10px 16px; background:#555; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">닫기</button>
     </div>
-    <div style="margin-top:15px; font-size:12px; color:#888;">
-        <label style="cursor:pointer;"><input type="checkbox" id="hideTodayChk"> 오늘 하루 이 창 다시 보지 않기</label>
-    </div>
+    <div style="margin-top:15px; font-size:12px; color:#888;"><label style="cursor:pointer;"><input type="checkbox" id="hideTodayChk"> 오늘 하루 다시 보지 않기</label></div>
 </div>
 
 <script>
@@ -175,11 +161,6 @@
         refreshUI();
         checkAutoAlerts();
     };
-
-    // 창 크기 조절 시 표 높이 재정렬
-    window.addEventListener('resize', () => {
-        document.querySelectorAll('textarea.cell-input, textarea.empty-memo-editor').forEach(el => autoResize(el));
-    });
 
     function save() {
         localStorage.setItem('combined_data_2026', JSON.stringify(scheduleData));
@@ -197,9 +178,8 @@
         renderTable();
     }
 
-    // [핵심] 글자 길이에 맞춰 텍스트박스 무한 확장
     function autoResize(el) {
-        el.style.height = '1px'; // 초기화 후 재계산 (글자 지웠을 때 줄어들게 함)
+        el.style.height = '1px';
         el.style.height = el.scrollHeight + 'px';
     }
 
@@ -232,20 +212,15 @@
         const lastDate = lastDateObj.getDate();
         const lastDayOfWeek = lastDateObj.getDay();
 
-        // 상단 메모
         if(firstDay > 0) {
-            let memoTop = memos[currentMonth + '_top'] !== undefined ? memos[currentMonth + '_top'] : (memos[currentMonth] || '');
+            let memoTop = memos[currentMonth + '_top'] || '';
             let memoCell = document.createElement('div');
             memoCell.className = 'day empty-memo-cell';
             memoCell.style.gridColumn = `span ${firstDay}`;
-            memoCell.innerHTML = `
-                <span class="memo-tag">📝 상단 메모</span>
-                <textarea class="empty-memo-editor" placeholder="내용을 입력하세요..." oninput="autoResize(this)" onchange="updateMemo('${currentMonth}_top', this.value)">${memoTop}</textarea>
-            `;
+            memoCell.innerHTML = `<span class="memo-tag">📝 메모</span><textarea class="empty-memo-editor" onchange="updateMemo('${currentMonth}_top', this.value)">${memoTop}</textarea>`;
             grid.appendChild(memoCell);
         }
 
-        // 날짜 채우기
         for(let d=1; d<=lastDate; d++) {
             let el = document.createElement('div');
             let dow = new Date(2026, currentMonth - 1, d).getDay();
@@ -254,17 +229,9 @@
 
             let daily = scheduleData.filter(s => s.month === currentMonth && extractDay(s.date) === d);
             daily.forEach(evt => {
-                let noteHtml = "";
-                let fullTitle = `${evt.display || evt.content}`;
-                if (evt.note && evt.note.trim() !== "") {
-                    fullTitle += `\n[비고] ${evt.note}`;
-                }
+                let fullTitle = `${evt.display || evt.content} ${evt.note ? '\n[비고]: ' + evt.note : ''}`;
                 let sym = getCategorySymbol(evt.category);
-                
-                // 마우스 올렸을 때만 툴팁(title)으로 전체 내용 확인 가능, 칸 안에서는 1줄 표시
-                el.innerHTML += `<div class="cal-event" data-cat="${evt.category}" title="${fullTitle}">
-                                    ${sym}${evt.display || evt.content}
-                                 </div>`;
+                el.innerHTML += `<div class="cal-event" data-cat="${evt.category}" title="${fullTitle}">${sym}${evt.display || evt.content}</div>`;
             });
 
             scheduleData.forEach(evt => {
@@ -277,23 +244,15 @@
             grid.appendChild(el);
         }
 
-        // 하단 메모
         if(lastDayOfWeek < 6) {
             let span = 6 - lastDayOfWeek;
             let memoBot = memos[currentMonth + '_bot'] || '';
             let memoCell = document.createElement('div');
             memoCell.className = 'day empty-memo-cell';
             memoCell.style.gridColumn = `span ${span}`;
-            memoCell.innerHTML = `
-                <span class="memo-tag">📝 하단 메모</span>
-                <textarea class="empty-memo-editor" placeholder="내용을 입력하세요..." oninput="autoResize(this)" onchange="updateMemo('${currentMonth}_bot', this.value)">${memoBot}</textarea>
-            `;
+            memoCell.innerHTML = `<span class="memo-tag">📝 메모</span><textarea class="empty-memo-editor" onchange="updateMemo('${currentMonth}_bot', this.value)">${memoBot}</textarea>`;
             grid.appendChild(memoCell);
         }
-
-        setTimeout(() => {
-            document.querySelectorAll('textarea.empty-memo-editor').forEach(el => autoResize(el));
-        }, 0);
     }
 
     function updateMemo(key, val) { memos[key] = val; save(); }
@@ -304,23 +263,19 @@
         let monthData = scheduleData.filter(s => s.month === currentMonth);
         monthData.forEach(item => appendRow(tbody, item, false));
         appendRow(tbody, null, true); 
-
-        // 렌더링 직후 모든 셀 높이 딱 맞게 펴주기
-        setTimeout(() => {
-            document.querySelectorAll('textarea.cell-input').forEach(el => autoResize(el));
-        }, 0);
+        setTimeout(() => { document.querySelectorAll('textarea.cell-input').forEach(el => autoResize(el)); }, 0);
     }
 
     function appendRow(tbody, item, isBlank) {
         let tr = document.createElement('tr');
         if(isBlank) {
             tr.innerHTML = `
-                <td><textarea class="cell-input center" placeholder="예: 4/1" oninput="autoResize(this)" onchange="addNew(this, 'date')"></textarea></td>
-                <td><textarea class="cell-input center" placeholder="정산서 검토" oninput="autoResize(this)" onchange="addNew(this, 'category')"></textarea></td>
-                <td><textarea class="cell-input" placeholder="업무내용 입력" oninput="autoResize(this)" onchange="addNew(this, 'content')"></textarea></td>
-                <td><textarea class="cell-input" placeholder="비고(입금 등)" oninput="autoResize(this)" onchange="addNew(this, 'note')"></textarea></td>
+                <td><textarea class="cell-input center" placeholder="4/1" oninput="autoResize(this)" onchange="addNew(this, 'date')"></textarea></td>
+                <td><textarea class="cell-input center" placeholder="분류" oninput="autoResize(this)" onchange="addNew(this, 'category')"></textarea></td>
+                <td><textarea class="cell-input" placeholder="업무내용" oninput="autoResize(this)" onchange="addNew(this, 'content')"></textarea></td>
+                <td><textarea class="cell-input" placeholder="비고" oninput="autoResize(this)" onchange="addNew(this, 'note')"></textarea></td>
                 <td style="vertical-align: middle;"><select class="cell-status" disabled><option>대기</option></select></td>
-                <td style="vertical-align: middle;"></td>
+                <td></td>
             `;
         } else {
             tr.innerHTML = `
@@ -353,7 +308,7 @@
 
     function updateItem(id, field, val) {
         let item = scheduleData.find(s => s.id === id);
-        if(item) { item[field] = val; save(); renderCalendar(); }
+        if(item) { item[field] = val.trim(); save(); renderCalendar(); }
     }
 
     function delItem(id) { scheduleData = scheduleData.filter(s => s.id !== id); save(); refreshUI(); }
@@ -371,17 +326,12 @@
         const b = document.getElementById('modalUrlBody');
         b.innerHTML = '';
         urlDataList.forEach(u => {
-            b.innerHTML += `<tr>
-                <td style="padding:4px;"><input type="text" style="width:100%; box-sizing:border-box; padding:6px; font-size:12px;" value="${u.company}" onchange="updateUrl(${u.id}, 'company', this.value)"></td>
-                <td style="padding:4px;"><input type="text" style="width:100%; box-sizing:border-box; padding:6px; font-size:12px;" value="${u.url}" onchange="updateUrl(${u.id}, 'url', this.value)"></td>
-                <td style="text-align:center;"><button style="background:none; border:none; color:red; cursor:pointer; font-size:13px; font-weight:bold;" onclick="delUrl(${u.id})">삭제</button></td>
-            </tr>`;
+            b.innerHTML += `<tr><td style="padding:4px;"><input type="text" style="width:100%; padding:6px; font-size:12px;" value="${u.company}" onchange="updateUrl(${u.id}, 'company', this.value)"></td>
+                <td style="padding:4px;"><input type="text" style="width:100%; padding:6px; font-size:12px;" value="${u.url}" onchange="updateUrl(${u.id}, 'url', this.value)"></td>
+                <td style="text-align:center;"><button style="color:red; border:none; background:none; cursor:pointer;" onclick="delUrl(${u.id})">삭제</button></td></tr>`;
         });
-        b.innerHTML += `<tr>
-            <td style="padding:4px;"><input type="text" style="width:100%; box-sizing:border-box; padding:6px; font-size:12px;" placeholder="새 업체명" onchange="addUrl(this, 'company')"></td>
-            <td style="padding:4px;"><input type="text" style="width:100%; box-sizing:border-box; padding:6px; font-size:12px;" placeholder="URL (http://...)" onchange="addUrl(this, 'url')"></td>
-            <td></td>
-        </tr>`;
+        b.innerHTML += `<tr><td style="padding:4px;"><input type="text" style="width:100%; padding:6px; font-size:12px;" placeholder="새 업체명" onchange="addUrl(this, 'company')"></td>
+            <td style="padding:4px;"><input type="text" style="width:100%; padding:6px; font-size:12px;" placeholder="URL" onchange="addUrl(this, 'url')"></td><td></td></tr>`;
     }
 
     function addUrl(el, field) {
@@ -406,49 +356,32 @@
 
         scheduleData.forEach(item => {
             let match = (item.note || "").match(/(\d{1,2})[\/\.](\d{1,2})/);
-            if(match && parseInt(match[1], 10) === tMonth && parseInt(match[2], 10) === tDay) {
-                depositMsgs.push(`- ${item.display || item.content}`);
-            }
-
+            if(match && parseInt(match[1], 10) === tMonth && parseInt(match[2], 10) === tDay) depositMsgs.push(`- ${item.display || item.content}`);
             if(item.category.includes("정산서") && extractDay(item.date) === tDay) {
                 urlDataList.forEach(u => {
                     if(u.company && item.content.includes(u.company)) {
-                        if(!companies.includes(u.company)) {
-                            companies.push(u.company);
-                            if(u.url) pendingUrlsToOpen.push(u.url);
-                        }
+                        if(!companies.includes(u.company)) { companies.push(u.company); if(u.url) pendingUrlsToOpen.push(u.url); }
                     }
                 });
             }
         });
 
         let htmlMsg = "";
-        if(depositMsgs.length > 0) { htmlMsg += `<strong style="color:#27ae60;">[입금일 도래]</strong><br>${depositMsgs.join("<br>")}<br><br>`; }
-        if(companies.length > 0) { htmlMsg += `<strong style="color:#E25B19;">[정산서 검토]</strong><br>${companies.join(", ")}<br>`; }
+        if(depositMsgs.length > 0) htmlMsg += `<strong style="color:#27ae60;">[입금일 도래]</strong><br>${depositMsgs.join("<br>")}<br><br>`;
+        if(companies.length > 0) htmlMsg += `<strong style="color:#E25B19;">[정산서 검토]</strong><br>${companies.join(", ")}<br>`;
 
         if (htmlMsg !== "") {
             document.getElementById('autoAlertMsg').innerHTML = htmlMsg;
             document.getElementById('autoAlertModal').style.display = 'block';
             document.getElementById('modalOverlay').style.display = 'block';
-            
-            const btnOpen = document.getElementById('btnOpenUrls');
-            btnOpen.style.display = pendingUrlsToOpen.length > 0 ? 'inline-block' : 'none';
-        } else if (isManual) {
-            alert(`오늘(${tMonth}/${tDay}) 예정된 정산/입금 일정이 없습니다.`);
-        }
+            document.getElementById('btnOpenUrls').style.display = pendingUrlsToOpen.length > 0 ? 'inline-block' : 'none';
+        } else if (isManual) alert(`오늘 예정된 일정이 없습니다.`);
     }
 
     function showManualAlert() { checkAutoAlerts(true); }
-
-    function openAlertUrls() {
-        pendingUrlsToOpen.forEach(url => window.open(url, '_blank'));
-        closeAutoAlert();
-    }
-
+    function openAlertUrls() { pendingUrlsToOpen.forEach(url => window.open(url, '_blank')); closeAutoAlert(); }
     function closeAutoAlert() {
-        if (document.getElementById('hideTodayChk').checked) {
-            localStorage.setItem('hideAlertDate_2026', new Date().toLocaleDateString());
-        }
+        if (document.getElementById('hideTodayChk').checked) localStorage.setItem('hideAlertDate_2026', new Date().toLocaleDateString());
         document.getElementById('autoAlertModal').style.display = 'none';
         document.getElementById('modalOverlay').style.display = 'none';
     }
