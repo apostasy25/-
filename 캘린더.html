@@ -17,25 +17,28 @@
         .header select { font-size: 16px; padding: 3px 6px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; color: #333; outline: none; }
         .btn-alert { background: #111; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
 
+        /* 검색 입력창 스타일 */
+        .search-input { padding: 6px 10px; border-radius: 4px; border: none; outline: none; font-size: 13px; width: 180px; font-family: inherit; }
+        .search-input:focus { box-shadow: 0 0 0 2px rgba(255,255,255,0.5); }
+        .btn-search { font-size: 13px; background: #27ae60; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+
         /* 메인 레이아웃 */
         .main-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 15px; padding: 15px; flex-grow: 1; overflow: hidden; }
 
         /* 좌측: 달력 영역 (고정) */
         .calendar-wrap { height: 100%; border: 1px solid var(--border); border-radius: 4px; background: var(--border); display: flex; flex-direction: column; overflow: hidden; }
         
-        /* 🚀 달력 핵심 수정: 무조건 6줄 고정이 아니라, 남는 공간을 균등하게 채우도록 (grid-auto-rows: 1fr) 변경 */
         .calendar { 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
-            grid-template-rows: auto; /* 요일 헤더는 내용 크기만큼만 */
-            grid-auto-rows: 1fr; /* 생성되는 날짜 칸들은 남는 높이를 1/N로 쭉쭉 늘려서 채움 */
+            grid-template-rows: auto; 
+            grid-auto-rows: 1fr; 
             height: 100%; 
             gap: 1px; 
         }
         .cal-header { background: var(--dark); color: #fff; text-align: center; padding: 8px; font-size: 13px; font-weight: bold; }
         
-        /* 달력 칸 크기 유연화 */
-        .day { background: #fff; padding: 4px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; min-height: 0; /* 화면이 작아도 뚫고 나가지 않게 조절 */ }
+        .day { background: #fff; padding: 4px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; min-height: 0; }
         .day-num { font-weight: bold; font-size: 12px; color: #555; margin-bottom: 2px; padding-bottom: 2px; border-bottom: 1px solid #f8f8f8; flex-shrink: 0; }
         .day.sunday .day-num { color: #e74c3c; }
         .day.saturday .day-num { color: #3498db; }
@@ -45,7 +48,7 @@
         .empty-memo-editor { width: 100%; height: 100%; border: none; padding: 22px 8px 8px; font-family: inherit; font-size: 12px; line-height: 1.4; color: #333; outline: none; box-sizing: border-box; background: transparent; resize: none; overflow-y: auto; }
         .memo-tag { position: absolute; top: 4px; left: 8px; font-size: 10px; color: #E25B19; font-weight: bold; pointer-events: none; }
 
-        /* 달력 일정 뱃지: 1줄 고정 (... 표시) */
+        /* 달력 일정 뱃지: 1줄 고정 */
         .cal-event { 
             font-size: 11px; padding: 3px 5px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; 
             font-weight: bold; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default;
@@ -57,7 +60,7 @@
         .cal-event[data-cat*="기타"] { border-left-color: #95a5a6; background: #f2f4f4; }
         .cal-event.deposit { border-left-color: #27ae60 !important; background: #eafaf1 !important; color: #1e8449; }
 
-        /* 3. 우측: 상세 일정 영역 (스크롤 허용) */
+        /* 우측: 상세 일정 영역 */
         .details-panel { height: 100%; border: 1px solid var(--border); border-radius: 4px; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
         .panel-title { background: var(--dark); color: #fff; padding: 10px 15px; font-size: 14px; font-weight: bold; flex-shrink: 0; }
         
@@ -84,7 +87,6 @@
 
         .btn-del { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; height: 36px; }
 
-        /* 기타 UI */
         .btn-url-manage { font-size: 12px; background: #555; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px; }
         #modalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:150; }
     </style>
@@ -103,8 +105,10 @@
             </select>
             정산 업무 현황
         </h1>
-        <div>
-            <button class="btn-url-manage" onclick="toggleUrlManage()">🔗 업체 URL 관리</button>
+        <div style="display: flex; gap: 6px; align-items: center;">
+            <input type="text" id="keyword" class="search-input" placeholder="분류, 매절, 비고 등 검색..." onkeydown="if(event.key==='Enter') searchData()">
+            <button class="btn-search" onclick="searchData()">🔍 검색</button>
+            <button class="btn-url-manage" onclick="toggleUrlManage()" style="margin: 0;">🔗 URL 관리</button>
             <button class="btn-alert" onclick="showManualAlert()">🔔 알림 확인</button>
         </div>
     </div>
@@ -113,7 +117,6 @@
         <div class="calendar-wrap">
             <div class="calendar" id="calGrid"></div>
         </div>
-
         <div class="details-panel">
             <div class="panel-title">월별 상세 일정</div>
             <div class="table-scroll-area">
@@ -133,6 +136,26 @@
             </div>
         </div>
     </div>
+</div>
+
+<div id="searchModal" style="display:none; position:fixed; top:10%; left:10%; width:80%; background:white; border-radius: 8px; z-index:200; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,0.4);">
+    <h3 style="margin-top:0; border-bottom:2px solid #E25B19; padding-bottom:10px; font-size:16px; color:#E25B19;">🔍 전체 통합 검색 결과</h3>
+    <div style="max-height:600px; overflow-y:auto; margin-bottom:15px;">
+        <table style="width:100%; border-collapse: collapse; border:1px solid #ddd; table-layout: fixed;">
+            <thead>
+                <tr style="background:#f4f6f8;">
+                    <th width="8%" style="border:1px solid #ddd; padding:8px;">월</th>
+                    <th width="10%" style="border:1px solid #ddd; padding:8px;">날짜</th>
+                    <th width="12%" style="border:1px solid #ddd; padding:8px;">분류</th>
+                    <th width="35%" style="border:1px solid #ddd; padding:8px;">업무 내용</th>
+                    <th width="25%" style="border:1px solid #ddd; padding:8px;">비고 (특이사항)</th>
+                    <th width="10%" style="border:1px solid #ddd; padding:8px;">상태</th>
+                </tr>
+            </thead>
+            <tbody id="searchResultBody"></tbody>
+        </table>
+    </div>
+    <div style="text-align:right;"><button style="padding:8px 18px; background:#555; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;" onclick="closeSearchModal()">닫기</button></div>
 </div>
 
 <div id="urlModal" style="display:none; position:fixed; top:15%; left:30%; width:40%; background:white; border-radius: 8px; z-index:200; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
@@ -209,6 +232,62 @@
         return "";
     }
 
+    // 🚀 [강력해진 통합 검색 기능]
+    function searchData() {
+        let kw = document.getElementById('keyword').value.trim().toLowerCase();
+        if(!kw) {
+            alert("검색어를 입력해주세요. (예: 매절, 선인세, 에이블리 등)");
+            return;
+        }
+
+        // 띄어쓰기를 기준으로 키워드를 여러 개로 나눔 (다중 검색 지원)
+        let keywords = kw.split(/\s+/);
+
+        let results = scheduleData.filter(item => {
+            // 모든 텍스트 영역을 하나의 문자열로 합침 (분류 + 내용 + 비고)
+            let fullText = `${item.category || ''} ${item.content || ''} ${item.note || ''}`.toLowerCase();
+            
+            // 입력한 모든 키워드가 이 줄에 포함되어 있는지 확인
+            return keywords.every(k => fullText.includes(k));
+        });
+
+        // 월별, 날짜별 오름차순 정렬
+        results.sort((a, b) => {
+            if(a.month !== b.month) return a.month - b.month;
+            return extractDay(a.date) - extractDay(b.date);
+        });
+
+        const tbody = document.getElementById('searchResultBody');
+        tbody.innerHTML = '';
+
+        if(results.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="padding:20px; text-align:center; border:1px solid #ddd; color:#888;">'${kw}'에 대한 검색 결과가 없습니다.</td></tr>`;
+        } else {
+            results.forEach(r => {
+                let statusColor = "#888";
+                if(r.status === "진행") statusColor = "#f39c12";
+                if(r.status === "완료") statusColor = "#27ae60";
+
+                tbody.innerHTML += `<tr>
+                    <td style="padding:10px; border:1px solid #ddd; text-align:center; font-weight:bold;">${r.month}월</td>
+                    <td style="padding:10px; border:1px solid #ddd; text-align:center;">${r.date}</td>
+                    <td style="padding:10px; border:1px solid #ddd; text-align:center;">${r.category}</td>
+                    <td style="padding:10px; border:1px solid #ddd; font-size:12px; white-space:pre-wrap;">${r.content}</td>
+                    <td style="padding:10px; border:1px solid #ddd; font-size:12px; color:#E25B19; font-weight:bold; white-space:pre-wrap;">${r.note || ''}</td>
+                    <td style="padding:10px; border:1px solid #ddd; text-align:center; font-weight:bold; color:${statusColor};">${r.status}</td>
+                </tr>`;
+            });
+        }
+
+        document.getElementById('searchModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+    }
+
+    function closeSearchModal() {
+        document.getElementById('searchModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+
     function renderCalendar() {
         const grid = document.getElementById('calGrid');
         grid.innerHTML = '';
@@ -237,7 +316,7 @@
 
             let daily = scheduleData.filter(s => s.month === currentMonth && extractDay(s.date) === d);
             daily.forEach(evt => {
-                let fullTitle = `${evt.display || evt.content} ${evt.note ? '\n[비고]: ' + evt.note : ''}`;
+                let fullTitle = `${evt.display || evt.content} ${evt.note ? '\n[비고/특이사항]: ' + evt.note : ''}`;
                 let sym = getCategorySymbol(evt.category);
                 el.innerHTML += `<div class="cal-event" data-cat="${evt.category}" title="${fullTitle}">${sym}${evt.display || evt.content}</div>`;
             });
@@ -281,7 +360,7 @@
                 <td><textarea class="cell-input center" placeholder="4/1" oninput="autoResize(this)" onchange="addNew(this, 'date')"></textarea></td>
                 <td><textarea class="cell-input center" placeholder="분류" oninput="autoResize(this)" onchange="addNew(this, 'category')"></textarea></td>
                 <td><textarea class="cell-input" placeholder="업무내용" oninput="autoResize(this)" onchange="addNew(this, 'content')"></textarea></td>
-                <td><textarea class="cell-input" placeholder="비고" oninput="autoResize(this)" onchange="addNew(this, 'note')"></textarea></td>
+                <td><textarea class="cell-input" placeholder="비고, 매절 등" oninput="autoResize(this)" onchange="addNew(this, 'note')"></textarea></td>
                 <td style="vertical-align: middle;"><select class="cell-status" disabled><option>대기</option></select></td>
                 <td></td>
             `;
