@@ -179,3 +179,264 @@
     function changeMonth() {
         currentMonth = parseInt(document.getElementById('monthSelect').value);
         refreshUI();
+    }
+
+    function refreshUI() {
+        renderCalendar();
+        renderTable();
+    }
+
+    // 날짜 추출 완벽 호환 (4/1, 4-1, 4.1 모두 1로 인식)
+    function extractDay(s) {
+        if(!s) return -1;
+        let nums = s.match(/\d+/g);
+        if (!nums) return -1;
+        if (nums.length >= 2) return parseInt(nums[1], 10);
+        if (nums.length === 1) return parseInt(nums[0], 10);
+        return -1;
+    }
+
+    // 엑셀 기호 완벽 복구
+    function getCategorySymbol(category) {
+        if (!category) return "";
+        if (category.includes("정산서")) return "* ";
+        if (category.includes("선인세")) return "# ";
+        if (category.includes("작가")) return "@ ";
+        if (category.includes("기타")) return "+ ";
+        return "";
+    }
+
+    function handleRichText(e) {
+        if (e.ctrlKey && e.shiftKey && (e.key === 'x' || e.key === 'X')) {
+            e.preventDefault();
+            document.execCommand('strikeThrough', false, null);
+        }
+    }
+
+    // 달력 렌더링 (높이 제한 해제)
+    function renderCalendar() {
+        const grid = document.getElementById('calGrid');
+        grid.innerHTML = '';
+        const daysArr = ['일', '월', '화', '수', '목', '금', '토'];
+        daysArr.forEach(d => grid.innerHTML += `<div class="cal-header">${d}</div>`);
+
+        const lastDateObj = new Date(2026, currentMonth, 0);
+        const firstDay = new Date(2026, currentMonth - 1, 1).getDay();
+        const lastDate = lastDateObj.getDate();
+        const lastDayOfWeek = lastDateObj.getDay();
+
+        // 1. 달력 상단 빈칸
+        if(firstDay > 0) {
+            let memoTop = memos[currentMonth + '_top'] !== undefined ? memos[currentMonth + '_top'] : (memos[currentMonth] || '');
+            let memoCell = document.createElement('div');
+            memoCell.className = 'day empty-memo-cell';
+            memoCell.style.gridColumn = `span ${firstDay}`; // 확실한 칸 차지
+            memoCell.innerHTML = `
+                <span class="memo-tag">📝 상단 메모 (드래그 후 Ctrl+Shift+X로 취소선)</span>
+                <div class="empty-memo-editor" contenteditable="true" onblur="updateMemo('${currentMonth}_top', this.innerText)" onkeydown="handleRichText(event)">${memoTop}</div>
+            `;
+            grid.appendChild(memoCell);
+        }
+
+        // 2. 날짜 채우기
+        for(let d=1; d<=lastDate; d++) {
+            let el = document.createElement('div');
+            let dow = new Date(2026, currentMonth - 1, d).getDay();
+            el.className = `day ${dow === 0 ? 'sunday' : ''} ${dow === 6 ? 'saturday' : ''}`;
+            el.innerHTML = `<div class="day-num">${d}</div>`;
+
+            let daily = scheduleData.filter(s => s.month === currentMonth && extractDay(s.date) === d);
+            daily.forEach(evt => {
+                let noteHtml = "";
+                if (evt.note && evt.note.trim() !== "") {
+                    noteHtml = `<div class="event-note">${evt.note}</div>`;
+                }
+                let sym = getCategorySymbol(evt.category);
+                
+                el.innerHTML += `<div class="cal-event" data-cat="${evt.category}">
+                                    ${sym}${evt.display || evt.content}
+                                    ${noteHtml}
+                                 </div>`;
+            });
+
+            // 미래 입금 표시
+            scheduleData.forEach(evt => {
+                if(!evt.note) return;
+                let match = evt.note.match(/(\d{1,2})[\/\.](\d{1,2})/);
+                if(match && parseInt(match[1], 10) === currentMonth && parseInt(match[2], 10) === d) {
+                    el.innerHTML += `<div class="cal-event deposit">💰 입금: ${evt.display || evt.content}</div>`;
+                }
+            });
+            grid.appendChild(el);
+        }
+
+        // 3. 달력 하단 빈칸
+        if(lastDayOfWeek < 6) {
+            let span = 6 - lastDayOfWeek;
+            let memoBot = memos[currentMonth + '_bot'] || '';
+            let memoCell = document.createElement('div');
+            memoCell.className = 'day empty-memo-cell';
+            memoCell.style.gridColumn = `span ${span}`; // 확실한 칸 차지
+            memoCell.innerHTML = `
+                <span class="memo-tag">📝 하단 메모 (드래그 후 Ctrl+Shift+X로 취소선)</span>
+                <div class="empty-memo-editor" contenteditable="true" onblur="updateMemo('${currentMonth}_bot', this.innerText)" onkeydown="handleRichText(event)">${memoBot}</div>
+            `;
+            grid.appendChild(memoCell);
+        }
+    }
+
+    function updateMemo(key, val) { memos[key] = val; save(); }
+
+    // 엑셀형 테이블 렌더링
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        let monthData = scheduleData.filter(s => s.month === currentMonth);
+        monthData.forEach(item => appendRow(tbody, item, false));
+        appendRow(tbody, null, true); 
+    }
+
+    function appendRow(tbody, item, isBlank) {
+        let tr = document.createElement('tr');
+        if(isBlank) {
+            tr.innerHTML = `
+                <td><div class="edit-cell" contenteditable="true" data-placeholder="예: 4/1" onblur="addNew(this, 'date')"></div></td>
+                <td><div class="edit-cell" contenteditable="true" data-placeholder="정산서 검토" onblur="addNew(this, 'category')"></div></td>
+                <td><div class="edit-cell" contenteditable="true" data-placeholder="업무내용 입력" onblur="addNew(this, 'content')"></div></td>
+                <td><div class="edit-cell" contenteditable="true" data-placeholder="비고(입금 등)" onblur="addNew(this, 'note')"></div></td>
+                <td><select disabled><option>대기</option></select></td>
+                <td style="text-align:center; color:#ccc;">-</td>
+            `;
+        } else {
+            tr.innerHTML = `
+                <td><div class="edit-cell" contenteditable="true" onblur="updateItem(${item.id}, 'date', this.innerText)">${item.date}</div></td>
+                <td><div class="edit-cell" contenteditable="true" onblur="updateItem(${item.id}, 'category', this.innerText)">${item.category}</div></td>
+                <td><div class="edit-cell" contenteditable="true" onblur="updateItem(${item.id}, 'content', this.innerText)">${item.content}</div></td>
+                <td><div class="edit-cell" contenteditable="true" onblur="updateItem(${item.id}, 'note', this.innerText)">${item.note || ''}</div></td>
+                <td>
+                    <select data-status="${item.status}" onchange="updateItem(${item.id}, 'status', this.value); this.dataset.status=this.value;">
+                        <option value="대기" ${item.status==='대기'?'selected':''}>대기</option>
+                        <option value="진행" ${item.status==='진행'?'selected':''}>진행</option>
+                        <option value="완료" ${item.status==='완료'?'selected':''}>완료</option>
+                        <option value="보류" ${item.status==='보류'?'selected':''}>보류</option>
+                    </select>
+                </td>
+                <td style="text-align: center;"><button class="btn-del" onclick="delItem(${item.id})">×</button></td>
+            `;
+        }
+        tbody.appendChild(tr);
+    }
+
+    function addNew(el, field) {
+        let val = el.innerText.trim();
+        if(!val) return;
+        let newItem = { id: Date.now(), month: currentMonth, date: "", category: "정산서 검토", content: "", display: "", status: "대기", note: "" };
+        newItem[field] = val;
+        scheduleData.push(newItem);
+        save(); refreshUI();
+    }
+
+    function updateItem(id, field, val) {
+        let item = scheduleData.find(s => s.id === id);
+        if(item) { item[field] = val.trim(); save(); renderCalendar(); }
+    }
+
+    function delItem(id) { scheduleData = scheduleData.filter(s => s.id !== id); save(); refreshUI(); }
+
+    function toggleUrlManage() {
+        const m = document.getElementById('urlModal');
+        const o = document.getElementById('modalOverlay');
+        const isShowing = m.style.display === 'block';
+        m.style.display = isShowing ? 'none' : 'block';
+        o.style.display = isShowing ? 'none' : 'block';
+        if(!isShowing) renderUrlModal();
+    }
+
+    function renderUrlModal() {
+        const b = document.getElementById('modalUrlBody');
+        b.innerHTML = '';
+        urlDataList.forEach(u => {
+            b.innerHTML += `<tr>
+                <td style="padding:4px;"><input type="text" style="width:100%; box-sizing:border-box; padding:6px; font-size:12px;" value="${u.company}" onchange="updateUrl(${u.id}, 'company', this.value)"></td>
+                <td style="padding:4px;"><input type="text" style="width:100%; box-sizing:border-box; padding:6px; font-size:12px;" value="${u.url}" onchange="updateUrl(${u.id}, 'url', this.value)"></td>
+                <td style="text-align:center;"><button style="background:none; border:none; color:red; cursor:pointer; font-size:13px; font-weight:bold;" onclick="delUrl(${u.id})">삭제</button></td>
+            </tr>`;
+        });
+        b.innerHTML += `<tr>
+            <td style="padding:4px;"><input type="text" style="width:100%; box-sizing:border-box; padding:6px; font-size:12px;" placeholder="새 업체명" onchange="addUrl(this, 'company')"></td>
+            <td style="padding:4px;"><input type="text" style="width:100%; box-sizing:border-box; padding:6px; font-size:12px;" placeholder="URL (http://...)" onchange="addUrl(this, 'url')"></td>
+            <td></td>
+        </tr>`;
+    }
+
+    function addUrl(el, field) {
+        if(!el.value.trim()) return;
+        let n = { id: Date.now(), company: "", url: "" };
+        n[field] = el.value; urlDataList.push(n); save(); renderUrlModal();
+    }
+    function updateUrl(id, f, v) { let u = urlDataList.find(x=>x.id===id); u[f]=v; save(); }
+    function delUrl(id) { urlDataList = urlDataList.filter(x=>x.id!==id); save(); renderUrlModal(); }
+
+    function checkAutoAlerts(isManual = false) {
+        const todayStr = new Date().toLocaleDateString();
+        if (!isManual && localStorage.getItem('hideAlertDate_2026') === todayStr) return; 
+
+        const today = new Date();
+        const tMonth = today.getMonth() + 1;
+        const tDay = today.getDate();
+        
+        pendingUrlsToOpen = [];
+        let companies = [];
+        let depositMsgs = [];
+
+        scheduleData.forEach(item => {
+            let match = (item.note || "").match(/(\d{1,2})[\/\.](\d{1,2})/);
+            if(match && parseInt(match[1], 10) === tMonth && parseInt(match[2], 10) === tDay) {
+                depositMsgs.push(`- ${item.display || item.content}`);
+            }
+
+            if(item.category.includes("정산서") && extractDay(item.date) === tDay) {
+                urlDataList.forEach(u => {
+                    if(u.company && item.content.includes(u.company)) {
+                        if(!companies.includes(u.company)) {
+                            companies.push(u.company);
+                            if(u.url) pendingUrlsToOpen.push(u.url);
+                        }
+                    }
+                });
+            }
+        });
+
+        let htmlMsg = "";
+        if(depositMsgs.length > 0) { htmlMsg += `<strong style="color:#27ae60;">[입금일 도래]</strong><br>${depositMsgs.join("<br>")}<br><br>`; }
+        if(companies.length > 0) { htmlMsg += `<strong style="color:#E25B19;">[정산서 검토]</strong><br>${companies.join(", ")}<br>`; }
+
+        if (htmlMsg !== "") {
+            document.getElementById('autoAlertMsg').innerHTML = htmlMsg;
+            document.getElementById('autoAlertModal').style.display = 'block';
+            document.getElementById('modalOverlay').style.display = 'block';
+            
+            const btnOpen = document.getElementById('btnOpenUrls');
+            btnOpen.style.display = pendingUrlsToOpen.length > 0 ? 'inline-block' : 'none';
+        } else if (isManual) {
+            alert(`오늘(${tMonth}/${tDay}) 예정된 정산/입금 일정이 없습니다.`);
+        }
+    }
+
+    function showManualAlert() { checkAutoAlerts(true); }
+
+    function openAlertUrls() {
+        pendingUrlsToOpen.forEach(url => window.open(url, '_blank'));
+        closeAutoAlert();
+    }
+
+    function closeAutoAlert() {
+        if (document.getElementById('hideTodayChk').checked) {
+            localStorage.setItem('hideAlertDate_2026', new Date().toLocaleDateString());
+        }
+        document.getElementById('autoAlertModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
+</script>
+</body>
+</html>
