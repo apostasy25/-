@@ -14,10 +14,10 @@
         .header { background: var(--primary); color: #fff; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
         .header h1 { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
         .header select { font-size: 16px; padding: 4px 8px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; color: #333; outline: none; }
-        .btn-alert { background: #111; color: #fff; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: background 0.2s; }
+        .btn-alert { background: #111; color: #fff; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
         .btn-alert:hover { background: #000; }
 
-        /* 메인 레이아웃 (달력 1.4 : 테이블 1 비율) */
+        /* 메인 레이아웃 (달력 1.4 : 테이블 1) */
         .main-layout { display: flex; gap: 20px; padding: 20px; align-items: flex-start; }
         .calendar-wrap { flex: 1.4; border: 1px solid var(--border); border-radius: 4px; background: var(--border); display: flex; flex-direction: column; }
         .details-panel { flex: 1; border: 1px solid var(--border); border-radius: 4px; background: #fff; }
@@ -30,56 +30,56 @@
         .day.sunday .day-num { color: #e74c3c; }
         .day.saturday .day-num { color: #3498db; }
         
-        /* 빈 칸 메모 영역 */
+        /* 빈 칸 메모 영역 (달력) */
         .empty-memo-cell { background: #fffbe6 !important; position: relative; padding: 0 !important; }
-        .empty-memo-editor { width: 100%; height: 100%; min-height: 130px; border: none; padding: 30px 10px 10px; font-family: inherit; font-size: 13px; line-height: 1.6; color: #333; outline: none; box-sizing: border-box; white-space: pre-wrap; word-break: break-word; }
+        .empty-memo-editor { width: 100%; height: 100%; min-height: 130px; border: none; padding: 30px 10px 10px; font-family: inherit; font-size: 12px; line-height: 1.5; color: #333; outline: none; box-sizing: border-box; background: transparent; resize: none; overflow: hidden; display: block; }
         .memo-tag { position: absolute; top: 8px; left: 10px; font-size: 12px; color: #E25B19; font-weight: bold; pointer-events: none; }
 
-        /* 달력 뱃지 가독성 개선 */
+        /* 🚀 달력 뱃지: 무조건 1줄로 자르기 (... 표시) */
         .cal-event { 
-            font-size: 12px; padding: 5px 6px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; 
-            font-weight: bold; line-height: 1.4; color: #111;
-            white-space: pre-wrap; word-break: break-word; margin-bottom: 2px;
+            font-size: 12px; padding: 4px 6px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; 
+            font-weight: bold; color: #111; margin-bottom: 2px; cursor: default;
+            
+            /* 핵심: 한 줄 고정 및 말줄임표 처리 */
+            display: block;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
         }
         .cal-event[data-cat*="정산서"] { border-left-color: #E25B19; background: #fff3ed; }
         .cal-event[data-cat*="선인세"] { border-left-color: #27ae60; background: #eafaf1; }
         .cal-event[data-cat*="작가"] { border-left-color: #9b59b6; background: #f4e8f9; }
         .cal-event[data-cat*="기타"] { border-left-color: #95a5a6; background: #f2f4f4; }
         .cal-event.deposit { border-left-color: #27ae60 !important; background: #eafaf1 !important; color: #1e8449; }
-        
-        .event-note { font-size: 11px; color: #666; font-weight: normal; margin-top: 4px; border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 4px; }
 
-        /* 🚀 우측 상세 테이블 가독성 극대화 (엑셀 스타일) */
+        /* 🚀 우측 상세 테이블 (절대 안 짤리게 세팅) */
         .panel-title { background: var(--dark); color: #fff; padding: 12px 15px; font-size: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid var(--border); }
-        th { background: #f4f6f8; font-size: 13px; padding: 12px 5px; border: 1px solid #ddd; border-bottom: 2px solid #ccc; color: #222; text-align: center; font-weight: bold; }
+        th { background: #f4f6f8; font-size: 13px; padding: 10px 5px; border: 1px solid #ddd; border-bottom: 2px solid #ccc; color: #222; text-align: center; font-weight: bold; }
         
-        /* 모든 셀에 명확한 테두리 추가 */
-        td { border: 1px solid #ddd; vertical-align: middle; background: #fff; transition: background 0.1s; }
+        td { border: 1px solid #ddd; vertical-align: top; background: #fff; padding: 0; }
+        tbody tr:hover td { background: #f9fbff; }
         
-        /* 줄 강조: 마우스 올리면 연한 파란색으로 변함 */
-        tbody tr:hover td { background: #f4f9ff; }
-        
-        /* 엑셀처럼 텍스트를 바로 칠 수 있는 셀 */
-        .edit-cell {
-            width: 100%; box-sizing: border-box; padding: 10px 8px; font-size: 13px;
-            color: #222; outline: none; white-space: pre-wrap; word-break: break-word;
-            line-height: 1.5; min-height: 42px; cursor: text;
+        /* 테이블 안의 텍스트 입력창: 복붙 서식 파괴 방지용 순수 textarea 사용 */
+        .cell-input {
+            width: 100%; box-sizing: border-box; border: none; padding: 8px 6px; font-size: 12.5px;
+            color: #222; background: transparent; font-family: inherit;
+            outline: none; resize: none; overflow: hidden; display: block;
+            line-height: 1.5; min-height: 36px; transition: background 0.1s;
         }
-        .edit-cell:empty:before { content: attr(data-placeholder); color: #aaa; pointer-events: none; }
+        .cell-input.center { text-align: center; }
         
-        /* 입력 시 테두리 대신 그림자를 써서 칸 덜컹거림 방지 */
-        .edit-cell:focus { background: #fffbe6; box-shadow: inset 0 0 0 2px var(--primary); border-radius: 2px; }
+        /* 엑셀 포커스 효과 */
+        .cell-input:focus { background: #fffbe6; box-shadow: inset 0 0 0 2px var(--primary); }
 
-        select { width: 85%; margin: 8px auto; display: block; padding: 6px; font-size: 13px; text-align: center; border: 1px solid #ccc; border-radius: 4px; outline: none; cursor: pointer; background: #fff; }
-        select:focus { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
-        
-        select[data-status="대기"] { color: #888; }
-        select[data-status="진행"] { color: #f39c12; font-weight: bold; }
-        select[data-status="완료"] { color: #27ae60; font-weight: bold; }
+        select.cell-status { width: 90%; margin: 6px auto; display: block; padding: 6px; font-size: 12px; text-align: center; border: 1px solid #ccc; border-radius: 4px; outline: none; cursor: pointer; background: #fff; }
+        select.cell-status:focus { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+        select.cell-status[data-status="대기"] { color: #888; }
+        select.cell-status[data-status="진행"] { color: #f39c12; font-weight: bold; }
+        select.cell-status[data-status="완료"] { color: #27ae60; font-weight: bold; }
 
-        .btn-del { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 18px; font-weight: bold; padding: 10px 0; width: 100%; transition: 0.2s; }
+        .btn-del { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 18px; font-weight: bold; padding: 8px 0; width: 100%; height: 100%; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
         .btn-del:hover { background: #ffebeb; color: #c0392b; }
         
         .btn-url-manage { font-size: 13px; background: #555; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; transition: 0.2s; }
@@ -115,17 +115,17 @@
         </div>
         <div class="details-panel">
             <div class="panel-title">
-                <span>월별 상세 일정 (엑셀 입력 방식)</span>
+                <span>월별 상세 일정</span>
             </div>
             <div>
                 <table>
                     <thead>
                         <tr>
                             <th width="12%">날짜</th>
-                            <th width="16%">분류</th>
-                            <th width="35%">업무 내용</th>
-                            <th width="20%">비고(입금 등)</th>
-                            <th width="12%">상태</th>
+                            <th width="14%">분류</th>
+                            <th width="38%">업무 내용</th>
+                            <th width="21%">비고(입금 등)</th>
+                            <th width="10%">상태</th>
                             <th width="5%">-</th>
                         </tr>
                     </thead>
@@ -176,6 +176,11 @@
         checkAutoAlerts();
     };
 
+    // 창 크기 조절 시 표 높이 재정렬
+    window.addEventListener('resize', () => {
+        document.querySelectorAll('textarea.cell-input, textarea.empty-memo-editor').forEach(el => autoResize(el));
+    });
+
     function save() {
         localStorage.setItem('combined_data_2026', JSON.stringify(scheduleData));
         localStorage.setItem('monthly_memos_2026', JSON.stringify(memos));
@@ -190,6 +195,12 @@
     function refreshUI() {
         renderCalendar();
         renderTable();
+    }
+
+    // [핵심] 글자 길이에 맞춰 텍스트박스 무한 확장
+    function autoResize(el) {
+        el.style.height = '1px'; // 초기화 후 재계산 (글자 지웠을 때 줄어들게 함)
+        el.style.height = el.scrollHeight + 'px';
     }
 
     function extractDay(s) {
@@ -210,13 +221,6 @@
         return "";
     }
 
-    function handleRichText(e) {
-        if (e.ctrlKey && e.shiftKey && (e.key === 'x' || e.key === 'X')) {
-            e.preventDefault();
-            document.execCommand('strikeThrough', false, null);
-        }
-    }
-
     function renderCalendar() {
         const grid = document.getElementById('calGrid');
         grid.innerHTML = '';
@@ -228,18 +232,20 @@
         const lastDate = lastDateObj.getDate();
         const lastDayOfWeek = lastDateObj.getDay();
 
+        // 상단 메모
         if(firstDay > 0) {
             let memoTop = memos[currentMonth + '_top'] !== undefined ? memos[currentMonth + '_top'] : (memos[currentMonth] || '');
             let memoCell = document.createElement('div');
             memoCell.className = 'day empty-memo-cell';
             memoCell.style.gridColumn = `span ${firstDay}`;
             memoCell.innerHTML = `
-                <span class="memo-tag">📝 상단 메모 (드래그 후 Ctrl+Shift+X로 취소선)</span>
-                <div class="empty-memo-editor" contenteditable="true" onblur="updateMemo('${currentMonth}_top', this.innerText)" onkeydown="handleRichText(event)">${memoTop}</div>
+                <span class="memo-tag">📝 상단 메모</span>
+                <textarea class="empty-memo-editor" placeholder="내용을 입력하세요..." oninput="autoResize(this)" onchange="updateMemo('${currentMonth}_top', this.value)">${memoTop}</textarea>
             `;
             grid.appendChild(memoCell);
         }
 
+        // 날짜 채우기
         for(let d=1; d<=lastDate; d++) {
             let el = document.createElement('div');
             let dow = new Date(2026, currentMonth - 1, d).getDay();
@@ -249,14 +255,15 @@
             let daily = scheduleData.filter(s => s.month === currentMonth && extractDay(s.date) === d);
             daily.forEach(evt => {
                 let noteHtml = "";
+                let fullTitle = `${evt.display || evt.content}`;
                 if (evt.note && evt.note.trim() !== "") {
-                    noteHtml = `<div class="event-note">${evt.note}</div>`;
+                    fullTitle += `\n[비고] ${evt.note}`;
                 }
                 let sym = getCategorySymbol(evt.category);
                 
-                el.innerHTML += `<div class="cal-event" data-cat="${evt.category}">
+                // 마우스 올렸을 때만 툴팁(title)으로 전체 내용 확인 가능, 칸 안에서는 1줄 표시
+                el.innerHTML += `<div class="cal-event" data-cat="${evt.category}" title="${fullTitle}">
                                     ${sym}${evt.display || evt.content}
-                                    ${noteHtml}
                                  </div>`;
             });
 
@@ -264,12 +271,13 @@
                 if(!evt.note) return;
                 let match = evt.note.match(/(\d{1,2})[\/\.](\d{1,2})/);
                 if(match && parseInt(match[1], 10) === currentMonth && parseInt(match[2], 10) === d) {
-                    el.innerHTML += `<div class="cal-event deposit">💰 입금: ${evt.display || evt.content}</div>`;
+                    el.innerHTML += `<div class="cal-event deposit" title="💰 입금: ${evt.display || evt.content}">💰 입금: ${evt.display || evt.content}</div>`;
                 }
             });
             grid.appendChild(el);
         }
 
+        // 하단 메모
         if(lastDayOfWeek < 6) {
             let span = 6 - lastDayOfWeek;
             let memoBot = memos[currentMonth + '_bot'] || '';
@@ -277,11 +285,15 @@
             memoCell.className = 'day empty-memo-cell';
             memoCell.style.gridColumn = `span ${span}`;
             memoCell.innerHTML = `
-                <span class="memo-tag">📝 하단 메모 (드래그 후 Ctrl+Shift+X로 취소선)</span>
-                <div class="empty-memo-editor" contenteditable="true" onblur="updateMemo('${currentMonth}_bot', this.innerText)" onkeydown="handleRichText(event)">${memoBot}</div>
+                <span class="memo-tag">📝 하단 메모</span>
+                <textarea class="empty-memo-editor" placeholder="내용을 입력하세요..." oninput="autoResize(this)" onchange="updateMemo('${currentMonth}_bot', this.value)">${memoBot}</textarea>
             `;
             grid.appendChild(memoCell);
         }
+
+        setTimeout(() => {
+            document.querySelectorAll('textarea.empty-memo-editor').forEach(el => autoResize(el));
+        }, 0);
     }
 
     function updateMemo(key, val) { memos[key] = val; save(); }
@@ -292,41 +304,46 @@
         let monthData = scheduleData.filter(s => s.month === currentMonth);
         monthData.forEach(item => appendRow(tbody, item, false));
         appendRow(tbody, null, true); 
+
+        // 렌더링 직후 모든 셀 높이 딱 맞게 펴주기
+        setTimeout(() => {
+            document.querySelectorAll('textarea.cell-input').forEach(el => autoResize(el));
+        }, 0);
     }
 
     function appendRow(tbody, item, isBlank) {
         let tr = document.createElement('tr');
         if(isBlank) {
             tr.innerHTML = `
-                <td><div class="edit-cell" contenteditable="true" data-placeholder="예: 4/1" onblur="addNew(this, 'date')"></div></td>
-                <td><div class="edit-cell" contenteditable="true" data-placeholder="정산서 검토" onblur="addNew(this, 'category')"></div></td>
-                <td><div class="edit-cell" contenteditable="true" data-placeholder="업무내용 입력" onblur="addNew(this, 'content')"></div></td>
-                <td><div class="edit-cell" contenteditable="true" data-placeholder="비고(입금 등)" onblur="addNew(this, 'note')"></div></td>
-                <td><select disabled><option>대기</option></select></td>
-                <td style="text-align:center; color:#ccc;">-</td>
+                <td><textarea class="cell-input center" placeholder="예: 4/1" oninput="autoResize(this)" onchange="addNew(this, 'date')"></textarea></td>
+                <td><textarea class="cell-input center" placeholder="정산서 검토" oninput="autoResize(this)" onchange="addNew(this, 'category')"></textarea></td>
+                <td><textarea class="cell-input" placeholder="업무내용 입력" oninput="autoResize(this)" onchange="addNew(this, 'content')"></textarea></td>
+                <td><textarea class="cell-input" placeholder="비고(입금 등)" oninput="autoResize(this)" onchange="addNew(this, 'note')"></textarea></td>
+                <td style="vertical-align: middle;"><select class="cell-status" disabled><option>대기</option></select></td>
+                <td style="vertical-align: middle;"></td>
             `;
         } else {
             tr.innerHTML = `
-                <td><div class="edit-cell" contenteditable="true" onblur="updateItem(${item.id}, 'date', this.innerText)">${item.date}</div></td>
-                <td><div class="edit-cell" contenteditable="true" onblur="updateItem(${item.id}, 'category', this.innerText)">${item.category}</div></td>
-                <td><div class="edit-cell" contenteditable="true" onblur="updateItem(${item.id}, 'content', this.innerText)">${item.content}</div></td>
-                <td><div class="edit-cell" contenteditable="true" onblur="updateItem(${item.id}, 'note', this.innerText)">${item.note || ''}</div></td>
-                <td>
-                    <select data-status="${item.status}" onchange="updateItem(${item.id}, 'status', this.value); this.dataset.status=this.value;">
+                <td><textarea class="cell-input center" oninput="autoResize(this)" onchange="updateItem(${item.id}, 'date', this.value)">${item.date}</textarea></td>
+                <td><textarea class="cell-input center" oninput="autoResize(this)" onchange="updateItem(${item.id}, 'category', this.value)">${item.category}</textarea></td>
+                <td><textarea class="cell-input" oninput="autoResize(this)" onchange="updateItem(${item.id}, 'content', this.value)">${item.content}</textarea></td>
+                <td><textarea class="cell-input" oninput="autoResize(this)" onchange="updateItem(${item.id}, 'note', this.value)">${item.note || ''}</textarea></td>
+                <td style="vertical-align: middle;">
+                    <select class="cell-status" data-status="${item.status}" onchange="updateItem(${item.id}, 'status', this.value); this.dataset.status=this.value;">
                         <option value="대기" ${item.status==='대기'?'selected':''}>대기</option>
                         <option value="진행" ${item.status==='진행'?'selected':''}>진행</option>
                         <option value="완료" ${item.status==='완료'?'selected':''}>완료</option>
                         <option value="보류" ${item.status==='보류'?'selected':''}>보류</option>
                     </select>
                 </td>
-                <td style="text-align: center;"><button class="btn-del" onclick="delItem(${item.id})">×</button></td>
+                <td style="vertical-align: middle;"><button class="btn-del" onclick="delItem(${item.id})">×</button></td>
             `;
         }
         tbody.appendChild(tr);
     }
 
     function addNew(el, field) {
-        let val = el.innerText.trim();
+        let val = el.value.trim();
         if(!val) return;
         let newItem = { id: Date.now(), month: currentMonth, date: "", category: "정산서 검토", content: "", display: "", status: "대기", note: "" };
         newItem[field] = val;
@@ -336,7 +353,7 @@
 
     function updateItem(id, field, val) {
         let item = scheduleData.find(s => s.id === id);
-        if(item) { item[field] = val.trim(); save(); renderCalendar(); }
+        if(item) { item[field] = val; save(); renderCalendar(); }
     }
 
     function delItem(id) { scheduleData = scheduleData.filter(s => s.id !== id); save(); refreshUI(); }
