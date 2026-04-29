@@ -7,7 +7,7 @@
     <style>
         :root { --primary: #E25B19; --dark: #333; --bg: #f4f6f8; --border: #c8c8c8; }
         
-        /* 1. 전체 화면 높이 고정 및 스크롤 제어 */
+        /* 전체 화면 높이 고정 및 스크롤 제어 */
         body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); margin: 0; padding: 15px; height: 100vh; box-sizing: border-box; overflow: hidden; }
         .container { max-width: 100%; height: 100%; margin: auto; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 8px; display: flex; flex-direction: column; }
         
@@ -17,22 +17,31 @@
         .header select { font-size: 16px; padding: 3px 6px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; color: #333; outline: none; }
         .btn-alert { background: #111; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
 
-        /* 2. 메인 레이아웃: 높이를 브라우저에 맞게 고정 */
+        /* 메인 레이아웃 */
         .main-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 15px; padding: 15px; flex-grow: 1; overflow: hidden; }
 
         /* 좌측: 달력 영역 (고정) */
         .calendar-wrap { height: 100%; border: 1px solid var(--border); border-radius: 4px; background: var(--border); display: flex; flex-direction: column; overflow: hidden; }
-        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: auto repeat(6, 1fr); height: 100%; gap: 1px; }
+        
+        /* 🚀 달력 핵심 수정: 무조건 6줄 고정이 아니라, 남는 공간을 균등하게 채우도록 (grid-auto-rows: 1fr) 변경 */
+        .calendar { 
+            display: grid; 
+            grid-template-columns: repeat(7, 1fr); 
+            grid-template-rows: auto; /* 요일 헤더는 내용 크기만큼만 */
+            grid-auto-rows: 1fr; /* 생성되는 날짜 칸들은 남는 높이를 1/N로 쭉쭉 늘려서 채움 */
+            height: 100%; 
+            gap: 1px; 
+        }
         .cal-header { background: var(--dark); color: #fff; text-align: center; padding: 8px; font-size: 13px; font-weight: bold; }
         
-        /* 달력 각 칸: 내용이 많아도 칸 크기는 균등하게 유지 */
-        .day { background: #fff; padding: 4px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
-        .day-num { font-weight: bold; font-size: 12px; color: #555; margin-bottom: 2px; padding-bottom: 2px; border-bottom: 1px solid #f8f8f8; }
+        /* 달력 칸 크기 유연화 */
+        .day { background: #fff; padding: 4px; overflow: hidden; display: flex; flex-direction: column; gap: 2px; min-height: 0; /* 화면이 작아도 뚫고 나가지 않게 조절 */ }
+        .day-num { font-weight: bold; font-size: 12px; color: #555; margin-bottom: 2px; padding-bottom: 2px; border-bottom: 1px solid #f8f8f8; flex-shrink: 0; }
         .day.sunday .day-num { color: #e74c3c; }
         .day.saturday .day-num { color: #3498db; }
         
         /* 달력 빈 칸 메모 */
-        .empty-memo-cell { background: #fffbe6 !important; position: relative; padding: 0 !important; }
+        .empty-memo-cell { background: #fffbe6 !important; position: relative; padding: 0 !important; min-height: 0; }
         .empty-memo-editor { width: 100%; height: 100%; border: none; padding: 22px 8px 8px; font-family: inherit; font-size: 12px; line-height: 1.4; color: #333; outline: none; box-sizing: border-box; background: transparent; resize: none; overflow-y: auto; }
         .memo-tag { position: absolute; top: 4px; left: 8px; font-size: 10px; color: #E25B19; font-weight: bold; pointer-events: none; }
 
@@ -40,6 +49,7 @@
         .cal-event { 
             font-size: 11px; padding: 3px 5px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; 
             font-weight: bold; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default;
+            flex-shrink: 0;
         }
         .cal-event[data-cat*="정산서"] { border-left-color: #E25B19; background: #fff3ed; }
         .cal-event[data-cat*="선인세"] { border-left-color: #27ae60; background: #eafaf1; }
@@ -51,7 +61,6 @@
         .details-panel { height: 100%; border: 1px solid var(--border); border-radius: 4px; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
         .panel-title { background: var(--dark); color: #fff; padding: 10px 15px; font-size: 14px; font-weight: bold; flex-shrink: 0; }
         
-        /* 🚀 테이블 스크롤 영역 활성화 */
         .table-scroll-area { flex-grow: 1; overflow-y: auto; }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; border-left: none; border-right: none; }
@@ -59,7 +68,6 @@
         td { border: 1px solid #ddd; vertical-align: top; padding: 0; background: #fff; }
         tbody tr:hover td { background: #f9fbff; }
         
-        /* 테이블 입력창: 엑셀처럼 텍스트만 처리 & 무한 자동 높이조절 */
         .cell-input {
             width: 100%; box-sizing: border-box; border: none; padding: 8px 6px; font-size: 12px;
             color: #222; background: transparent; font-family: inherit;
