@@ -16,7 +16,7 @@
         .header select { font-size: 16px; padding: 3px 8px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; }
         .btn-alert { background: #111; color: #fff; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
-        /* 메인 레이아웃: 달력 비율 1.9 : 1 로 확장 */
+        /* 메인 레이아웃 */
         .main-layout { display: grid; grid-template-columns: 1.9fr 1fr; gap: 20px; padding: 20px; height: calc(100vh - 110px); }
 
         /* 달력 스타일 */
@@ -28,14 +28,18 @@
         .day.sunday .day-num { color: #e74c3c; }
         .day.saturday .day-num { color: #3498db; }
         
-        /* 빈 칸 메모 영역 (취소선 지원을 위해 div로 변경) */
+        /* 빈 칸 메모 영역 */
         .empty-memo-cell { background: #fffbe6 !important; position: relative; grid-column: span var(--span); }
         .empty-memo-editor { width: 100%; height: 100%; border: none; background: transparent; padding: 22px 10px 10px; font-family: inherit; font-size: 13px; line-height: 1.5; color: #444; outline: none; box-sizing: border-box; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
         .memo-tag { position: absolute; top: 5px; left: 10px; font-size: 11.5px; color: #E25B19; font-weight: bold; pointer-events: none; }
 
-        /* 달력 이벤트(일정) 뱃지 스타일 (여러 줄 텍스트 지원) */
+        /* 달력 이벤트(일정) 뱃지 스타일 - 분류별 색상 추가 */
         .cal-event { font-size: 12px; padding: 4px 6px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; font-weight: bold; line-height: 1.3; white-space: pre-wrap; word-break: keep-all; }
-        .cal-event[data-cat="정산서 검토"] { border-left-color: #E25B19; background: #fff3ed; }
+        .cal-event[data-cat*="정산서"] { border-left-color: #E25B19; background: #fff3ed; }
+        .cal-event[data-cat*="선인세"] { border-left-color: #27ae60; background: #eafaf1; }
+        .cal-event[data-cat*="작가"] { border-left-color: #9b59b6; background: #f4e8f9; }
+        .cal-event[data-cat*="기타"] { border-left-color: #95a5a6; background: #f2f4f4; }
+        
         .event-note { font-size: 11px; color: #666; font-weight: normal; margin-top: 4px; border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 3px; }
         .cal-event.deposit { border-left-color: #27ae60 !important; background: #eafaf1 !important; color: #1e8449; }
 
@@ -44,12 +48,10 @@
         .panel-title { background: var(--dark); color: #fff; padding: 10px 15px; font-size: 14px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .table-scroll { flex-grow: 1; overflow-y: auto; background: #fff; }
         
-        /* 테이블 열 비율 조정 (날짜/상태 축소, 내용/비고 확장) */
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { position: sticky; top: 0; background: #eee; z-index: 10; font-size: 13px; padding: 10px 4px; border-bottom: 2px solid var(--border); }
         td { border-bottom: 1px solid #eee; padding: 4px; vertical-align: top; }
         
-        /* 텍스트 입력 칸 (여러 줄 지원을 위해 textarea로 변경) */
         td input, td select { width: 100%; box-sizing: border-box; border: 1px solid transparent; padding: 6px; font-size: 12px; text-align: center; background: transparent; font-family: inherit; }
         td textarea { width: 100%; box-sizing: border-box; border: 1px solid transparent; padding: 6px; font-size: 12px; background: transparent; font-family: inherit; resize: vertical; min-height: 32px; height: 100%; display: block; white-space: pre-wrap; }
         
@@ -62,7 +64,6 @@
         .btn-del { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 18px; font-weight: bold; padding: 0 5px; width: 100%; }
         .btn-url-manage { font-size: 13px; background: #555; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 10px; }
 
-        /* 오버레이 */
         #modalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:150; }
     </style>
 </head>
@@ -90,7 +91,6 @@
         <div class="calendar-wrap">
             <div class="calendar" id="calGrid"></div>
         </div>
-
         <div class="details-panel">
             <div class="panel-title">
                 <span>월별 상세 일정</span>
@@ -172,7 +172,6 @@
         renderTable();
     }
 
-    // 에디터 취소선 단축키 (Ctrl + Shift + X)
     function handleRichText(e) {
         if (e.ctrlKey && e.shiftKey && (e.key === 'x' || e.key === 'X')) {
             e.preventDefault();
@@ -180,7 +179,26 @@
         }
     }
 
-    // [핵심 업데이트] 달력 모든 빈칸을 메모로 활용
+    // [업데이트] 어떤 기호가 섞여있어도 숫자만 똑똑하게 추출하는 함수 (4/1, 4-1, 4.1 모두 호환)
+    function extractDay(s) {
+        if(!s) return -1;
+        let nums = s.match(/\d+/g);
+        if (!nums) return -1;
+        if (nums.length >= 2) return parseInt(nums[1], 10); // "4/1" -> 1
+        if (nums.length === 1) return parseInt(nums[0], 10); // "1일" -> 1
+        return -1;
+    }
+
+    // [업데이트] 분류에 따른 기호 부여 함수
+    function getCategorySymbol(category) {
+        if (!category) return "";
+        if (category.includes("정산서")) return "* ";
+        if (category.includes("선인세")) return "# ";
+        if (category.includes("작가")) return "@ ";
+        if (category.includes("기타")) return "+ ";
+        return "";
+    }
+
     function renderCalendar() {
         const grid = document.getElementById('calGrid');
         grid.innerHTML = '';
@@ -192,11 +210,9 @@
         const lastDate = lastDateObj.getDate();
         const lastDayOfWeek = lastDateObj.getDay();
 
-        // 1. 월 시작 전 빈 칸 (상단 메모)
         if(firstDay > 0) {
             let memoTop = memos[currentMonth + '_top'];
-            if(memoTop === undefined) memoTop = memos[currentMonth] || ''; // 구버전 데이터 호환
-
+            if(memoTop === undefined) memoTop = memos[currentMonth] || ''; 
             let memoCell = document.createElement('div');
             memoCell.className = 'day empty-memo-cell';
             memoCell.style.setProperty('--span', firstDay);
@@ -207,21 +223,22 @@
             grid.appendChild(memoCell);
         }
 
-        // 2. 실제 날짜
         for(let d=1; d<=lastDate; d++) {
             let el = document.createElement('div');
             let dow = new Date(2026, currentMonth - 1, d).getDay();
             el.className = `day ${dow === 0 ? 'sunday' : ''} ${dow === 6 ? 'saturday' : ''}`;
             el.innerHTML = `<div class="day-num">${d}</div>`;
 
+            // 일반 일정 및 분류별 기호 표시 적용
             let daily = scheduleData.filter(s => s.month === currentMonth && extractDay(s.date) === d);
             daily.forEach(evt => {
                 let noteHtml = "";
                 if (evt.note && evt.note.trim() !== "") {
                     noteHtml = `<div class="event-note">${evt.note}</div>`;
                 }
+                let sym = getCategorySymbol(evt.category);
                 el.innerHTML += `<div class="cal-event" data-cat="${evt.category}">
-                                    <div>${evt.display || evt.content}</div>
+                                    <div>${sym}${evt.display || evt.content}</div>
                                     ${noteHtml}
                                  </div>`;
             });
@@ -237,7 +254,6 @@
             grid.appendChild(el);
         }
 
-        // 3. 월 종료 후 빈 칸 (하단 메모)
         if(lastDayOfWeek < 6) {
             let span = 6 - lastDayOfWeek;
             let memoBot = memos[currentMonth + '_bot'] || '';
@@ -254,7 +270,6 @@
 
     function updateMemo(key, val) { memos[key] = val; save(); }
 
-    // [핵심 업데이트] 업무 내용/비고 다중 라인(textarea) 지원
     function renderTable() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -343,12 +358,6 @@
     function updateUrl(id, f, v) { let u = urlDataList.find(x=>x.id===id); u[f]=v; save(); }
     function delUrl(id) { urlDataList = urlDataList.filter(x=>x.id!==id); save(); renderUrlModal(); }
 
-    function extractDay(s) {
-        if(!s) return -1;
-        let m = s.match(/-(\d+)/); return m ? parseInt(m[1]) : -1;
-    }
-
-    // [자동 팝업 알림 로직]
     function checkAutoAlerts(isManual = false) {
         const todayStr = new Date().toLocaleDateString();
         if (!isManual && localStorage.getItem('hideAlertDate_2026') === todayStr) return; 
