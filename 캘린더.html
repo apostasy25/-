@@ -6,6 +6,7 @@
     <title>정산업무 통합 대시보드</title>
     <style>
         :root { --primary: #E25B19; --dark: #333; --bg: #f4f6f8; --border: #c8c8c8; }
+        /* body의 높이 제한과 overflow-x:hidden을 해제하여 자연스러운 전체 스크롤 허용 */
         body { font-family: 'Malgun Gothic', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #222; }
         
         .container { max-width: 100%; margin: auto; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-radius: 6px; overflow: hidden; }
@@ -17,14 +18,15 @@
         .btn-alert { background: #111; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
         .btn-alert:hover { background: #000; }
 
-        /* 메인 레이아웃: 달력 비율 축소, 우측 테이블 확장 (1.4 : 1) */
-        .main-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; padding: 20px; align-items: start; }
+        /* 메인 레이아웃: height 제한(calc) 완전 삭제하여 30일까지 잘리지 않게 함 */
+        .main-layout { display: grid; grid-template-columns: 1.8fr 1fr; gap: 20px; padding: 20px; align-items: start; }
 
         /* 달력 스타일 */
         .calendar-wrap { border: 1px solid var(--border); border-radius: 4px; background: var(--border); display: flex; flex-direction: column; }
         .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; flex-grow: 1; }
         .cal-header { background: var(--dark); color: #fff; text-align: center; padding: 8px; font-size: 13px; font-weight: bold; }
         
+        /* 달력 각 날짜 칸: min-height를 넉넉히 주고 내용에 따라 늘어나게 함 */
         .day { background: #fff; padding: 6px; min-height: 120px; display: flex; flex-direction: column; gap: 3px; }
         .day-num { font-weight: bold; font-size: 13px; color: #555; margin-bottom: 4px; padding-bottom: 2px; border-bottom: 1px solid #f0f0f0; }
         .day.sunday .day-num { color: #e74c3c; }
@@ -35,7 +37,7 @@
         .empty-memo-editor { width: 100%; height: 100%; min-height: 120px; border: none; background: transparent; padding: 26px 10px 10px; font-family: inherit; font-size: 13px; line-height: 1.5; color: #444; outline: none; box-sizing: border-box; white-space: pre-wrap; word-break: break-all; }
         .memo-tag { position: absolute; top: 6px; left: 10px; font-size: 11px; color: #E25B19; font-weight: bold; pointer-events: none; }
 
-        /* 달력 이벤트(일정) 뱃지 */
+        /* 달력 이벤트(일정) 뱃지: 깔끔한 한 줄 텍스트 (넘치면 ...) */
         .cal-event { 
             font-size: 11.5px; padding: 4px 6px; border-radius: 3px; background: #f0f4f8; border-left: 3px solid #3498db; 
             font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #222;
@@ -56,6 +58,7 @@
         th { background: #eee; font-size: 13px; padding: 10px 4px; border-bottom: 2px solid var(--border); color: #333; }
         td { border-bottom: 1px solid #e0e0e0; padding: 4px; vertical-align: middle; }
         
+        /* 텍스트 입력칸: 자동 높이 조절(Auto-resize) 적용하여 스크롤바 제거 */
         td input, td select { width: 100%; box-sizing: border-box; border: 1px solid transparent; padding: 8px 4px; font-size: 12px; text-align: center; background: transparent; font-family: inherit; color: #222; }
         td textarea { 
             width: 100%; box-sizing: border-box; border: 1px solid transparent; padding: 8px 6px; 
@@ -110,11 +113,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th width="9%">날짜</th>
-                            <th width="12%">분류</th>
-                            <th width="40%">업무 내용</th>
-                            <th width="24%">비고(입금 등)</th>
-                            <th width="10%">상태</th>
+                            <th width="12%">날짜</th>
+                            <th width="15%">분류</th>
+                            <th width="33%">업무 내용</th>
+                            <th width="23%">비고(입금 등)</th>
+                            <th width="12%">상태</th>
                             <th width="5%">-</th>
                         </tr>
                     </thead>
@@ -153,6 +156,7 @@
 </div>
 
 <script>
+    // 기본 업체 목록 (업체현황입력표 CSV 데이터 일부 선반영)
     const defaultUrls = [
         { id: 1, company: "교보문고", url: "https://partner.kyobobook.co.kr/" },
         { id: 2, company: "구글", url: "" },
@@ -193,6 +197,7 @@
         renderTable();
     }
 
+    // 텍스트상자 자동 높이 조절 (가독성 개선의 핵심)
     function autoResize(el) {
         el.style.height = 'auto';
         el.style.height = (el.scrollHeight) + 'px';
@@ -270,6 +275,7 @@
                                  </div>`;
             });
 
+            // 미래 입금 표시
             scheduleData.forEach(evt => {
                 if(!evt.note) return;
                 let match = evt.note.match(/(\d{1,2})[\/\.](\d{1,2})/);
@@ -303,6 +309,7 @@
         monthData.forEach(item => appendRow(tbody, item, false));
         appendRow(tbody, null, true); 
         
+        // 렌더링 후 모든 textarea의 높이를 내용에 맞게 자동 조절
         document.querySelectorAll('textarea').forEach(el => autoResize(el));
     }
 
