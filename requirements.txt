@@ -1,0 +1,12 @@
+# 원작료 정산 자동화 — 실행/빌드 의존성
+openpyxl>=3.1,<4
+pypdf>=4.0,<6
+
+# GUI: 마스터 관리(PySide6) + 정산 실행(tkinter는 Windows Python 기본 포함)
+PySide6>=6.6
+
+# (선택) 정산 실행 화면의 파일 끌어다 놓기(drag&drop). 없으면 파일 선택만 동작.
+tkinterdnd2>=0.4
+
+# 빌드 도구(exe 생성)
+pyinstaller>=6.3
