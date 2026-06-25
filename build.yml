@@ -1,0 +1,50 @@
+name: build-exe                     # 깃허브 Actions 탭에 표시될 이름
+
+on:
+  push:
+    branches: [ main ]              # main 에 올릴 때마다 자동 빌드
+  workflow_dispatch:                # Actions 탭에서 수동 실행 버튼
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest         # 윈도우 exe 는 윈도우에서 빌드
+    steps:
+      - name: 소스 가져오기
+        uses: actions/checkout@v6
+
+      - name: 파이썬 설치
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: 패키지 설치
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: exe 빌드 (onedir)
+        run: pyinstaller build.spec --noconfirm
+
+      - name: 데이터 폴더 동봉 (실데이터는 넣지 않음)
+        shell: pwsh
+        run: |
+          $dst = "dist/정산자동화"
+          New-Item -ItemType Directory -Force -Path "$dst/inbox/매출리스트" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$dst/inbox/기타수익"   | Out-Null
+          New-Item -ItemType Directory -Force -Path "$dst/inbox/직전정산서" | Out-Null
+          New-Item -ItemType Directory -Force -Path "$dst/output"           | Out-Null
+          # 정산서 양식(공용·개인정보 아님)은 exe 옆에 둬야 정산서 생성이 동작합니다.
+          Copy-Item "정산서_양식_기초.xlsx" "$dst/" -Force
+          # 마스터는 개인정보(사업자/주민번호 등) 때문에 깃에 올리지 않습니다.
+          # 다운로드 후 실제 마스터(원작료정산_마스터.xlsx)를 이 폴더에 직접 넣어 사용하세요.
+
+      - name: 결과물 업로드 (Actions > Artifacts 에서 다운로드)
+        uses: actions/upload-artifact@v4
+        with:
+          name: 정산자동화-windows
+          path: dist/정산자동화
+          if-no-files-found: error
